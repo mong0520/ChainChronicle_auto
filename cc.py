@@ -13,6 +13,8 @@ from logging.handlers import RotatingFileHandler
 
 class ChainChronicleAutomation():
     def __init__(self):
+        self.uid = "ANDOa5f1b8e3-9ad9-40f2-8b5c-57a8b521151d" 
+        self.token = "APA91bGTMWur8RYAC0edNtWPxKlaH7KmnRBWf50kmRI2VBE93WQiyxeCMjbtVz75WEIQIDlhE2xdiEtF-RJz57S3Z1duvyCJ3S2Mk7Crf_29HlScIy3I_331XHHAdRDpJDCrK9Oc3IEk"
         self.__initLogger()
         self.sid = None
         self.headers = {        
@@ -27,6 +29,7 @@ class ChainChronicleAutomation():
                 'Connection': 'Keep-Alive',
                 'Content-Length': '1506'
                 }
+        self.cardTypes = {0: "角色卡", 1: "武器卡", 2: "鍛造卡", 3: "成長卡"}
         
     def getLogger(self):
         return self.logger
@@ -55,7 +58,7 @@ class ChainChronicleAutomation():
             #print "...Result = [{0}]".format(result['res'])
             #print result
             if (result['res'] == 103):
-                self.logger.debug("[Warning]: 體力不足, 使用體力果")
+                self.logger.warning("體力不足, 使用體力果")
                 r = self.__recoverStamina()      
                 if r['res'] != 0:           
                     self.logger.debug("恢復體力失敗: {0}".format(r['res']))
@@ -89,7 +92,7 @@ class ChainChronicleAutomation():
             time.sleep(1)       
             
         
-    def CC_Gacha(self, count, bSell):       
+    def CC_Gacha(self, count, bSell, keptCards):       
         for i in range(0, count):
             now = int(time.time()*1000)
             hexNow = format(now + 5000, 'x')
@@ -103,14 +106,19 @@ class ChainChronicleAutomation():
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
             #print (r.text) 
             try:
-                idx = r['body'][1]['data'][0]['idx']
-                id = r['body'][1]['data'][0]['id']
-                self.logger.debug("#{0}: Gacha! Result = {1}, Card ID = {2}, Card UID = {3}".format(i, r['res'], id, idx))               
+                idx = int(r['body'][1]['data'][0]['idx'])
+                type = int(r['body'][1]['data'][0]['type'])
+                #id = r['body'][1]['data'][0]['id']
+                #self.logger.debug("#{0}: Gacha! Result = {1}, Card ID = {2}, Card UID = {3}".format(i, r['res'], id, idx))               
+                self.logger.debug("#{0}: 挑戰轉蛋！ 獲得[{1}]一張".format(i, self.cardTypes[type]))                
                 if bSell:
-                    self.__sellItem(idx)
+                    if not keptCards or type not in keptCards:
+                        self.__sellItem(idx)
+
             except Exception as e:
+                self.logger.debug(str(e))
                 self.logger.debug("Undefined Error: {0}".format(r['res']))
-    
+                self.logger.debug('包包已滿？')    
 
     
     def CC_buyStaminaFruit(self, count):
@@ -280,24 +288,35 @@ class ChainChronicleAutomation():
         return r    
 
     def __initLogger(self):
-        self.uid = "ANDOa5f1b8e3-9ad9-40f2-8b5c-57a8b521151d" 
-        self.token = "APA91bGTMWur8RYAC0edNtWPxKlaH7KmnRBWf50kmRI2VBE93WQiyxeCMjbtVz75WEIQIDlhE2xdiEtF-RJz57S3Z1duvyCJ3S2Mk7Crf_29HlScIy3I_331XHHAdRDpJDCrK9Oc3IEk"
+        fileFormatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
+            '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
+
+        consoleFormatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
+            ' - %(message)s', datefmt='%B %d %H:%M:%S')
+        
         self.logger = logging.getLogger("Chain Chronicle")
         self.logger.setLevel(logging.DEBUG)
         
         rh = RotatingFileHandler("cc.log", maxBytes=1024*5, backupCount=3)
+        rh.setLevel(logging.DEBUG)
+        rh.setFormatter(fileFormatter)
+
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG)
+        console.setFormatter(consoleFormatter)
 
         self.logger.addHandler(rh)   
         self.logger.addHandler(console)   
         
     
     def printUsage(self):
-        print "cc.py -type [gacha|quest|buy] -qid quest_id -count n -sell [0|1] -raid [0|1]"
-        print "\tgacha: play gacha for [count] times, if [sell] is 1, then sell it immediately"
-        print "\tquest: play quest with [qid] for [count] times, play Raid game if raid = 1, if [sell] is 1, then sell it immediately"
-        print "\tbuy: buy [count] Stamina Fruits"
+        print "cc.py -type [gacha|quest|buy] -qid quest_id -count n -sell [0|1] -raid [0|1] -keep [0,1,2,3]\n"
+        print "gacha: play gacha for [count] times, if [sell] is 1, then sell it immediately.\n"+\
+                " Specified card type will NOT be sold by assign the card type to [keep], seperate by ','" +\
+                "0 = 角色卡, 1 = 武器卡, 2 = 鍛造卡, 3 = 成長卡\n" +\
+                "example: python cc.py -type gacha -count 200 keep 2,3\n"
+        print "quest: play quest with [qid] for [count] times, play Raid game if raid = 1, if [sell] is 1, then sell it immediately\n"
+        print "buy: buy [count] Stamina Fruits"
 
 if __name__ == "__main__":
     cc = ChainChronicleAutomation()
@@ -309,6 +328,7 @@ if __name__ == "__main__":
     count = 1
     bSell = 0
     bRaid = 0
+    keptCards = None
     
     if len(sys.argv) < 3: 
         cc.printUsage()
@@ -327,6 +347,8 @@ if __name__ == "__main__":
                 bSell = int(sys.argv[i+1])
             if sys.argv[i] == "-raid":
                 bRaid = int(sys.argv[i+1])
+            if sys.argv[i] == "-keep":
+                keptCards = [ int(n) for n in sys.argv[i+1].split(',') ]
 
     logger = cc.getLogger()            
     now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -334,7 +356,7 @@ if __name__ == "__main__":
     cc.CC_Login()
 
     if type == 'gacha':     
-        cc.CC_Gacha(count, bSell)
+        cc.CC_Gacha(count, bSell, keptCards)
     elif type == 'quest':       
         if qid:
             cc.CC_PlayQuest(qid, count, bRaid, bSell)         
