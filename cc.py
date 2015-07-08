@@ -80,11 +80,11 @@ class ChainChronicleAutomation():
                             # self.logger.debug(idx)
                             self.__sellItem(idx)
                     except Exception as e:
-                        self.logger.debug("無可販賣卡片")
+                        self.logger.error("無可販賣卡片")
             elif result['res'] == 1:
-                self.logger.debug("#{0} - 任務失敗，已被登出".format(i))
+                self.logger.error("#{0} - 任務失敗，已被登出".format(i))
             else:
-                self.logger.debug("#{0} - 任務失敗: Error Code = {1}".format(i, result['res']))
+                self.logger.error("#{0} - 任務失敗: Error Code = {1}".format(i, result['res']))
             
             #魔神戰
             self.__PlayRaid(bRaid)
@@ -116,9 +116,8 @@ class ChainChronicleAutomation():
                         self.__sellItem(idx)
 
             except Exception as e:
-                self.logger.debug(str(e))
-                self.logger.debug("Undefined Error: {0}".format(r['res']))
-                self.logger.debug('包包已滿？')    
+                self.logger.error("Undefined Error: {0}".format(r['res']))
+                self.logger.error('包包已滿或聖靈幣不足')    
 
     
     def CC_buyStaminaFruit(self, count):
@@ -136,7 +135,7 @@ class ChainChronicleAutomation():
             if r['res'] == 0:
                 self.logger.debug("#{0}, 購買體力果實完成".format(i))
             else:
-                self.logger.debug("#{0}, 購買體力果實失敗, result = {0}".format(i, r['res']))
+                self.logger.error("#{0}, 購買體力果實失敗, result = {0}".format(i, r['res']))
 
     def __sellItem(self, idx):
         now = int(time.time()*1000)
@@ -216,9 +215,9 @@ class ChainChronicleAutomation():
                 elif r['res'] == 104:
                     self.logger.debug(u"魔神戰體力不足")
                 elif r['res'] == 603:
-                    self.logger.debug(u"魔神戰逾時")
+                    self.logger.error(u"魔神戰逾時")
                 else:
-                    self.logger.debug("Unknown Error: {0}".format(r['res']))
+                    self.logger.error("Unknown Error: {0}".format(r['res']))
             else:
                 pass
         else:
@@ -282,9 +281,9 @@ class ChainChronicleAutomation():
         if r['res'] == 0:
             self.logger.debug("體力完全回復")
         elif r['res'] == 703:
-            self.logger.debug("體力果石不足，無法回復體力")
+            self.logger.error("體力果石不足，無法回復體力")
         else:
-            self.logger.debug("體力無法回復, Error Code:{0}".format(r['res']))
+            self.logger.error("體力無法回復, Error Code:{0}".format(r['res']))
         return r    
 
     def __initLogger(self):
@@ -298,7 +297,7 @@ class ChainChronicleAutomation():
         self.logger.setLevel(logging.DEBUG)
         
         rh = RotatingFileHandler("cc.log", maxBytes=1024*5, backupCount=3)
-        rh.setLevel(logging.DEBUG)
+        rh.setLevel(logging.ERROR)
         rh.setFormatter(fileFormatter)
 
         console = logging.StreamHandler()
@@ -367,5 +366,5 @@ if __name__ == "__main__":
     else:
         logger.debug("Unsupported type:[{0}]".format(type))
 
-    now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M%S')
+    now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     logger.debug("#End at: {0}".format(now))
