@@ -56,6 +56,10 @@ class ChainChronicleAutomation():
 
 
             self.config['Buy']['count'] = config.getint('Buy', 'Count')
+            try:
+                self.config['General']['RetryDurtion'] = config.getint('General', 'RetryDuration')
+            except:
+                self.config['General']['RetryDurtion'] = 10
 
 
             # for key in self.config:
@@ -91,7 +95,17 @@ class ChainChronicleAutomation():
             sys.exit(0)
 
     def CC_PlayQuest(self, qtype, qid, count, bRaid, bSell, maxEventPoint):
-        for i in range(0, count):
+        #for i in range(0, count):
+        current = 0
+        bInfinte = False
+
+        if count == -1:
+            bInfinte = True
+
+        while True:
+            current = current + 1
+            if current > count and not bInfinte:
+                break
             #print "Start to play quest:[{0}]".format(i)
             result = self.__getQuest(qtype, qid).json()
             #print "...Result = [{0}]".format(result['res'])
@@ -110,10 +124,11 @@ class ChainChronicleAutomation():
                         self.logger.error("購買體力果實失敗, result = {0}".format(r['res']))
                         sys.exit(0)
                 time.sleep(1)
+                current = current - 1
                 continue    
             result = self.__getBattleResult(qid).json()
             if result['res'] == 0:
-                self.logger.info("#{0} - 任務完成!".format(i))
+                self.logger.info("#{0} - 任務完成!".format(current))
                 #self.logger.debug(result)
                 # 踏破活動
                 try:
@@ -148,10 +163,14 @@ class ChainChronicleAutomation():
                     except Exception as e:
                         self.logger.warning("無可販賣卡片")
             elif result['res'] == 1:
-                self.logger.error("#{0} - 任務失敗，已被登出".format(i))
-                sys.exit(0)
+                self.logger.warning("#{0} - 任務失敗，已被登出".format(current))
+                sleepSec = 60 * self.config['General']['RetryDurtion']
+                self.logger.info("等待{0}分鐘後再試...".format(sleepSec/60))
+                time.sleep(sleepSec)
+                self.CC_Login()
+                #sys.exit(0)
             else:
-                self.logger.error("#{0} - 任務失敗: Error Code = {1}".format(i, result['res']))
+                self.logger.error("#{0} - 任務失敗: Error Code = {1}".format(current, result['res']))
                 sys.exit(0)
             
             #魔神戰
@@ -300,10 +319,14 @@ class ChainChronicleAutomation():
         payload = "nature=cnt%3d{0}".format(hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()     
         #self.logger.debug("Raw data = {0}".format(r))
-        try:
-            #self.logger.debug("Raid Boss ID: [{0}]".format(r['body'][0]['data'][0]['boss_id']))
-            self.logger.debug(u"魔神來襲！魔神等級: [{0}]".format(r['body'][0]['data'][0]['boss_param']['lv']))
-            return r['body'][0]['data'][0]['boss_id']
+        try:        
+            # bossCount = len(r['body'][0]['data'])
+            # self.logger.debug("Boss Count = {0}".format(bossCount))
+            for r in r['body'][0]['data']:
+                # self.logger.debug(u"魔神戰資訊 = {0}".format(r))
+                if r['own']:
+                    self.logger.debug(u"魔神來襲！魔神等級: [{0}]".format(r['boss_param']['lv']))
+                    return r['boss_id']
         except Exception as e:
             self.logger.debug(u"未觸發魔神戰")
             return None
@@ -339,7 +362,7 @@ class ChainChronicleAutomation():
         post_url = "http://prod4.cc.mobimon.com.tw/raid/entry?bid={0}&use=1&fid=1913206&pt=0&cnt={1}&timestamp={2}".format(bossId, hexNow, now)
         payload = "nature=bid%3d{0}%26cnt%3d{1}%26fid%3d1913206%26pt%3d0%26use%3d1".format(bossId, hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()      
-        #self.logger.debug("Get Raid Request result = {0}".format(r['res']))
+        # self.logger.debug("Get Raid Request result = {0}".format(r['res']))
         return r
         
     def __getRaidResult(self, bossId):        
@@ -445,7 +468,7 @@ if __name__ == "__main__":
         count = config['Quest']['count']
         bRaid = config['Quest']['raid']
         bSell = config['Quest']['sell']
-        maxEventPoint = config['Quest']['max_event_point']
+        maxEventPoint = config['Quest']['max_event_point']        
         if maxEventPoint == -1:
             maxEventPoint = sys.maxint
         cc.CC_PlayQuest(qtype, qid, count, bRaid, bSell, maxEventPoint)         
