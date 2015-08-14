@@ -3,7 +3,7 @@
 cd /home/ubuntu/ChainChronicle/
 
 # Needs 20000/81 = 247 Stamina fruits or 1870聖靈幣
-python cc.py setting_50wave.ini -action quest
+python cc.py config/setting_mong.ini -action quest
 
 # total 4,000 cards
 #for ((i=1;i<=20;i=i+1))  

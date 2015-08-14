@@ -195,7 +195,7 @@ class ChainChronicleAutomation():
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
             if r['res'] == 0:
                 try:
-                    id = r['body'][1]['data'][0]['id']
+                    # id = r['body'][1]['data'][0]['id'] 
                     idx = int(r['body'][1]['data'][0]['idx'])
                     type = int(r['body'][1]['data'][0]['type']) 
             
@@ -231,6 +231,8 @@ class ChainChronicleAutomation():
                 except Exception as e:
                     self.logger.error("Undefined Error: {0}".format(r['res']))
                     self.logger.error(e)
+                    self.logger.error(r)
+                    raise
             elif r['res'] == 703:
                 self.logger.error("聖靈幣不足")
                 sys.exit(0)
@@ -343,6 +345,7 @@ class ChainChronicleAutomation():
                     self.logger.debug(u"魔神戰體力不足")
                 elif r['res'] == 603:
                     self.logger.error(u"魔神戰逾時")
+                    # 逾時需要點掉
                 else:
                     self.logger.error("Unknown Error: {0}".format(r['res']))
             else:
@@ -418,7 +421,10 @@ class ChainChronicleAutomation():
             '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
 
         consoleFormatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
-            ' - %(message)s', datefmt='%B %d %H:%M:%S')
+            '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
+
+        # consoleFormatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
+            # ' - %(message)s', datefmt='%B %d %H:%M:%S')
         
         self.logger = logging.getLogger("Chain Chronicle")
         self.logger.setLevel(logging.DEBUG)
