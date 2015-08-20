@@ -31,7 +31,8 @@ class ChainChronicleAutomation():
         self.__loadConfig(configFile)
     
     def __initDb(self):
-        client = MongoClient('localhost', 27017)
+        client = MongoClient('lineage.twbbs.org', 27017)
+        client.the_database.authenticate('admin', 'mong730520', source = 'admin')
         self.db = client.cc
 
     def __loadConfig(self, configFile):
