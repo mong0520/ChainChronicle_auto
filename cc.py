@@ -36,7 +36,7 @@ class ChainChronicleAutomation():
 
     def __loadConfig(self, configFile):
         try:            
-            self.config = {"General":{}, "Quest":{}, "Gacha":{} ,"Buy":{}}
+            self.config = {"General":{}, "Quest":{}, "Gacha":{} ,"Buy":{}, "RaidGacha":{}}
             config = ConfigParser.ConfigParser()
             config.read(configFile)
 
@@ -53,6 +53,10 @@ class ChainChronicleAutomation():
             self.config['Gacha']['count'] = config.getint('Gacha', 'Count')
             self.config['Gacha']['sell'] = config.getint('Gacha', 'AutoSell')
             self.config['Gacha']['keep_cards'] = config.get('Gacha', 'KeepCards')
+
+            self.config['RaidGacha']['count'] = config.getint('RaidGacha', 'Count')
+            self.config['RaidGacha']['sell'] = config.getint('RaidGacha', 'AutoSell')
+            self.config['RaidGacha']['keepCardId'] = config.getint('RaidGacha', 'KeepCardId')
 
 
             self.config['Buy']['count'] = config.getint('Buy', 'Count')
@@ -193,12 +197,20 @@ class ChainChronicleAutomation():
             post_url = "http://prod4.cc.mobimon.com.tw/gacha?t=6&c=1&cnt={0}&timestamp={1}".format(hexNow, now)
             payload = "nature=c%3d1%26cnt%3d{0}%26t%3d6".format(hexNow)
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+            # self.logger.debug(r)
             if r['res'] == 0:
                 try:
                     # id = r['body'][1]['data'][0]['id'] 
-                    idx = int(r['body'][1]['data'][0]['idx'])
-                    type = int(r['body'][1]['data'][0]['type']) 
-            
+                    idx = -1
+                    type = -1
+                    for body in r['body']:                 
+                        try:
+                            idx = int(body['data'][0]['idx'])
+                            type = int(body['data'][0]['type']) 
+                            break
+                        except:
+                            pass
+
                     self.logger.debug("#{0}: 挑戰轉蛋！ 獲得[{1}]一張".format(i, self.cardTypes[type]))
                     #self.logger.debug(r['body'][1]['data'][0])
                     '''
@@ -228,6 +240,9 @@ class ChainChronicleAutomation():
                                 self.logger.error("\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
                                 sys.exit(0)
 
+                except KeyError as e:
+                    self.logger.error("Key Error:{0}, 找不到卡片idx, 可能是包包已滿".format(e))
+                    sys.exit(0)
                 except Exception as e:
                     self.logger.error("Undefined Error: {0}".format(r['res']))
                     self.logger.error(e)
@@ -240,7 +255,64 @@ class ChainChronicleAutomation():
                 self.logger.error("未定義的錯誤:{0}, {1}".format(r['res'], r['msg']))
                 sys.exit(0)
 
-    
+    def CC_RaidGacha(self, count, bSell, keepCardId):       
+        gachaType = 3
+        for i in range(0, count):
+            time.sleep(5)
+            now = int(time.time()*1000)
+            hexNow = format(now + 5000, 'x')
+            # self.logger.debug(now)
+            # self.logger.debug(hexNow)
+            cookies = {'sid': self.sid}
+            self.headers = {
+                    'Cookie': 'sid={0}'.format(self.sid),               
+                    'nat': "c=10&cnt={0}&nature=c%3d1%26cnt%3d{0}%26t%3d6&t={2}&timestamp={1}".format(hexNow, now, gachaType)
+                    }
+            post_url = "http://prod4.cc.mobimon.com.tw/gacha?t={2}&c=10&cnt={0}&timestamp={1}".format(hexNow, now, gachaType)
+            payload = "nature=c%3d10%26cnt%3d{0}%26t%3d".format(hexNow)
+            r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+            # self.logger.debug(r)
+            if r['res'] == 0:
+                # id = r['body'][1]['data'][0]['id'] 
+                idx = -1
+                type = -1
+                try:
+                    for record in r['body'][1]['data']:
+                        # self.logger.debug(record)
+                        idx = int(record['idx'])
+                        type = int(record['type'])
+                        cid = int(record['id']) 
+                        cardName = u""
+
+                        # self.logger.debug(cid)                        
+                        try:
+                            cardName = self.db.charainfo.find_one({"cid": cid})['name']
+                            self.logger.debug(u"魔神轉蛋！ 獲得[{0}]一張".format(cardName))
+                        except Exception as e:
+                            self.logger.debug("魔神轉蛋！ 獲得[{0}]一張".format(self.cardTypes[type]))
+                
+                        # self.logger.debug("cid = {0}, keepcardid = {1}".format(cid, keepCardId))
+                        if cid == keepCardId:
+                            self.logger.info("\t~~~ 屁莉卡來加持 ~~~")
+                        else:
+                            if bSell:
+                                r = self.__sellItem(idx)
+                            if r['res'] == 0:
+                                self.logger.debug("\t-> 賣出卡片")
+                            else:
+                                self.logger.error("\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
+                                sys.exit(0)            
+                except Exception as e:
+                    self.logger.error("無法取得卡片資訊，可是包包已滿")
+                    sys.exit(0)
+            elif r['res'] == 703:
+                self.logger.error("魔神幣不足")
+                sys.exit(0)
+            else:
+                self.logger.error("未定義的錯誤:{0}, {1}".format(r['res'], r['msg']))
+                sys.exit(0)
+
+
     def CC_buyStaminaFruit(self, count):
         r = None
         for i in range(0, count):
@@ -343,9 +415,14 @@ class ChainChronicleAutomation():
                     self.__getRaidBonus(bossId)
                 elif r['res'] == 104:
                     self.logger.debug(u"魔神戰體力不足")
-                elif r['res'] == 603:
+		elif r['res'] == 603:
+                    self.logger.debug(u"發現的魔神已結束")
+                    self.__getRaidResult(bossId)
+                    self.__getRaidBonus(bossId)
+                elif r['res'] == 608:
                     self.logger.error(u"魔神戰逾時")
-                    # 逾時需要點掉
+                    self.__getRaidResult(bossId)
+                    self.__getRaidBonus(bossId)
                 else:
                     self.logger.error("Unknown Error: {0}".format(r['res']))
             else:
@@ -466,6 +543,11 @@ if __name__ == "__main__":
         if config['Gacha']['keep_cards']:
             keptCards = [ int(n) for n in config['Gacha']['keep_cards'].split(',') ]
         cc.CC_Gacha(count, bSell, keptCards)
+    if action == 'raid_gacha':     
+        count = config['RaidGacha']['count']
+        bSell = config['RaidGacha']['sell']
+        keepCardId = config['RaidGacha']['keepCardId']
+        cc.CC_RaidGacha(count, bSell, keepCardId)
     elif action == 'quest':       
         now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         logger.info("#Start at: {0}".format(now))
