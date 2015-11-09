@@ -35,7 +35,11 @@ class ChainChronicleAutomation():
         self.__loadConfig(configFile)
     
     def __initDb(self):
-        client = MongoClient('lineage.twbbs.org', 27017)
+        # client = MongoClient('lineage.twbbs.org', 27017)
+        # client = MongoClient('54.64.174.97', 27017)
+        client = MongoClient('127.0.0.1', 27017)
+
+
         #client.the_database.authenticate('admin', 'mong730520', source = 'admin')
         self.db = client.cc
 
@@ -236,7 +240,7 @@ class ChainChronicleAutomation():
                             try:                            
                                 cardName = self.db.charainfo.find_one({"cid": id})['name']
                             except:
-                                self.logger.warning("無法找到角色卡片名稱")
+                                self.logger.warning("無法找到角色卡片名稱，請檢查是否有新卡或是DB線連狀態")
                                 cardName = id
 
                         self.logger.debug(u"#{0}: 轉蛋開始！ 獲得[{1}]一張".format(i, cardName))
