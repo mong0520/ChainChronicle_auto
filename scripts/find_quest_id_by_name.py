@@ -5,11 +5,15 @@ client = MongoClient('127.0.0.1', 27017)
 collection = client.cc.quest
 
 try:
-    quest_doc = collection.find_one({"name": sys.argv[1]})
-    print "Quest Type ID = %d" % quest_doc['place_id']
-    print "Quest ID = %d" % quest_doc['quest_id']
-    #print "Quest Name = %s" % quest_doc['name']
+    quest_doc = collection.find({"name": {"$regex": sys.argv[1]} })
+    for doc in quest_doc:
+        print "================================="
+        print "Quest Type ID = %d" % doc['place_id']
+        print "Quest ID = %d" % doc['quest_id']
+        print "Quest Name = %s" % doc['name']
+        print "================================="
+except KeyError as e:
+    print "Result doesn't include key [{0}]".format(e)
 except Exception as e:
-    print "no data"
-    print e
+    raise
 
