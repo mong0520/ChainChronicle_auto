@@ -570,9 +570,13 @@ if __name__ == "__main__":
                 continue
             qtype = quest.split(',')[0]
             qid = quest.split(',')[1]
-            print qtype
-            print qid
-            cc.CC_PlayQuest(qtype, qid, count, bRaid, bSell, maxEventPoint)
+            # print qtype
+            # print qid
+            try:
+                cc.CC_PlayQuest(qtype, qid, count, bRaid, bSell, maxEventPoint)
+            except Exception as e:
+                logger.info(e)
+                pass
             now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
             logger.info("#End at: {0}".format(now))
             time.sleep(1)
