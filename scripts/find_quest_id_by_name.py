@@ -7,6 +7,7 @@ collection = client.cc.quest
 try:
     quest_doc = collection.find({"name": {"$regex": sys.argv[1]} })
     for doc in quest_doc:
+        print doc
         print "================================="
         print "Quest Type ID = %d" % doc['place_id']
         print "Quest ID = %d" % doc['quest_id']

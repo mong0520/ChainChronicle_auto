@@ -576,7 +576,7 @@ if __name__ == "__main__":
                 cc.CC_PlayQuest(qtype, qid, count, bRaid, bSell, maxEventPoint)
             except Exception as e:
                 logger.info(e)
-                pass
+                continue
             now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
             logger.info("#End at: {0}".format(now))
             time.sleep(1)
