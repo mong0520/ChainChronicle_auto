@@ -9,8 +9,9 @@ try:
     for doc in quest_doc:
         print doc
         print "================================="
-        print "Quest Type ID = %d" % doc['place_id']
+        print "Quest Type ID = %d" % doc['kind']
         print "Quest ID = %d" % doc['quest_id']
+        print "Quest Length = %d" % len(doc['chapter_list'])
         print "Quest Name = %s" % doc['name']
         print "================================="
 except KeyError as e:
