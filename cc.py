@@ -219,6 +219,20 @@ class ChainChronicleAutomation():
 
             time.sleep(1)
 
+    def CC_SetPassword(self, password):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        self.headers = { 
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "cnt={0}&nature=cnt%3d{0}%26pass%3d{2}&pass={2}&timestamp={1}".format(hexNow, now, password)
+                }   
+        post_url = "http://prod4.cc.mobimon.com.tw/user/set_password?cnt={0}&timestamp={1}".format(hexNow, now)
+        payload = "pass={0}&nature=cnt%3d{1}%26pass%3d{0}".format(password, hexNow)
+
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+
+        print r
 
     def CC_Gacha(self, gType, count, bSell, keptCards):
         sleep_time = 0
@@ -595,6 +609,8 @@ if __name__ == "__main__":
     #     bSell = config['RaidGacha']['sell']
     #     keepCardId = config['RaidGacha']['keepCardId']
     #     cc.CC_RaidGacha(count, bSell, keepCardId)
+    elif action == 'password':
+        cc.CC_SetPassword('aaa123')
     elif action == 'quest':
         now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         logger.info("#Start at: {0}".format(now))
