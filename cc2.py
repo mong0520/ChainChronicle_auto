@@ -744,22 +744,24 @@ if __name__ == "__main__":
         cc.CC_buyItem(item_type, 1)
     elif action == 'poc':
         # r = cc.get_item_from_storage()
-        money_goal = 500000000
+        # money_goal = 500000000
 
-        money_current = 99999999999999
-        while True:
-            if money_current <= money_goal:
-                break
+        # money_current = 99999999999999
+        # while True:
+        for i in range(1,1300000):
+            # if money_current <= money_goal:
+                # break
+            logger.debug("#{0}".format(i))
             r = cc.CC_explorer(1, 0, 582439944)
             r = cc.CC_explorer_cancel(1)
 
-            r = cc.CC_GetAllData()
-            data = r['body'][8]['data']
-            for d in data:
-                if d['item_id'] == 10:
-                    logger.debug("剩餘金幣 = {0}".format(d['cnt']))
-                    money_current = d['cnt']
-                    break
+            # r = cc.CC_GetAllData()
+            # data = r['body'][8]['data']
+            # for d in data:
+            #     if d['item_id'] == 10:
+            #         logger.debug("剩餘金幣 = {0}".format(d['cnt']))
+            #         money_current = d['cnt']
+            #         break
 
     elif action == 'status':
         r = cc.CC_GetAllData()
