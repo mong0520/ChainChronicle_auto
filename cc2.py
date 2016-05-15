@@ -354,10 +354,10 @@ class ChainChronicleAutomation():
             now = int(time.time()*1000)
             hexNow = format(now + 5000, 'x')
             cookies = {'sid': self.sid}
-            self.headers = { 
+            self.headers = {
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "cnt={0}&id={2}&kind=item&nature=cnt%3d{0}%26id%3d{2}%26kind%3ditem%26price%3d30%26type%3d{3}%26val%3d1&price=30&timestamp={1}&type={3}&val=1".format(hexNow, now, item_mapping[item_type]['id'], item_mapping[item_type]['type'])
-                    }   
+                    }
             post_url = "http://v252.cc.mobimon.com.tw/token?kind=item&type={2}&id={3}&val={4}&price={5}&cnt={0}&timestamp={1}".format(hexNow, now, item_mapping[item_type]['type'], item_mapping[item_type]['id'], item_mapping[item_type]['val'], item_mapping[item_type]['price'])
             payload = "nature=cnt%3d{0}%26id%3d{1}%26kind%3ditem%26price%3d{2}%26type%3d{3}%26val%3d{4}".format(hexNow, item_mapping[item_type]['id'], item_mapping[item_type]['price'], item_mapping[item_type]['type'], item_mapping[item_type]['val'])
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
@@ -391,6 +391,44 @@ class ChainChronicleAutomation():
             else:
                 self.logger.debug("\t-> 完成")
         return r
+
+    def CC_explorer(self, explorer_idx, area, idx):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        # area = "0"
+        cookies = {'sid': self.sid}
+        # idx = "582439944"
+        helper1 = "588707"
+        helper2 = "1913206"
+        self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "card_idx={2}&cnt={0}&explorer_idx={6}&helper1={3}&helper2={4}&interval=2&"\
+                "location_id={5}&nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d1%26helper1%3d{3}%26helper2%3d{4}%26"\
+                "interval%3d2%26location_id%3d{5}%26pickup%3d1&pickup=1&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx)
+                }
+        post_url = "http://v252.cc.mobimon.com.tw/explorer/entry?explorer_idx={6}&location_id={5}&card_idx={2}&pickup" \
+        "=1&interval=2&helper1={3}&helper2={4}&cnt={0}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx)
+
+        payload = "nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d{6}%26helper1%3d{3}%26helper2%3d{4}%26interval%3d2%26location_id%3d{5}%26pickup%3d1".format(hexNow, now, idx, helper1, helper2, area, explorer_idx)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        # self.logger.debug(r)
+        return r
+
+    def CC_explorer_cancel(self, explorer_idx):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        # explorer_idx = "1"
+        self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "cnt={0}&explorer_idx={2}&nature=cnt%3d{0}%26explorer_idx%3d{2}&timestamp={1}".format(hexNow, now, explorer_idx)
+                }
+        post_url = "http://v252.cc.mobimon.com.tw/explorer/cancel?explorer_idx={2}&cnt={0}&timestamp={1}".format(hexNow, now, explorer_idx)
+
+        payload = "nature=cnt%3d{0}%26explorer_idx%3d{2}".format(hexNow, now, explorer_idx)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        return r
+        # self.logger.debug(r)
 
     def __sellItem(self, idx):
         now = int(time.time()*1000)
@@ -658,9 +696,9 @@ if __name__ == "__main__":
         keptCards = None
         if config['Gacha']['keep_cards']:
             keptCards = [ int(n) for n in config['Gacha']['keep_cards'].split(',') ]
-        
-        # for i in range(1, 3):    
-        #    threading.Thread(target = cc.CC_Gacha, args = (gType, count, bSell, keptCards), name =  'thread-'  + str(i)).start() 
+
+        # for i in range(1, 3):
+        #    threading.Thread(target = cc.CC_Gacha, args = (gType, count, bSell, keptCards), name =  'thread-'  + str(i)).start()
         cc.CC_Gacha(gType, count, bSell, keptCards)
     # elif action == 'raid_gacha':
     #     count = config['RaidGacha']['count']
@@ -705,7 +743,24 @@ if __name__ == "__main__":
         count = config['Buy']['count']
         cc.CC_buyItem(item_type, 1)
     elif action == 'poc':
-        r = cc.get_item_from_storage()
+        # r = cc.get_item_from_storage()
+        money_goal = 500000000
+
+        money_current = 99999999999999
+        while True:
+            if money_current <= money_goal:
+                break
+            r = cc.CC_explorer(1, 0, 582439944)
+            r = cc.CC_explorer_cancel(1)
+
+            r = cc.CC_GetAllData()
+            data = r['body'][8]['data']
+            for d in data:
+                if d['item_id'] == 10:
+                    logger.debug("剩餘金幣 = {0}".format(d['cnt']))
+                    money_current = d['cnt']
+                    break
+
     elif action == 'status':
         r = cc.CC_GetAllData()
         #logger.debug(type(r))
