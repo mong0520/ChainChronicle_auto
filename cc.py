@@ -237,7 +237,7 @@ class ChainChronicleAutomation():
     def CC_Gacha(self, gType, count, bSell, keptCards):
         sleep_time = 0
         for i in range(0, count):
-            time.sleep(1)
+            # time.sleep(0.25)
             now = int(time.time()*1000)
             hexNow = format(now + 5000, 'x')
             cookies = {'sid': self.sid}
