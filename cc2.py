@@ -48,7 +48,7 @@ class ChainChronicleAutomation():
 
     def __loadConfig(self, configFile):
         try:
-            self.config = {"General":{}, "Quest":{}, "Gacha":{} ,"Buy":{}, "RaidGacha":{}}
+            self.config = {"General":{}, "Quest":{}, "Gacha":{} ,"Buy":{}, "RaidGacha":{}, "Explorer":{}}
             config = ConfigParser.ConfigParser()
             config.read(configFile)
 
@@ -80,15 +80,24 @@ class ChainChronicleAutomation():
                 self.config['General']['RetryDurtion'] = 10
 
             try:
-                self.config['General']['Delay'] = config.getint('General', 'Delay')
+                self.config['Explorer']['area'] = config.getint('Explorer', 'area')
             except:
-                self.config['General']['Delay'] = 0
+                self.config['Explorer']['area'] = 0
 
+            try:
+                self.config['Explorer']['card_idx'] = config.getint('Explorer', 'card_idx')
+            except:
+                self.config['Explorer']['card_idx'] = 0
+
+            try:
+                self.config['Explorer']['interval'] = config.getint('Explorer', 'interval')
+            except:
+                self.config['Explorer']['interval'] = 0
 
             # for key in self.config:
             #    self.logger.debug('Key = {0}, Value = {1}'.format(key, self.config[key]))
         except Exception as e:
-            self.logger.debug(str(e))
+            raise
             sys.exit(0)
 
     def getConfigDictionary(self):
@@ -392,7 +401,7 @@ class ChainChronicleAutomation():
                 self.logger.debug("\t-> 完成")
         return r
 
-    def CC_explorer(self, explorer_idx, area, idx):
+    def CC_explorer(self, explorer_idx, area, idx, pickup=0):
         now = int(time.time()*1000)
         hexNow = format(now + 5000, 'x')
         # area = "0"
@@ -400,19 +409,21 @@ class ChainChronicleAutomation():
         # idx = "582439944"
         helper1 = "588707"
         helper2 = "1913206"
+        # pickup = 0
         self.headers = {
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "card_idx={2}&cnt={0}&explorer_idx={6}&helper1={3}&helper2={4}&interval=2&"\
                 "location_id={5}&nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d1%26helper1%3d{3}%26helper2%3d{4}%26"\
-                "interval%3d2%26location_id%3d{5}%26pickup%3d1&pickup=1&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx)
+                "interval%3d2%26location_id%3d{5}%26pickup%3d{7}&pickup={7}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
                 }
         post_url = "http://v252.cc.mobimon.com.tw/explorer/entry?explorer_idx={6}&location_id={5}&card_idx={2}&pickup" \
-        "=1&interval=2&helper1={3}&helper2={4}&cnt={0}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx)
+        "={7}&interval=2&helper1={3}&helper2={4}&cnt={0}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
 
-        payload = "nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d{6}%26helper1%3d{3}%26helper2%3d{4}%26interval%3d2%26location_id%3d{5}%26pickup%3d1".format(hexNow, now, idx, helper1, helper2, area, explorer_idx)
+        payload = "nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d{6}%26helper1%3d{3}%26helper2%3d{4}%26interval%3d2%26location_id%3d{5}%26pickup%3d{7}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
-        # self.logger.debug(r)
-        return r
+        # self.logger.debug(json.dumps(r))
+        # self.logger.debug(json.dumps(r['res']))
+        return r['res']
 
     def CC_explorer_cancel(self, explorer_idx):
         now = int(time.time()*1000)
@@ -427,8 +438,9 @@ class ChainChronicleAutomation():
 
         payload = "nature=cnt%3d{0}%26explorer_idx%3d{2}".format(hexNow, now, explorer_idx)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        # self.logger.debug(json.dumps(r))
         return r
-        # self.logger.debug(r)
+
 
     def __sellItem(self, idx):
         now = int(time.time()*1000)
@@ -742,26 +754,31 @@ if __name__ == "__main__":
         item_type = config['Buy']['type']
         count = config['Buy']['count']
         cc.CC_buyItem(item_type, 1)
-    elif action == 'poc':
+    elif action == 'explorer':
         # r = cc.get_item_from_storage()
         # money_goal = 500000000
 
         # money_current = 99999999999999
         # while True:
-        for i in range(1,1300000):
-            # if money_current <= money_goal:
-                # break
+        area = config['Explorer']['area']
+        card_idx = config['Explorer']['card_idx']
+        interval = config['Explorer']['interval']
+        for i in range(1, 1300000):
+
             logger.debug("#{0}".format(i))
-            r = cc.CC_explorer(1, 0, 582439944)
+            if cc.CC_explorer(1, area, card_idx, 0) != 0:
+                # pick retry
+                logger.warning("Pickup error, try another pickup value")
+                cc.CC_explorer(1, area, card_idx, 1)
             r = cc.CC_explorer_cancel(1)
 
-            # r = cc.CC_GetAllData()
-            # data = r['body'][8]['data']
-            # for d in data:
-            #     if d['item_id'] == 10:
-            #         logger.debug("剩餘金幣 = {0}".format(d['cnt']))
-            #         money_current = d['cnt']
-            #         break
+            r = cc.CC_GetAllData()
+            data = r['body'][8]['data']
+            for d in data:
+                if d['item_id'] == 10:
+                    logger.debug(u"剩餘金幣 = {0}".format(d['cnt']))
+                    money_current = d['cnt']
+                    break
 
     elif action == 'status':
         r = cc.CC_GetAllData()
