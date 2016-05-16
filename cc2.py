@@ -772,12 +772,14 @@ if __name__ == "__main__":
                 cc.CC_explorer(1, area, card_idx, 1)
             r = cc.CC_explorer_cancel(1)
 
-            if i % 500 == 0:
+            if i % 5000 == 0:
                 r = cc.CC_GetAllData()
                 data = r['body'][8]['data']
                 for d in data:
                     if d['item_id'] == 10:
-                        logger.debug(u"剩餘金幣 = {0}".format(d['cnt']))
+                        if d['cnt'] <= 1000000000:
+                            sys.exit(0)
+                        logger.info(u"剩餘金幣 = {0}".format(d['cnt']))
                         money_current = d['cnt']
                         break
 
