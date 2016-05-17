@@ -790,9 +790,7 @@ if __name__ == "__main__":
         # interval = config['Explorer']['interval']
 
         if config['Explorer']['area']:
-            print "hi"
             area_list = [ int(n) for n in config['Explorer']['area'].split(',') ]
-            print area_list
 
         if config['Explorer']['card_idx']:
             card_idx_list = [ int(n) for n in config['Explorer']['card_idx'].split(',') ]
@@ -808,6 +806,9 @@ if __name__ == "__main__":
 
             # get result
             r = cc.CC_explorer_result(i+1)
+            # while cc.CC_explorer_result(i+1) != 2304:
+            #     logger.debug(u"探索尚未結束..稍後重試")
+            #     time.sleep(60)
 
             # go to explorer
             r = cc.CC_explorer(i+1, area, card_idx)
