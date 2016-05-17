@@ -430,7 +430,7 @@ class ChainChronicleAutomation():
         elif r['res'] == 0:
             self.logger.debug("探索開始!")
         else:
-            self.logger.error("未知的探索錯誤:".format(r['res']))
+            self.logger.error("未知的探索錯誤:{0}".format(r['res']))
         return r['res']
 
     def CC_explorer_result(self, explorer_idx):
