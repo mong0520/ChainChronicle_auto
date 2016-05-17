@@ -80,17 +80,17 @@ class ChainChronicleAutomation():
                 self.config['General']['RetryDurtion'] = 10
 
             try:
-                self.config['Explorer']['area'] = config.getint('Explorer', 'area')
+                self.config['Explorer']['area'] = config.get('Explorer', 'area')
             except:
                 self.config['Explorer']['area'] = 0
 
             try:
-                self.config['Explorer']['card_idx'] = config.getint('Explorer', 'card_idx')
+                self.config['Explorer']['card_idx'] = config.get('Explorer', 'card_idx')
             except:
                 self.config['Explorer']['card_idx'] = 0
 
             try:
-                self.config['Explorer']['interval'] = config.getint('Explorer', 'interval')
+                self.config['Explorer']['interval'] = config.get('Explorer', 'interval')
             except:
                 self.config['Explorer']['interval'] = 0
 
@@ -412,18 +412,43 @@ class ChainChronicleAutomation():
         # pickup = 0
         self.headers = {
                 'Cookie': 'sid={0}'.format(self.sid),
-                'nat': "card_idx={2}&cnt={0}&explorer_idx={6}&helper1={3}&helper2={4}&interval=2&"\
+                'nat': "card_idx={2}&cnt={0}&explorer_idx={6}&helper1={3}&helper2={4}&interval=1&"\
                 "location_id={5}&nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d1%26helper1%3d{3}%26helper2%3d{4}%26"\
-                "interval%3d2%26location_id%3d{5}%26pickup%3d{7}&pickup={7}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
+                "interval%3d1%26location_id%3d{5}%26pickup%3d{7}&pickup={7}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
                 }
         post_url = "http://v252.cc.mobimon.com.tw/explorer/entry?explorer_idx={6}&location_id={5}&card_idx={2}&pickup" \
-        "={7}&interval=2&helper1={3}&helper2={4}&cnt={0}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
+        "={7}&interval=1&helper1={3}&helper2={4}&cnt={0}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
 
-        payload = "nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d{6}%26helper1%3d{3}%26helper2%3d{4}%26interval%3d2%26location_id%3d{5}%26pickup%3d{7}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
+        payload = "nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d{6}%26helper1%3d{3}%26helper2%3d{4}%26interval%3d1%26location_id%3d{5}%26pickup%3d{7}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         # self.logger.debug(json.dumps(r))
         # self.logger.debug(json.dumps(r['res']))
+
+        if r['res'] == 2311:
+            self.logger.debug(u"pickup value error, retry")
+            self.CC_explorer(explorer_idx, area, idx, pickup=1)
+        elif r['res'] == 0:
+            self.logger.debug("探索開始!")
+        else:
+            self.logger.error("未知的探索錯誤:".format(r['res']))
         return r['res']
+
+    def CC_explorer_result(self, explorer_idx):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        # explorer_idx = "1"
+        self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "cnt={0}&explorer_idx={2}&nature=cnt%3d{0}%26explorer_idx%3d{2}&timestamp={1}".format(hexNow, now, explorer_idx)
+                }
+        post_url = "http://v252.cc.mobimon.com.tw/explorer/result?explorer_idx={2}&cnt={0}&timestamp={1}".format(hexNow, now, explorer_idx)
+
+        payload = "nature=cnt%3d{0}%26explorer_idx%3d{2}".format(hexNow, now, explorer_idx)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        self.logger.debug("取得探索成果!")
+        self.logger.debug(json.dumps(r))
+        return r
 
     def CC_explorer_cancel(self, explorer_idx):
         now = int(time.time()*1000)
@@ -762,26 +787,52 @@ if __name__ == "__main__":
         # while True:
         area = config['Explorer']['area']
         card_idx = config['Explorer']['card_idx']
-        interval = config['Explorer']['interval']
-        for i in range(1, 1300000):
+        # interval = config['Explorer']['interval']
 
-            logger.debug("#{0}".format(i))
-            if cc.CC_explorer(1, area, card_idx, 0) != 0:
-                # pick retry
-                logger.warning("Pickup error, try another pickup value")
-                cc.CC_explorer(1, area, card_idx, 1)
-            r = cc.CC_explorer_cancel(1)
+        if config['Explorer']['area']:
+            print "hi"
+            area_list = [ int(n) for n in config['Explorer']['area'].split(',') ]
+            print area_list
 
-            if i % 5000 == 0:
-                r = cc.CC_GetAllData()
-                data = r['body'][8]['data']
-                for d in data:
-                    if d['item_id'] == 10:
-                        if d['cnt'] <= 1000000000:
-                            sys.exit(0)
-                        logger.info(u"剩餘金幣 = {0}".format(d['cnt']))
-                        money_current = d['cnt']
-                        break
+        if config['Explorer']['card_idx']:
+            card_idx_list = [ int(n) for n in config['Explorer']['card_idx'].split(',') ]
+
+        # if config['Explorer']['interval']:
+        #     interval_list = [ int(n) for n in config['Explorer']['interval'].split(',') ]
+
+        for i in range(0, 3):
+            # print ar
+            area = area_list[i]
+            card_idx = card_idx_list[i]
+            # interval = interval_list[i]
+
+            # get result
+            r = cc.CC_explorer_result(i+1)
+
+            # go to explorer
+            r = cc.CC_explorer(i+1, area, card_idx)
+
+            # r = cc.CC_explorer_cancel(1)
+
+            # if reulst != 0:
+            #     logger.debug(r)
+            #     # pick retry
+            #     logger.warning("Pickup error, try another pickup value")
+            #     r = cc.CC_explorer(i+1, area, card_idx, 1)
+            #     logger.debug(r)
+                # r = cc.CC_explorer_cancel(1)
+
+            # this function can be used to consume money to avoid money overflow
+            # if i % 5000 == 0:
+            #     r = cc.CC_GetAllData()
+            #     data = r['body'][8]['data']
+            #     for d in data:
+            #         if d['item_id'] == 10:
+            #             if d['cnt'] <= 1000000000:
+            #                 sys.exit(0)
+            #             logger.info(u"剩餘金幣 = {0}".format(d['cnt']))
+            #             money_current = d['cnt']
+            #             break
 
     elif action == 'status':
         r = cc.CC_GetAllData()
