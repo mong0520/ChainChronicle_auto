@@ -72,8 +72,16 @@ class ChainChronicleAutomation():
             # self.config['RaidGacha']['keepCardId'] = config.getint('RaidGacha', 'KeepCardId')
 
 
-            self.config['Buy']['count'] = config.getint('Buy', 'Count')
-            self.config['Buy']['type'] = config.get('Buy', 'Type')
+            try:
+                self.config['Buy']['count'] = config.getint('Buy', 'Count')
+            except:
+                self.config['Buy']['count'] = 1
+            
+            try:
+                self.config['Buy']['type'] = config.get('Buy', 'Type')
+            except:
+                self.config['Buy']['type'] = 0
+
             try:
                 self.config['General']['RetryDurtion'] = config.getint('General', 'RetryDuration')
             except:
