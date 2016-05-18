@@ -743,7 +743,6 @@ class ChainChronicleAutomation():
                 temp_idx = card['idx']
                 card_doc = self.db.charainfo.find_one({"cid": card['id']})
                 if card_doc:
-<<<<<<< HEAD
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
                     # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
                     # self.logger.debug("weapontype:{0}".format(card_doc['battletype']))
@@ -752,13 +751,6 @@ class ChainChronicleAutomation():
                             self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
                             self.logger.debug("{0} is picked to eplorer".format(temp_idx))
                             return temp_idx
-=======
-                    if area_pickup_list['home'] == card_doc['home'] or area_pickup_list['jobtype'] == card_doc['jobtype'] or area_pickup_list['weapontype'] == card_doc['battletype']:
-                        temp_idx = card['idx']
-                        self.logger.debug("Found pickup card!")
-                        self.logger.debug("{0} is picked to eplorer".format(temp_idx))
-                        return temp_idx
->>>>>>> 5bd6da2f68af291102103ed19c277bcbb1986e99
                     else:
                         continue
                 else:
