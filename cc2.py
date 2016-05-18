@@ -6,7 +6,7 @@ import time
 import logging
 import datetime
 from logging.handlers import RotatingFileHandler
-# from pymongo import MongoClient
+from pymongo import MongoClient
 import ConfigParser
 from random import randint
 import threading
@@ -37,14 +37,14 @@ class ChainChronicleAutomation():
         self.__loadConfig(configFile)
 
     def __initDb(self):
-        pass
-        # client = MongoClient('lineage.twbbs.org', 27017)
+        # pass
+        client = MongoClient('lineage.twbbs.org', 27017)
         # client = MongoClient('54.64.174.97', 27017)
-        # client = MongoClient('127.0.0.1', 27017)
+        client = MongoClient('127.0.0.1', 27017)
 
 
         #client.the_database.authenticate('admin', 'mong730520', source = 'admin')
-        # self.db = client.cc
+        self.db = client.cc
 
     def __loadConfig(self, configFile):
         try:
@@ -97,10 +97,10 @@ class ChainChronicleAutomation():
             # except:
             #     self.config['Explorer']['card_idx'] = 0
 
-            try:
-                self.config['Explorer']['interval'] = config.get('Explorer', 'interval')
-            except:
-                self.config['Explorer']['interval'] = 0
+            # try:
+            #    self.config['Explorer']['interval'] = config.get('Explorer', 'interval')
+            # except:
+            #    self.config['Explorer']['interval'] = 0
 
             # for key in self.config:
             #    self.logger.debug('Key = {0}, Value = {1}'.format(key, self.config[key]))
@@ -730,28 +730,34 @@ class ChainChronicleAutomation():
                 #     sys.exit(0)
             # else:
             #     continue
+
     def find_best_idx_to_explorer(self, area, area_pickup_list):
         # for pickup in pickup_list:
             # self.logger.debug(pickup)
         card_list = self.CC_GetAllData()['body'][6]['data']
+        self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
+        self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
+        self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
         for card in card_list:
             if card['type'] == 0:
                 temp_idx = card['idx']
                 card_doc = self.db.charainfo.find_one({"cid": card['id']})
                 if card_doc:
-                    if area_pickup_list['home'] == card_doc['home'] or
-                        area_pickup_list['jobtype'] == card_doc['jobtype'] or
-                        area_pickup_list['weapontype'] == card_doc['battletype']:
-                        temp_idx = card['idx']
-                        self.logger.debug("Found pickup card!")
-                        self.logger.debug("{0} is picked to eplorer".format(temp_idx))
-                        return temp_idx
+                    # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
+                    # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
+                    # self.logger.debug("weapontype:{0}".format(card_doc['battletype']))
+                    if (int(area_pickup_list['home']) == card_doc['home']) or (int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (int(area_pickup_list['weapontype']) == card_doc['battletype']):
+                            temp_idx = card['idx']
+                            self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
+                            self.logger.debug("{0} is picked to eplorer".format(temp_idx))
+                            return temp_idx
                     else:
                         continue
                 else:
-                    self.logger.error("Cannot find card id {0} in database, please update DB".format(card['id']))
-                    self.logger.debug("{0} is picked to eplorer".format(temp_idx))
-                    return temp_idx
+                    continue
+
+                self.logger.error("Cannot find card id {0} in database, please update DB".format(card['id']))
+                self.logger.debug("{0} is picked to eplorer".format(temp_idx))
 
                 # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
                 # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
@@ -863,7 +869,6 @@ if __name__ == "__main__":
         for i in range(0, 3):
             area = area_list[i]
             card_idx = cc.find_best_idx_to_explorer(area, pickup_list[area])
-            sys.exit(0)
             # interval = interval_list[i]
 
             # get result
