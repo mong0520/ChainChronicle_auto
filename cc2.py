@@ -76,7 +76,7 @@ class ChainChronicleAutomation():
                 self.config['Buy']['count'] = config.getint('Buy', 'Count')
             except:
                 self.config['Buy']['count'] = 1
-            
+
             try:
                 self.config['Buy']['type'] = config.get('Buy', 'Type')
             except:
@@ -92,10 +92,10 @@ class ChainChronicleAutomation():
             except:
                 self.config['Explorer']['area'] = 0
 
-            try:
-                self.config['Explorer']['card_idx'] = config.get('Explorer', 'card_idx')
-            except:
-                self.config['Explorer']['card_idx'] = 0
+            # try:
+            #     self.config['Explorer']['card_idx'] = config.get('Explorer', 'card_idx')
+            # except:
+            #     self.config['Explorer']['card_idx'] = 0
 
             try:
                 self.config['Explorer']['interval'] = config.get('Explorer', 'interval')
@@ -458,6 +458,22 @@ class ChainChronicleAutomation():
         self.logger.debug(json.dumps(r))
         return r
 
+    def CC_explorer_get_pickup(self):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        # explorer_idx = "1"
+        self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "cnt={0}&nature=cnt%3d{0}&timestamp={1}".format(hexNow, now)
+                }
+        post_url = "http://v252.cc.mobimon.com.tw/explorer/list?cnt={0}&timestamp={1}".format(hexNow, now)
+
+        payload = "nature=cnt%3d{0}".format(hexNow)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        return r
+
+
     def CC_explorer_cancel(self, explorer_idx):
         now = int(time.time()*1000)
         hexNow = format(now + 5000, 'x')
@@ -714,6 +730,36 @@ class ChainChronicleAutomation():
                 #     sys.exit(0)
             # else:
             #     continue
+    def find_best_idx_to_explorer(self, area, area_pickup_list):
+        # for pickup in pickup_list:
+            # self.logger.debug(pickup)
+        card_list = self.CC_GetAllData()['body'][6]['data']
+        for card in card_list:
+            if card['type'] == 0:
+                temp_idx = card['idx']
+                card_doc = self.db.charainfo.find_one({"cid": card['id']})
+                if card_doc:
+                    if area_pickup_list['home'] == card_doc['home'] or
+                        area_pickup_list['jobtype'] == card_doc['jobtype'] or
+                        area_pickup_list['weapontype'] == card_doc['battletype']:
+                        temp_idx = card['idx']
+                        self.logger.debug("Found pickup card!")
+                        self.logger.debug("{0} is picked to eplorer".format(temp_idx))
+                        return temp_idx
+                    else:
+                        continue
+                else:
+                    self.logger.error("Cannot find card id {0} in database, please update DB".format(card['id']))
+                    self.logger.debug("{0} is picked to eplorer".format(temp_idx))
+                    return temp_idx
+
+                # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
+                # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
+                # self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['battletype']))
+                # fake idx, it needs to query from mongodb and match pickup attribute
+                return card['idx']
+            else:
+                continue
 
 
 if __name__ == "__main__":
@@ -793,23 +839,31 @@ if __name__ == "__main__":
 
         # money_current = 99999999999999
         # while True:
-        area = config['Explorer']['area']
-        card_idx = config['Explorer']['card_idx']
+        r = cc.CC_explorer_get_pickup()
+        if r['res'] != 0:
+            logger.error("無法取得探索資訊")
+            sys.exit(0)
+        else:
+            pickup_list = r['pickup']
+
+
+        # area = config['Explorer']['area']
+        # card_idx = config['Explorer']['card_idx']
         # interval = config['Explorer']['interval']
 
         if config['Explorer']['area']:
             area_list = [ int(n) for n in config['Explorer']['area'].split(',') ]
 
-        if config['Explorer']['card_idx']:
-            card_idx_list = [ int(n) for n in config['Explorer']['card_idx'].split(',') ]
+        # if config['Explorer']['card_idx']:
+        #     card_idx_list = [ int(n) for n in config['Explorer']['card_idx'].split(',') ]
 
         # if config['Explorer']['interval']:
         #     interval_list = [ int(n) for n in config['Explorer']['interval'].split(',') ]
 
         for i in range(0, 3):
-            # print ar
             area = area_list[i]
-            card_idx = card_idx_list[i]
+            card_idx = cc.find_best_idx_to_explorer(area, pickup_list[area])
+            sys.exit(0)
             # interval = interval_list[i]
 
             # get result
