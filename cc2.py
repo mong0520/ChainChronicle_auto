@@ -731,6 +731,21 @@ class ChainChronicleAutomation():
             # else:
             #     continue
 
+    def CC_GetLatestCharInfo(self):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        self.headers = {
+            'Cookie': 'sid={0}'.format(self.sid),
+            'nat': "cnt={0}&nature=cnt%3d{0}&timestamp={1}".format(hexNow, now)
+            }
+        post_url = "http://v252.cc.mobimon.com.tw/data/charainfo?cnt={0}&timestamp={1}".format(hexNow, now)
+        payload = "nature=cnt%3d{0}".format(hexNow)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        # self.logger.debug(r)
+        return r
+
+
     def find_best_idx_to_explorer(self, area, area_pickup_list):
         # for pickup in pickup_list:
             # self.logger.debug(pickup)
@@ -839,6 +854,10 @@ if __name__ == "__main__":
         item_type = config['Buy']['type']
         count = config['Buy']['count']
         cc.CC_buyItem(item_type, 1)
+    elif action == 'list_latest':
+        r = cc.CC_GetLatestCharInfo()
+        logger.debug(json.dumps(r))
+
     elif action == 'explorer':
         # r = cc.get_item_from_storage()
         # money_goal = 500000000
