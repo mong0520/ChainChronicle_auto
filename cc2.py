@@ -409,7 +409,7 @@ class ChainChronicleAutomation():
                 self.logger.debug("\t-> 完成")
         return r
 
-    def CC_explorer(self, explorer_idx, area, idx, pickup=0):
+    def CC_explorer(self, explorer_idx, area, idx, pickup=1):
         now = int(time.time()*1000)
         hexNow = format(now + 5000, 'x')
         # area = "0"
@@ -434,7 +434,7 @@ class ChainChronicleAutomation():
 
         if r['res'] == 2311:
             self.logger.debug(u"pickup value error, retry")
-            self.CC_explorer(explorer_idx, area, idx, pickup=1)
+            self.CC_explorer(explorer_idx, area, idx, pickup=0)
         elif r['res'] == 0:
             self.logger.debug("探索開始!")
         else:
@@ -746,13 +746,13 @@ class ChainChronicleAutomation():
         return r
 
 
-    def find_best_idx_to_explorer(self, area, area_pickup_list):
+    def find_best_idx_to_explorer(self, area, area_pickup_list, except_card_idx=[]):
         # for pickup in pickup_list:
             # self.logger.debug(pickup)
         card_list = self.CC_GetAllData()['body'][6]['data']
-        self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
-        self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
-        self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
+        # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
+        # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
+        # self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
         for card in card_list:
             if card['type'] == 0:
                 temp_idx = card['idx']
@@ -763,6 +763,8 @@ class ChainChronicleAutomation():
                     # self.logger.debug("weapontype:{0}".format(card_doc['battletype']))
                     if (int(area_pickup_list['home']) == card_doc['home']) or (int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (int(area_pickup_list['weapontype']) == card_doc['battletype']):
                             temp_idx = card['idx']
+                            if temp_idx in except_card_idx:
+                                continue
                             self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
                             self.logger.debug("{0} is picked to eplorer".format(temp_idx))
                             return temp_idx
@@ -884,17 +886,27 @@ if __name__ == "__main__":
 
         # if config['Explorer']['interval']:
         #     interval_list = [ int(n) for n in config['Explorer']['interval'].split(',') ]
-
+        except_card_idx = list()
         for i in range(0, 3):
+            # get result
+            while True:
+                r = cc.CC_explorer_result(i+1)
+                # No explorer data or get result success
+                if r['res'] == 2308 or r['res'] == 0:
+                    break
+                elif r['res'] == 2302:
+                    logger.warning(u"探索尚未結束..稍後重試")
+                    time.sleep(60) 
+                else:
+                    logger.warning("未知的探索結果")
+                    logger.warning(r)
+                    break
+
             area = area_list[i]
-            card_idx = cc.find_best_idx_to_explorer(area, pickup_list[area])
+            card_idx = cc.find_best_idx_to_explorer(area, pickup_list[area], except_card_idx)
+            except_card_idx.append(card_idx)
             # interval = interval_list[i]
 
-            # get result
-            r = cc.CC_explorer_result(i+1)
-            # while cc.CC_explorer_result(i+1) != 2304:
-            #     logger.debug(u"探索尚未結束..稍後重試")
-            #     time.sleep(60)
 
             # go to explorer
             r = cc.CC_explorer(i+1, area, card_idx)
@@ -924,7 +936,8 @@ if __name__ == "__main__":
     elif action == 'status':
         r = cc.CC_GetAllData()
         #logger.debug(type(r))
-        logger.debug(json.dumps(r['body'][8]['data'], sort_keys=True, indent=2))
+        # logger.debug(json.dumps(r['body'][8]['data'], sort_keys=True, indent=2))
+        logger.info(json.dumps(r, sort_keys=True, indent=2))
     else:
         logger.debug("Unsupported action:[{0}]".format(action))
 
