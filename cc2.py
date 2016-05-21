@@ -886,7 +886,8 @@ if __name__ == "__main__":
 
         # if config['Explorer']['interval']:
         #     interval_list = [ int(n) for n in config['Explorer']['interval'].split(',') ]
-        except_card_idx = list()
+        # 菲娜，主角x2
+        except_card_idx = [7017, 7024, 7015]
         for i in range(0, 3):
             # get result
             while True:
@@ -896,7 +897,7 @@ if __name__ == "__main__":
                     break
                 elif r['res'] == 2302:
                     logger.warning(u"探索尚未結束..稍後重試")
-                    time.sleep(60) 
+                    time.sleep(60)
                 else:
                     logger.warning("未知的探索結果")
                     logger.warning(r)
