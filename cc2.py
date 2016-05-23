@@ -765,6 +765,8 @@ class ChainChronicleAutomation():
                             temp_idx = card['idx']
                             if temp_idx in except_card_idx:
                                 continue
+                            if card_doc['rarity'] < 5:
+                                continue
                             self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
                             self.logger.debug("{0} is picked to eplorer".format(temp_idx))
                             return temp_idx
@@ -887,7 +889,7 @@ if __name__ == "__main__":
         # if config['Explorer']['interval']:
         #     interval_list = [ int(n) for n in config['Explorer']['interval'].split(',') ]
         # 菲娜，主角x2
-        except_card_idx = [7017, 7024, 7015]
+        except_card_idx = [7017, 7024, 7015, 51]
         for i in range(0, 3):
             # get result
             while True:
