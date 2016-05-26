@@ -490,6 +490,85 @@ class ChainChronicleAutomation():
         # self.logger.debug(json.dumps(r))
         return r
 
+    def CC_Subjugation(self, jid):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+
+        # Check
+        self.logger.debug("Check Subjugation")
+        self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "cnt={0}&jid={2}&nature=cnt%3d{0}%26jid%3d{2}&timestamp={1}".format(hexNow, now, jid)
+                }
+        post_url = "http://v252.cc.mobimon.com.tw/subjugation/check_participant?jid={2}&cnt={0}&timestamp={1}".format(hexNow, now, jid)
+        payload = "nature=cnt%3d{0}%26jid%3d{1}".format(hexNow, jid)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+
+        # get ecnt
+        r = cc.CC_GetAllData()
+        ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
+        self.logger.debug(u"第{0}次討伐".format(ecnt))
+        sys.exit(0)
+
+        # Try
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        self.logger.debug("Try Subjugation")
+        self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "brave=0&cnt={0}&ecnt={3}&jid={2}&nature=brave%3d0%26cnt%3d{0}%26ecnt%3d{3}%26jid%3d{2}&timestamp={1}".format(hexNow, now, jid, ecnt)
+                }
+        post_url = "http://v252.cc.mobimon.com.tw/subjugation/try?jid={2}&ecnt=2&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid)
+
+        payload = "nature=brave%3d0%26cnt%3d{0}%26ecnt%3d{2}%26jid%3d{1}".format(hexNow, jid, ecnt)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        if r['res'] == 1916:
+            self.logger.warning("Not enough brave, exit")
+            return
+
+        # check r, maybe already tried, then call proceed to get base_id
+
+        self.logger.debug(r)
+        # Get base id
+        self.logger.debug("Get avaliable base ids")
+        base_id_list = []
+        wave_list = []
+        for data in r['body'][1]['data']:
+            base_id_list.append(data['base_id'])
+            wave_list.append(data['max_wave'])
+        self.logger.debug("Base ID = {0}".format(base_id_list))
+        # Start
+        pt_cid = [7024, 46, 7017, 41]
+        for idx, bid in enumerate(base_id_list):
+            now = int(time.time()*1000)
+            hexNow = format(now + 5000, 'x')
+            self.logger.debug(u"Using Party {0}".format(idx))
+
+            # Start entry
+            self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "bid={3}&brave=0&cnt={0}&fid=383974&full=0&jid={2}&nature=bid%3d{3}%26brave%3d0%26cnt%3d{0}%26fid%3d383974%26full%3d0%26jid%3d{2}%26pt%3d0&pt={4}&timestamp={1}".format(hexNow, now, jid, bid, idx)}
+            post_url = "http://v252.cc.mobimon.com.tw/subjugation/entry?jid={2}&bid={3}&pt={4}&fid=383974&full=0&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid, bid, idx)
+            payload = "nature=bid%3d{3}%26brave%3d0%26cnt%{0}%26fid%3d383974%26full%3d0%26jid%3d{2}%26pt%3d{4}".format(hexNow, now, jid, bid, idx)
+
+            r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+            # self.logger.debug("Start entry = {0}".format(r))
+
+            # Get Result
+            now = int(time.time()*1000)
+            hexNow = format(now + 5000, 'x')
+            self.headers = {
+                'Cookie': 'sid={0}'.format(self.sid),
+                'nat': "bid={3}&bt=6176&cc=1&cnt={0}&d=1&jid={2}&mission=%7b%22cid%22%3a%5b{4}%5d%2c%22sid%22%3a%5b0%5d%2c%22fid%22%3a4006%2c%22ms%22%3a0%2c%22md%22%3a18179%2c%22sc%22%3a%7b%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a1%2c%22he%22%3a0%2c%22da%22%3a1%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a1%2c%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22weapon%22%3a%7b%220%22%3a1%2c%221%22%3a0%2c%222%22%3a0%2c%223%22%3a1%2c%224%22%3a0%2c%225%22%3a0%2c%228%22%3a0%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a1%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a2%7d%2c%22fj%22%3a0%2c%22fw%22%3a0%2c%22fo%22%3a0%2c%22cc%22%3a1%2c%22bf_atk%22%3a0%2c%22bf_hp%22%3a0%2c%22bf_spd%22%3a0%7d&nature=bid%3d{3}%26bt%3d6176%26cc%3d1%26cnt%3d{0}%26d%3d1%26jid%3d{2}%26mission%3d%257b%2522cid%2522%253a%255b{4}%255d%252c%2522sid%2522%253a%255b0%255d%252c%2522fid%2522%253a4006%252c%2522ms%2522%253a0%252c%2522md%2522%253a18179%252c%2522sc%2522%253a%257b%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a1%252c%2522he%2522%253a0%252c%2522da%2522%253a1%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a1%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a1%252c%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a1%252c%25224%2522%253a0%252c%25225%2522%253a0%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a1%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a2%257d%252c%2522fj%2522%253a0%252c%2522fw%2522%253a0%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%252c%2522bf_atk%2522%253a0%252c%2522bf_hp%2522%253a0%252c%2522bf_spd%2522%253a0%257d%26res%3d1%26s%3d1%26time%3d1.68%26wc%{5}d5&res=1&s=1&time=1.68&timestamp={1}&wc={5}".format(hexNow, now, jid, bid, pt_cid[idx], wave_list[idx])
+                }
+
+            post_url = "http://v252.cc.mobimon.com.tw/subjugation/result?res=1&jid={2}&bid={3}&wc={4}&bt=6176&cc=1&time=1.68&d=1&s=1&cnt={0}&timestamp={1}".format(hexNow, now, jid, bid, wave_list[idx])
+
+            payload = "mission=%7b%22cid%22%3a%5b{4}%5d%2c%22sid%22%3a%5b0%5d%2c%22fid%22%3a4006%2c%22ms%22%3a0%2c%22md%22%3a18179%2c%22sc%22%3a%7b%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a1%2c%22he%22%3a0%2c%22da%22%3a1%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a1%2c%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22weapon%22%3a%7b%220%22%3a1%2c%221%22%3a0%2c%222%22%3a0%2c%223%22%3a1%2c%224%22%3a0%2c%225%22%3a0%2c%228%22%3a0%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a1%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a2%7d%2c%22fj%22%3a0%2c%22fw%22%3a0%2c%22fo%22%3a0%2c%22cc%22%3a1%2c%22bf_atk%22%3a0%2c%22bf_hp%22%3a0%2c%22bf_spd%22%3a0%7d&nature=bid%3d{3}%26bt%3d6176%26cc%3d1%26cnt%3d{0}%26d%3d1%26jid%3d{2}%26mission%3d%257b%2522cid%2522%253a%255b{4}%255d%252c%2522sid%2522%253a%255b0%255d%252c%2522fid%2522%253a4006%252c%2522ms%2522%253a0%252c%2522md%2522%253a18179%252c%2522sc%2522%253a%257b%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a1%252c%2522he%2522%253a0%252c%2522da%2522%253a1%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a1%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a1%252c%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a1%252c%25224%2522%253a0%252c%25225%2522%253a0%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a1%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a2%257d%252c%2522fj%2522%253a0%252c%2522fw%2522%253a0%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%252c%2522bf_atk%2522%253a0%252c%2522bf_hp%2522%253a0%252c%2522bf_spd%2522%253a0%257d%26res%3d1%26s%3d1%26time%3d1.68%26wc%3d{5}".format(hexNow, now, jid, bid, pt_cid[idx], wave_list[idx])
+            r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+            self.logger.debug("End entry = {0}".format(r))
+
 
     def __sellItem(self, idx):
         now = int(time.time()*1000)
@@ -512,7 +591,7 @@ class ChainChronicleAutomation():
         cookies = {'sid': self.sid}
         self.headers = {
                 'Cookie': 'sid={0}'.format(self.sid),
-                'nat': "cnt={0}&nature=cnt%3d{0}%26param%3d%257b%2522APP%2522%253a%257b%2522Version%2522%253a%25222.22%2522%252c%2522time%2522%253a%25221436043943%2522%252c%2522Lang%2522%253a%2522Chinese%2522%257d%252c%2522DEV%2522%253a%257b%2522Model%2522%253a%2522Xiaomi%2bMI%2b3W%2522%252c%2522CPU%2522%253a%2522ARMv7%2bVFPv3%2bNEON%2522%252c%2522GPU%2522%253a%2522Adreno%2b(TM)%2b330%2522%252c%2522OSVersion%2522%253a%2522Android%2bOS%2b4.4.4%2b%252f%2bAPI-19%2b(KTU84P%252fV6.5.3.0.KXDMICD)%2522%252c%2522UserUniqueID%2522%253a%2522{2}%2522%252c%2522SysRAM%2522%253a1850%252c%2522VideoRAM%2522%253a198%252c%2522OS%2522%253a%25222%2522%252c%2522Token%2522%253a%2522{3}%2522%257d%257d&param=%7b%22APP%22%3a%7b%22Version%22%3a%222.22%22%2c%22time%22%3a%221436043943%22%2c%22Lang%22%3a%22Chinese%22%7d%2c%22DEV%22%3a%7b%22Model%22%3a%22Xiaomi+MI+3W%22%2c%22CPU%22%3a%22ARMv7+VFPv3+NEON%22%2c%22GPU%22%3a%22Adreno+(TM)+330%22%2c%22OSVersion%22%3a%22Android+OS+4.4.4+%2f+API-19+(KTU84P%2fV6.5.3.0.KXDMICD)%22%2c%22UserUniqueID%22%3a%22{2}%22%2c%22SysRAM%22%3a1850%2c%22VideoRAM%22%3a198%2c%22OS%22%3a%222%22%2c%22Token%22%3a%22{3}%22%7d%7d&timestamp={1}".format(hexNow, now, self.config['General']['uid'], self.config['General']['token'])
+                'nat': "cnt={0}&nature=cnt%3d{0}%26param%3d%257b%2522APP%2522%253a%257b%2522Version%2522%253a%25222.22%2522%252c%2522time%2522%253a%2522143198601943%2522%252c%2522Lang%2522%253a%2522Chinese%2522%257d%252c%2522DEV%2522%253a%257b%2522Model%2522%253a%2522Xiaomi%2bMI%2b3W%2522%252c%2522CPU%2522%253a%2522ARMv7%2bVFPv3%2bNEON%2522%252c%2522GPU%2522%253a%2522Adreno%2b(TM)%2b330%2522%252c%2522OSVersion%2522%253a%2522Android%2bOS%2b4.4.4%2b%252f%2bAPI-19%2b(KTU84P%252fV6.5.3.0.KXDMICD)%2522%252c%2522UserUniqueID%2522%253a%2522{2}%2522%252c%2522SysRAM%2522%253a1850%252c%2522VideoRAM%2522%253a198%252c%2522OS%2522%253a%25222%2522%252c%2522Token%2522%253a%2522{3}%2522%257d%257d&param=%7b%22APP%22%3a%7b%22Version%22%3a%222.22%22%2c%22time%22%3a%22143198601943%22%2c%22Lang%22%3a%22Chinese%22%7d%2c%22DEV%22%3a%7b%22Model%22%3a%22Xiaomi+MI+3W%22%2c%22CPU%22%3a%22ARMv7+VFPv3+NEON%22%2c%22GPU%22%3a%22Adreno+(TM)+330%22%2c%22OSVersion%22%3a%22Android+OS+4.4.4+%2f+API-19+(KTU84P%2fV6.5.3.0.KXDMICD)%22%2c%22UserUniqueID%22%3a%22{2}%22%2c%22SysRAM%22%3a1850%2c%22VideoRAM%22%3a198%2c%22OS%22%3a%222%22%2c%22Token%22%3a%22{3}%22%7d%7d&timestamp={1}".format(hexNow, now, self.config['General']['uid'], self.config['General']['token'])
                 }
         post_url = "http://prod4.cc.mobimon.com.tw/quest/entry?oc=1&type={3}&qid={0}&fid=198601&pt=0&cnt={1}&timestamp={2}".format(qid, hexNow, now, qtype)
         payload = "nature=cnt%3d{0}%26fid%3d198601%26pt%3d0%26qid%3d{2}%26type%3d{1}".format(hexNow, qtype, qid)
@@ -527,7 +606,7 @@ class ChainChronicleAutomation():
         cookies = {'sid': self.sid}
         self.headers = {
                 'Cookie': 'sid={0}'.format(self.sid),
-                'nat': "cnt={0}&nature=cnt%3d{0}%26param%3d%257b%2522APP%2522%253a%257b%2522Version%2522%253a%25222.22%2522%252c%2522time%2522%253a%25221436043943%2522%252c%2522Lang%2522%253a%2522Chinese%2522%257d%252c%2522DEV%2522%253a%257b%2522Model%2522%253a%2522Xiaomi%2bMI%2b3W%2522%252c%2522CPU%2522%253a%2522ARMv7%2bVFPv3%2bNEON%2522%252c%2522GPU%2522%253a%2522Adreno%2b(TM)%2b330%2522%252c%2522OSVersion%2522%253a%2522Android%2bOS%2b4.4.4%2b%252f%2bAPI-19%2b(KTU84P%252fV6.5.3.0.KXDMICD)%2522%252c%2522UserUniqueID%2522%253a%2522{2}%2522%252c%2522SysRAM%2522%253a1850%252c%2522VideoRAM%2522%253a198%252c%2522OS%2522%253a%25222%2522%252c%2522Token%2522%253a%2522{3}%2522%257d%257d&param=%7b%22APP%22%3a%7b%22Version%22%3a%222.22%22%2c%22time%22%3a%221436043943%22%2c%22Lang%22%3a%22Chinese%22%7d%2c%22DEV%22%3a%7b%22Model%22%3a%22Xiaomi+MI+3W%22%2c%22CPU%22%3a%22ARMv7+VFPv3+NEON%22%2c%22GPU%22%3a%22Adreno+(TM)+330%22%2c%22OSVersion%22%3a%22Android+OS+4.4.4+%2f+API-19+(KTU84P%2fV6.5.3.0.KXDMICD)%22%2c%22UserUniqueID%22%3a%22{2}%22%2c%22SysRAM%22%3a1851%2c%22VideoRAM%22%3a198%2c%22OS%22%3a%222%22%2c%22Token%22%3a%22{3}%22%7d%7d&timestamp={1}".format(hexNow, now, self.config['General']['uid'], self.config['General']['token'])
+                'nat': "cnt={0}&nature=cnt%3d{0}%26param%3d%257b%2522APP%2522%253a%257b%2522Version%2522%253a%25222.22%2522%252c%2522time%2522%253a%2522143198601943%2522%252c%2522Lang%2522%253a%2522Chinese%2522%257d%252c%2522DEV%2522%253a%257b%2522Model%2522%253a%2522Xiaomi%2bMI%2b3W%2522%252c%2522CPU%2522%253a%2522ARMv7%2bVFPv3%2bNEON%2522%252c%2522GPU%2522%253a%2522Adreno%2b(TM)%2b330%2522%252c%2522OSVersion%2522%253a%2522Android%2bOS%2b4.4.4%2b%252f%2bAPI-19%2b(KTU84P%252fV6.5.3.0.KXDMICD)%2522%252c%2522UserUniqueID%2522%253a%2522{2}%2522%252c%2522SysRAM%2522%253a1850%252c%2522VideoRAM%2522%253a198%252c%2522OS%2522%253a%25222%2522%252c%2522Token%2522%253a%2522{3}%2522%257d%257d&param=%7b%22APP%22%3a%7b%22Version%22%3a%222.22%22%2c%22time%22%3a%22143198601943%22%2c%22Lang%22%3a%22Chinese%22%7d%2c%22DEV%22%3a%7b%22Model%22%3a%22Xiaomi+MI+3W%22%2c%22CPU%22%3a%22ARMv7+VFPv3+NEON%22%2c%22GPU%22%3a%22Adreno+(TM)+330%22%2c%22OSVersion%22%3a%22Android+OS+4.4.4+%2f+API-19+(KTU84P%2fV6.5.3.0.KXDMICD)%22%2c%22UserUniqueID%22%3a%22{2}%22%2c%22SysRAM%22%3a1851%2c%22VideoRAM%22%3a198%2c%22OS%22%3a%222%22%2c%22Token%22%3a%22{3}%22%7d%7d&timestamp={1}".format(hexNow, now, self.config['General']['uid'], self.config['General']['token'])
                 }
         post_url = "http://prod4.cc.mobimon.com.tw/quest/result?qid={0}&res=1&bt=1200&time=0.00&d=1&s=1&cc=1&wc=5&wn=5&cnt={1}&timestamp={2}".format(qid, hexNow, now)
         payload = "ch=&eh=&ec=&mission=%7b%22cid%22%3a%5b7505%2c5033%2c52%2c38%2c7502%2c45%5d%2c%22fid%22%3a198601%2c%22ms%22%3a1%2c%22md%22%3a200001%2c%22sc%22%3a%7b%221%22%3a1%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a0%7d%2c%22es%22%3a1%2c%22at%22%3a1%2c%22he%22%3a1%2c%22da%22%3a1%2c%22ba%22%3a1%2c%22bu%22%3a1%2c%22job%22%3a%7b%220%22%3a1%2c%221%22%3a1%2c%222%22%3a2%2c%223%22%3a1%2c%224%22%3a2%7d%2c%22weapon%22%3a%7b%220%22%3a2%2c%221%22%3a1%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a2%2c%225%22%3a1%2c%228%22%3a1%2c%229%22%3a1%2c%2210%22%3a0%7d%2c%22box%22%3a1%2c%22um%22%3a%7b%221%22%3a1%2c%222%22%3a1%2c%223%22%3a0%7d%2c%22fj%22%3a-1%2c%22fw%22%3a-1%2c%22fo%22%3a1%2c%22cc%22%3a1%7d&nature=bt%3d1200%26cc%3d1%26ch%3d%26cnt%3d{0}%26d%3d1%26ec%3d%26eh%3d%26mission%3d%257b%2522cid%2522%253a%255b7505%252c5033%252c52%252c38%252c7502%252c45%255d%252c%2522fid%2522%253a198601%252c%2522ms%2522%253a0%252c%2522md%2522%253a200000%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a1%252c%25221%2522%253a1%252c%25222%2522%253a2%252c%25223%2522%253a1%252c%25224%2522%253a2%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a2%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a1%252c%25224%2522%253a2%252c%25225%2522%253a1%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a1%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a-1%252c%2522fw%2522%253a-1%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%257d%26qid%3d220103%26res%3d1%26s%3d0%26time%3d0.00%26wc%3d5%26wn%3d5".format(hexNow)
@@ -671,8 +750,8 @@ class ChainChronicleAutomation():
         self.logger = logging.getLogger("Chain Chronicle")
         self.logger.setLevel(logging.DEBUG)
 
-        rh = RotatingFileHandler("cc.log", maxBytes=10240*3, backupCount=3)
-        rh.setLevel(logging.INFO)
+        rh = RotatingFileHandler("cc.log", maxBytes=10240*100, backupCount=3)
+        rh.setLevel(logging.DEBUG)
         rh.setFormatter(fileFormatter)
 
         console = logging.StreamHandler()
@@ -941,6 +1020,8 @@ if __name__ == "__main__":
         #logger.debug(type(r))
         # logger.debug(json.dumps(r['body'][8]['data'], sort_keys=True, indent=2))
         logger.info(json.dumps(r, sort_keys=True, indent=2))
+    elif action =='subjugation':
+        r = cc.CC_Subjugation(4)
     else:
         logger.debug("Unsupported action:[{0}]".format(action))
 
