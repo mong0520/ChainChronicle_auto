@@ -509,7 +509,7 @@ class ChainChronicleAutomation():
         r = cc.CC_GetAllData()
         ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
         self.logger.debug(u"第{0}次討伐".format(ecnt))
-        sys.exit(0)
+        # sys.exit(0)
 
         # Try
         now = int(time.time()*1000)
@@ -519,7 +519,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "brave=0&cnt={0}&ecnt={3}&jid={2}&nature=brave%3d0%26cnt%3d{0}%26ecnt%3d{3}%26jid%3d{2}&timestamp={1}".format(hexNow, now, jid, ecnt)
                 }
-        post_url = "http://v252.cc.mobimon.com.tw/subjugation/try?jid={2}&ecnt=2&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid)
+        post_url = "http://v252.cc.mobimon.com.tw/subjugation/try?jid={2}&ecnt={3}&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid, ecnt)
 
         payload = "nature=brave%3d0%26cnt%3d{0}%26ecnt%3d{2}%26jid%3d{1}".format(hexNow, jid, ecnt)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
