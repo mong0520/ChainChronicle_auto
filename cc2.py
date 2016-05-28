@@ -527,10 +527,12 @@ class ChainChronicleAutomation():
             if r['res'] == 1916:
                 self.logger.warning("Not enough brave, exit")
                 break
+            elif r['res'] == 1917:
+                self.logger.warning("已經在討伐中")
 
             # check r, maybe already tried, then call proceed to get base_id
 
-            # self.logger.debug(r)
+            self.logger.debug(r)
             # Get base id
             self.logger.debug("取得關卡id")
             base_id_list = []
@@ -947,7 +949,7 @@ if __name__ == "__main__":
     elif action == 'buy_item':
         item_type = config['Buy']['type']
         count = config['Buy']['count']
-        cc.CC_buyItem(item_type, 1)
+        cc.CC_buyItem(item_type, count)
     elif action == 'list_latest':
         r = cc.CC_GetLatestCharInfo()
         logger.debug(json.dumps(r))
