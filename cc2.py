@@ -508,14 +508,15 @@ class ChainChronicleAutomation():
 
             # get ecnt
             r = cc.CC_GetAllData()
-            ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
+            # ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
+            ecnt = 16
             self.logger.info(u"第{0}次討伐".format(ecnt))
             # sys.exit(0)
 
             # Try
             now = int(time.time()*1000)
             hexNow = format(now + 5000, 'x')
-            self.logger.debug("取得討伐戰資料")
+            self.logger.debug(u"取得討伐戰資料")
             self.headers = {
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "brave=0&cnt={0}&ecnt={3}&jid={2}&nature=brave%3d0%26cnt%3d{0}%26ecnt%3d{3}%26jid%3d{2}&timestamp={1}".format(hexNow, now, jid, ecnt)
@@ -528,27 +529,27 @@ class ChainChronicleAutomation():
                 self.logger.warning("Not enough brave, exit")
                 break
             elif r['res'] == 1917:
-                self.logger.warning("已經在討伐中")
+                self.logger.warning(u"已經在討伐中")
+                self.logger.debug(r)
 
             # check r, maybe already tried, then call proceed to get base_id
 
-            self.logger.debug(r)
+            # self.logger.debug(r)
             # Get base id
-            self.logger.debug("取得關卡id")
+            self.logger.debug(u"取得關卡id")
             base_id_list = []
             wave_list = []
             for data in r['body'][1]['data']:
                 base_id_list.append(data['base_id'])
                 wave_list.append(data['max_wave'])
-            self.logger.debug("關卡id = {0}".format(base_id_list))
+            self.logger.debug(u"關卡id = {0}".format(base_id_list))
             # Start
             pt_cid = [5002, 6043, 7017, 41]
             pt_cids = [
                 [6042, 6043, 5047],
                 [5002, 5049, 61],
-                [69, 5057, 7015],
-                [7017,7018, 7019]
-
+                [69, 5057, 6],
+                [2049,2, 4]
             ]
             for idx, bid in enumerate(base_id_list):
                 now = int(time.time()*1000)
@@ -556,14 +557,14 @@ class ChainChronicleAutomation():
                 self.logger.debug(u"Using Party {0}".format(idx))
 
                 # Start entry
-                self.logger.debug("開始討伐")
+                self.logger.debug(u"開始討伐")
                 self.headers = {
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "bid={3}&brave=0&cnt={0}&fid=383974&full=0&jid={2}&nature=bid%3d{3}%26brave%3d0%26cnt%3d{0}%26fid%3d383974%26full%3d0%26jid%3d{2}%26pt%3d0&pt={4}&timestamp={1}".format(hexNow, now, jid, bid, idx)}
                 post_url = "http://v252.cc.mobimon.com.tw/subjugation/entry?jid={2}&bid={3}&pt={4}&fid=383974&full=0&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid, bid, idx)
                 payload = "nature=bid%3d{3}%26brave%3d0%26cnt%{0}%26fid%3d383974%26full%3d0%26jid%3d{2}%26pt%3d{4}".format(hexNow, now, jid, bid, idx)
 
-                self.logger.debug('討伐關卡: {0}'.format(bid))
+                self.logger.debug(u'討伐關卡: {0}'.format(bid))
                 r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
                 # self.logger.debug("Start entry = {0}".format(r))
 
@@ -579,8 +580,8 @@ class ChainChronicleAutomation():
 
                 payload = "mission=%7b%22cid%22%3a%5b{cid0}%2c{cid1}%2c{cid2}%5d%2c%22sid%22%3a%5b0%2c0%2c0%5d%2c%22fid%22%3a6043%2c%22ms%22%3a1%2c%22md%22%3a2476%2c%22sc%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a0%2c%22he%22%3a0%2c%22da%22%3a0%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a3%2c%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a1%7d%2c%22weapon%22%3a%7b%220%22%3a3%2c%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%2c%225%22%3a0%2c%228%22%3a0%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a2%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%7d%2c%22fj%22%3a0%2c%22fw%22%3a0%2c%22fo%22%3a0%2c%22cc%22%3a1%2c%22bf_atk%22%3a0%2c%22bf_hp%22%3a0%2c%22bf_spd%22%3a0%7d&nature=bid%3d{bid}%26bt%3d7056%26cc%3d1%26cnt%3d{cnt}%26d%3d1%26jid%3d{jid}%26mission%3d%257b%2522cid%2522%253a%255b{cid0}%252c{cid1}%252c{cid2}%255d%252c%2522sid%2522%253a%255b0%252c0%252c0%255d%252c%2522fid%2522%253a6043%252c%2522ms%2522%253a1%252c%2522md%2522%253a2476%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a1%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%252c%25225%2522%253a0%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a2%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a0%252c%2522fw%2522%253a0%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%252c%2522bf_atk%2522%253a0%252c%2522bf_hp%2522%253a0%252c%2522bf_spd%2522%253a0%257d%26res%3d1%26s%3d0%26time%3d1.80%26wc%3d{wc}".format(cnt=hexNow, now=now, jid=jid, bid=bid, cid0=pt_cids[idx][0], cid1=pt_cids[idx][1], cid2=pt_cids[idx][1], wc=wave_list[idx])
                 r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
-                # self.logger.debug("End entry = {0}".format(r))
-                self.logger.debug('討伐關卡: {0} 完成'.format(bid))
+                self.logger.debug("End entry = {0}".format(r))
+                self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
 
 
     def __sellItem(self, idx):
@@ -804,12 +805,15 @@ class ChainChronicleAutomation():
             # print count
             # print c['idx']
             if 'locked' in c and c['locked']:
-                self.logger.debug("聖靈幣鎖住，無法販賣")
+                self.logger.debug(u"聖靈幣鎖住，無法販賣")
                 continue
-            else:
-                self.logger.debug("賣出物品 {0}".format(c['id']))
+            elif 'type' in c and c['type'] in [2, 3]:
+                self.logger.debug(u"賣出物品 {0}".format(c['id']))
                 r = self.__sellItem(c['idx'])
                 count += 1
+            else:
+                self.logger.debug(u"非可販售類別")
+                continue
         all_data = self.CC_GetAllData()
         size = len(all_data['body'][6]['data'])
         self.logger.debug("目前包包物品數量 = {0}".format(size))
@@ -916,7 +920,7 @@ if __name__ == "__main__":
     elif action == 'password':
         cc.CC_SetPassword('aaa123')
     elif action == 'sell':
-        cc.CC_ClearItems(10)
+        cc.CC_ClearItems(600)
     elif action == 'quest':
         now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         logger.info("#Start at: {0}".format(now))
