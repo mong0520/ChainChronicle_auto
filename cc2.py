@@ -508,8 +508,8 @@ class ChainChronicleAutomation():
 
             # get ecnt
             r = cc.CC_GetAllData()
-            # ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
-            ecnt = 16
+            ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
+            # ecnt = 16
             self.logger.info(u"第{0}次討伐".format(ecnt))
             # sys.exit(0)
 
