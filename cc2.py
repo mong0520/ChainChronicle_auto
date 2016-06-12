@@ -10,6 +10,8 @@ from pymongo import MongoClient
 import ConfigParser
 from random import randint
 import threading
+from Queue import Queue
+from threading import Thread
 
 class ChainChronicleAutomation():
     def __init__(self, configFile):
@@ -367,7 +369,7 @@ class ChainChronicleAutomation():
         }
         self.logger.debug(item_mapping[item_type])
         for i in range(0, count):
-            self.logger.debug("#{0} 購買道具".format(i+1))
+            self.logger.debug(u"#{0} 購買道具".format(i+1))
             now = int(time.time()*1000)
             hexNow = format(now + 5000, 'x')
             cookies = {'sid': self.sid}
@@ -385,7 +387,7 @@ class ChainChronicleAutomation():
                 self.logger.warning("購買角色成長卡失敗, ErrorCode = {0}".format(r['res']))
                 return r
             else:
-                self.logger.debug("\t-> 完成")
+                self.logger.debug(u"\t-> 完成")
         return r
 
     def CC_buyStaminaFruit(self, count):
@@ -507,7 +509,7 @@ class ChainChronicleAutomation():
             # r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
 
             # get ecnt
-            r = cc.CC_GetAllData()
+            # r = cc.CC_GetAllData()
             # ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
             ecnt = 16
             self.logger.info(u"第{0}次討伐".format(ecnt))
@@ -580,7 +582,7 @@ class ChainChronicleAutomation():
 
                 payload = "mission=%7b%22cid%22%3a%5b{cid0}%2c{cid1}%2c{cid2}%5d%2c%22sid%22%3a%5b0%2c0%2c0%5d%2c%22fid%22%3a6043%2c%22ms%22%3a1%2c%22md%22%3a2476%2c%22sc%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a0%2c%22he%22%3a0%2c%22da%22%3a0%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a3%2c%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a1%7d%2c%22weapon%22%3a%7b%220%22%3a3%2c%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%2c%225%22%3a0%2c%228%22%3a0%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a2%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%7d%2c%22fj%22%3a0%2c%22fw%22%3a0%2c%22fo%22%3a0%2c%22cc%22%3a1%2c%22bf_atk%22%3a0%2c%22bf_hp%22%3a0%2c%22bf_spd%22%3a0%7d&nature=bid%3d{bid}%26bt%3d7056%26cc%3d1%26cnt%3d{cnt}%26d%3d1%26jid%3d{jid}%26mission%3d%257b%2522cid%2522%253a%255b{cid0}%252c{cid1}%252c{cid2}%255d%252c%2522sid%2522%253a%255b0%252c0%252c0%255d%252c%2522fid%2522%253a6043%252c%2522ms%2522%253a1%252c%2522md%2522%253a2476%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a1%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%252c%25225%2522%253a0%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a2%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a0%252c%2522fw%2522%253a0%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%252c%2522bf_atk%2522%253a0%252c%2522bf_hp%2522%253a0%252c%2522bf_spd%2522%253a0%257d%26res%3d1%26s%3d0%26time%3d1.80%26wc%3d{wc}".format(cnt=hexNow, now=now, jid=jid, bid=bid, cid0=pt_cids[idx][0], cid1=pt_cids[idx][1], cid2=pt_cids[idx][1], wc=wave_list[idx])
                 r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
-                self.logger.debug("End entry = {0}".format(r))
+                # self.logger.debug("End entry = {0}".format(r))
                 self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
 
 
@@ -882,6 +884,28 @@ class ChainChronicleAutomation():
             else:
                 continue
 
+    def CC_get_daily_gacha_ticket_thread_wrapper(self):
+        while True:
+            item = q.get()
+            # print "get data: {0}".format(item)
+            self.CC_get_daily_gacha_ticket()
+            q.task_done()
+
+    def CC_get_daily_gacha_ticket(self):
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        self.headers = {
+            'Cookie': 'sid={0}'.format(self.sid),
+            'nat': "cnt={0}&id=7&kind=limit_item&limit_id=9000&nature=cnt%3d{0}%26id%3d7%26kind%3dlimit_item%26limit_id%3d9000%26price%3d25%26type%3ditem%26val%3d1&price=25&timestamp={1}&type=item&val=1".format(hexNow, now)
+            }
+        post_url = "http://v252.cc.mobimon.com.tw/token?kind=limit_item&limit_id=9000&type=item&id=7&val=1&price=25&cnt={0}&timestamp={1}".format(hexNow, now)
+        payload = "nature=cnt%3d{0}%26id%3d7%26kind%3dlimit_item%26limit_id%3d9000%26price%3d25%26type%3ditem%26val%3d1".format(hexNow)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        self.logger.debug(r)
+        return r
+
+
 
 if __name__ == "__main__":
     action = None
@@ -1039,6 +1063,18 @@ if __name__ == "__main__":
         logger.info(json.dumps(r, sort_keys=True, indent=2))
     elif action =='subjugation':
         r = cc.CC_Subjugation(4)
+
+    elif action =='poc':
+        q = Queue(maxsize=0)
+        num_threads = 10
+        for i in range(num_threads):
+            worker = Thread(target=cc.CC_get_daily_gacha_ticket_thread_wrapper)
+            worker.setDaemon(True)
+            worker.start()
+
+        for i in range(0, num_threads + 1):
+            q.put(i)
+        q.join()
     else:
         logger.debug("Unsupported action:[{0}]".format(action))
 
