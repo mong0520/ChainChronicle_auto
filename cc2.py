@@ -848,41 +848,38 @@ class ChainChronicleAutomation():
         # for pickup in pickup_list:
             # self.logger.debug(pickup)
         card_list = self.CC_GetAllData()['body'][6]['data']
-        # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
-        # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
-        # self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
+        self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
+        self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
+        self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
         for card in card_list:
             if card['type'] == 0:
                 temp_idx = card['idx']
+                temp_id = card['id']
                 card_doc = self.db.charainfo.find_one({"cid": card['id']})
                 if card_doc:
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
                     # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
+                    # TODO: bug here, weapon type is not equal to battletype, how to solve it due to mongodb has no weapon type record
                     # self.logger.debug("weapontype:{0}".format(card_doc['battletype']))
                     if (int(area_pickup_list['home']) == card_doc['home']) or (int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (int(area_pickup_list['weapontype']) == card_doc['battletype']):
                             temp_idx = card['idx']
-                            if temp_idx in except_card_idx:
+                            if temp_id in except_card_idx:
                                 continue
-                            if card_doc['rarity'] < 5:
+                            if card_doc['rarity'] == 5:
                                 continue
                             self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
-                            self.logger.debug("{0} is picked to eplorer".format(temp_idx))
+                            self.logger.debug("{0} is picked to eplorer".format(temp_idx))                            
                             return temp_idx
                     else:
                         continue
-                else:
+                else:                    
                     continue
 
                 self.logger.error("Cannot find card id {0} in database, please update DB".format(card['id']))
                 self.logger.debug("{0} is picked to eplorer".format(temp_idx))
-
-                # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
-                # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
-                # self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['battletype']))
-                # fake idx, it needs to query from mongodb and match pickup attribute
-                return card['idx']
             else:
                 continue
+        return temp_idx
 
     def CC_get_daily_gacha_ticket_thread_wrapper(self):
         while True:
