@@ -89,6 +89,11 @@ class ChainChronicleAutomation():
             except:
                 self.config['General']['RetryDurtion'] = 10
 
+            try: 
+                self.config['General']['Delay'] = config.getint('General', 'Delay')
+            except:
+                self.config['General']['Delay'] = 0
+
             try:
                 self.config['Explorer']['area'] = config.get('Explorer', 'area')
             except:
@@ -188,7 +193,7 @@ class ChainChronicleAutomation():
                 continue
             if self.config['General']['Delay'] > 0:
                 # self.logger.debug(self.config['General']['Delay'])
-                random_salt = randint(0,99)
+                random_salt = randint(0,10)
                 # random 0 ~ 99 second
                 sleep_in_sec = 60 * self.config['General']['Delay'] + random_salt
                 self.logger.info("等待{0}秒後完成戰鬥...".format(sleep_in_sec))
@@ -435,7 +440,7 @@ class ChainChronicleAutomation():
         # self.logger.debug(json.dumps(r['res']))
 
         if r['res'] == 2311:
-            self.logger.debug(u"pickup value error, retry")
+            # self.logger.debug(u"pickup value error, retry")
             self.CC_explorer(explorer_idx, area, idx, pickup=0)
         elif r['res'] == 0:
             self.logger.debug("探索開始!")
@@ -963,6 +968,7 @@ if __name__ == "__main__":
             try:
                 cc.CC_PlayQuest(qtype, qid, count, bRaid, bSell, maxEventPoint)
             except Exception as e:
+                raise
                 logger.info(e)
                 continue
             now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -978,6 +984,10 @@ if __name__ == "__main__":
     elif action == 'list_latest':
         r = cc.CC_GetLatestCharInfo()
         logger.debug(json.dumps(r))
+
+    elif action == 'explorer_cancel':
+        for i in range(1, 4):
+            cc.cc.CC_explorer_cancel(i)
 
     elif action == 'explorer':
         # r = cc.get_item_from_storage()
