@@ -303,6 +303,7 @@ class ChainChronicleAutomation():
                     for record in r['body'][1]['data']:
                     # for record in r:
                         #print record
+                        print r['body'][1]
                         idx = record['idx']
                         # id = record['id']
                         # type = record['type']
