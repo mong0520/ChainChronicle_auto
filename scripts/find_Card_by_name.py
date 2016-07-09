@@ -10,7 +10,7 @@ try:
         #print doc
         print doc['cid']
         print doc['name']
-        print doc['title']
+        print doc['_id']
 except KeyError as e:
     print "Result doesn't include key [{0}]".format(e)
 except Exception as e:
