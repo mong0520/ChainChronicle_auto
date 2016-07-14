@@ -89,7 +89,7 @@ class ChainChronicleAutomation():
             except:
                 self.config['General']['RetryDurtion'] = 10
 
-            try: 
+            try:
                 self.config['General']['Delay'] = config.getint('General', 'Delay')
             except:
                 self.config['General']['Delay'] = 0
@@ -812,13 +812,13 @@ class ChainChronicleAutomation():
             # self.logger.debug()
             # print count
             # print c['idx']
-            if 'locked' in c and c['locked']:
-                self.logger.debug(u"聖靈幣鎖住，無法販賣")
-                continue
-            elif 'type' in c and c['type'] in [2, 3]:
+            if 'type' in c and c['type'] in [2, 3]:
                 self.logger.debug(u"賣出物品 {0}".format(c['id']))
                 r = self.__sellItem(c['idx'])
                 count += 1
+            elif 'locked' in c and c['locked']:
+                self.logger.debug(u"聖靈幣鎖住，無法販賣")
+                continue
             else:
                 self.logger.debug(u"非可販售類別")
                 continue
@@ -874,11 +874,11 @@ class ChainChronicleAutomation():
                             if card_doc['rarity'] == 5:
                                 continue
                             self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
-                            self.logger.debug("{0} is picked to eplorer".format(temp_idx))                            
+                            self.logger.debug("{0} is picked to eplorer".format(temp_idx))
                             return temp_idx
                     else:
                         continue
-                else:                    
+                else:
                     continue
 
                 self.logger.error("Cannot find card id {0} in database, please update DB".format(card['id']))
@@ -908,7 +908,77 @@ class ChainChronicleAutomation():
         self.logger.debug(r)
         return r
 
+    def CC_TotalWar(self, tid, ring=0, sell=1):
+        # accept total war
+        self.logger.debug(u"Accept TotalWar")
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        self.headers = {
+            'Cookie': 'sid={0}'.format(self.sid),
+            'nat': "cnt={0}&nature=cnt%3d{0}%26ring%3d0&ring={2}&timestamp={1}".format(hexNow, now, ring)
+            }
+        post_url = "http://v252.cc.mobimon.com.tw/totalwar/accept?ring={2}&cnt={0}&timestamp={1}".format(hexNow, now, ring)
+        payload = "nature=cnt%3d{0}%26ring%3d{1}".format(hexNow, ring)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        # self.logger.debug(r)
 
+        # get total war
+        self.logger.debug(u"Start total war")
+        ret = self.__start_total_war(tid)
+        # self.logger.debug(ret)
+
+        # finish total war
+        self.logger.debug(u"Finish Total war")
+        ret = self.__finish_total_war(tid, sell)
+        # self.logger.debug(ret)
+
+    def __start_total_war(self, tid):
+        fid = 1683830
+        # http://v252.cc.mobimon.com.tw/totalwar/entry?tid=11&fid=1683830&pt=5&cnt=155ea5f9137&timestamp=1468515969575
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        self.headers = {
+            'Cookie': 'sid={0}'.format(self.sid),
+            'nat': "cnt={0}&fid={1}&nature=cnt%3d{0}%26fid%3d{1}%26pt%3d5%26tid%3d{3}&pt=5&tid={3}&timestamp={2}".format(hexNow, fid, now, tid)
+            }
+        post_url = "http://v252.cc.mobimon.com.tw/totalwar/entry?tid={3}&fid={1}&pt=5&cnt={0}&timestamp={2}".format(hexNow, fid, now, tid)
+        payload = "nature=cnt%3d{0}%26fid%3d{1}%26pt%3d5%26tid%3d{2}".format(hexNow, fid, tid)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        # self.logger.debug(r)
+        return r
+
+    def __finish_total_war(self, tid, sell):
+        fid = 1683830
+        # http://v252.cc.mobimon.com.tw/totalwar/entry?tid=11&fid=1683830&pt=5&cnt=155ea5f9137&timestamp=1468515969575
+        now = int(time.time()*1000)
+        hexNow = format(now + 5000, 'x')
+        cookies = {'sid': self.sid}
+        self.headers = {
+            'Cookie': 'sid={0}'.format(self.sid),
+            'nat': "cnt={0}&nature=cnt%3d{0}%26res%3d1%26tid%3d11&res=1&tid={2}&timestamp={1}".format(hexNow, now, tid)
+            }
+        post_url = "http://v252.cc.mobimon.com.tw/totalwar/result?res=1&tid={2}&cnt={0}&timestamp={1}".format(hexNow, now, tid)
+        payload = "nature=cnt%3D{0}%26res%3D1%26tid%3D{1}".format(hexNow, tid)
+        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        # self.logger.debug(r)
+
+        if sell:
+            try:
+                for earn in r['body'][1]['data']:
+                    # id = earn['id']
+                    idx = earn['idx']
+                    # self.logger.debug(idx)
+                    r = self.__sellItem(idx)
+                    if r['res'] == 0:
+                        self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(idx, r['res']))
+                    else:
+                        self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
+                        sys.exit(0)
+            except Exception as e:
+                self.logger.warning(u"無可販賣卡片")
+        return r
 
 if __name__ == "__main__":
     action = None
@@ -1071,6 +1141,12 @@ if __name__ == "__main__":
         logger.info(json.dumps(r, sort_keys=True, indent=2))
     elif action =='subjugation':
         r = cc.CC_Subjugation(4)
+
+    elif action =='totalwar':
+        max_count = 2000
+        for i in xrange(0, max_count):
+            logger.debug(u"{0}/{1} 委托".format(i, max_count))
+            r = cc.CC_TotalWar(11, ring=1)
 
     elif action =='poc':
         q = Queue(maxsize=0)
