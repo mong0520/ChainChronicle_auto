@@ -166,6 +166,7 @@ class ChainChronicleAutomation():
 
         while True:
             current = current + 1
+            self.CC_GetPresents(sell=False)
             if current > count and not bInfinte:
                 break
             print "Start to play quest:[{0}]".format(qid)
@@ -967,6 +968,33 @@ class ChainChronicleAutomation():
                 self.logger.warning(u"無可販賣卡片")
         return r
 
+    def CC_GetPresents(self, sell=False):
+        # Get present list
+        self.logger.debug(u"Get present id")
+        url = 'http://v252.cc.mobimon.com.tw/present/list'
+        cookies = {'sid': self.sid}
+        headers = {'Cookie': 'sid={0}'.format(self.sid)}
+        data = {}
+        ret = self.poster.post_data(url, headers, cookies, **data)
+        present_ids = [data['idx'] for data in ret['body'][0]['data']]
+        self.logger.debug("Present count = {0}".format(len(present_ids)))
+        self.logger.debug("Present ids = {0}".format(present_ids))
+
+        # Get present
+        url = 'http://v252.cc.mobimon.com.tw/present/recv'
+        cookies = {'sid': self.sid}
+        headers = {'Cookie': 'sid={0}'.format(self.sid)}
+
+        while len(present_ids) > 0:
+            pid = present_ids.pop(0)
+            self.logger.debug("Get item: {0}".format(pid))
+            data = {'p': pid}
+            ret = self.poster.post_data(url, headers, cookies, **data)
+            if sell is True:
+                self.__sellItem(pid)
+        return ret
+
+
 if __name__ == "__main__":
     action = None
     if len(sys.argv) < 4:
@@ -1118,7 +1146,7 @@ if __name__ == "__main__":
         r = cc.CC_Subjugation(4)
 
     elif action =='totalwar':
-        max_count = 1
+        max_count = 10
         for i in xrange(0, max_count):
             logger.debug(u"{0}/{1} 委托".format(i, max_count))
             r = cc.CC_TotalWar(11, ring=1)
@@ -1134,6 +1162,10 @@ if __name__ == "__main__":
         for i in range(0, num_threads + 1):
             q.put(i)
         q.join()
+    elif action == 'present':
+        r = cc.CC_GetPresents(sell=False)
+        # logger.debug(type(r))
+        # logger.debug(json.dumps(r['body'][8]['data'], sort_keys=True, indent=2))
     else:
         logger.debug("Unsupported action:[{0}]".format(action))
 
