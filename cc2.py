@@ -12,12 +12,14 @@ from random import randint
 import threading
 from Queue import Queue
 from threading import Thread
+import poster
 
 class ChainChronicleAutomation():
     def __init__(self, configFile):
         #self.config['General']['uid'] = "ANDO4779bf78-f0f7-4a16-8d41-3c0d9ab46e0c"
         #self.config['General']['token'] = "APA91bEAKkkmD_eJ07r_NjRMRKJ2keH1A1Ju8mC2MDd9Iu9Bogxoy-HBl8SlCJJmMEM-aCMxnMEDNr-AC5TIiKmUHGRkk-lO1ypSdZhE8PhlQLjvBub3t81kwwwxIDQPw6CsarSI_BJ8"
         self.__initLogger()
+        self.poster = poster.Poster()
         self.sid = None
         self.headers = {
                 'X-Unity-Version': '4.6.5f1',
@@ -122,17 +124,25 @@ class ChainChronicleAutomation():
         return self.logger
 
     def CC_GetAllData(self):
+        url = "http://ios5.cc.mobimon.com.tw/user/all_data?"
+        data = {}
+        self.poster.set_sid(self.sid)
+        r = self.poster.post_data(url, **data)
+        # print r
+        #
         now = int(time.time()*1000)
         hexNow = format(now + 5000, 'x')
         cookies = {'sid': self.sid}
         self.headers = {
                     'Cookie': 'sid={0}'.format(self.sid),
-                    'nat': "cnt=14e5c7f82a4&nature=c%3d1%26cnt%3d{0}%26t%3d6&t=6&timestamp={1}".format(hexNow, now)
                     }
         post_url = "http://ios5.cc.mobimon.com.tw/user/all_data?cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "nature=cnt%3d{0}%26t%3d6".format(hexNow)
+        print post_url
+        print payload
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
-        return r
+        # print r
+        return None
 
     def CC_Login(self):
         # Login and get sid
