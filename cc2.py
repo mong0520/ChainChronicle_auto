@@ -124,25 +124,14 @@ class ChainChronicleAutomation():
         return self.logger
 
     def CC_GetAllData(self):
-        url = "http://ios5.cc.mobimon.com.tw/user/all_data?"
+        url = "http://ios5.cc.mobimon.com.tw/user/all_data"
         data = {}
-        self.poster.set_sid(self.sid)
-        r = self.poster.post_data(url, **data)
-        # print r
-        #
-        now = int(time.time()*1000)
-        hexNow = format(now + 5000, 'x')
+        headers = {'Cookie': 'sid={0}'.format(self.sid)}
         cookies = {'sid': self.sid}
-        self.headers = {
-                    'Cookie': 'sid={0}'.format(self.sid),
-                    }
-        post_url = "http://ios5.cc.mobimon.com.tw/user/all_data?cnt={0}&timestamp={1}".format(hexNow, now)
-        payload = "nature=cnt%3d{0}%26t%3d6".format(hexNow)
-        print post_url
-        print payload
-        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
-        # print r
-        return None
+        # self.poster.set_header(headers)
+        # self.poster.set_cookies(cookies)
+        ret = self.poster.post_data(url, headers, cookies, **data)
+        return ret
 
     def CC_Login(self):
         # Login and get sid
@@ -169,7 +158,6 @@ class ChainChronicleAutomation():
             sys.exit(0)
 
     def CC_PlayQuest(self, qtype, qid, count, bRaid, bSell, maxEventPoint):
-        #for i in range(0, count):
         current = 0
         bInfinte = False
 
@@ -180,7 +168,7 @@ class ChainChronicleAutomation():
             current = current + 1
             if current > count and not bInfinte:
                 break
-            #print "Start to play quest:[{0}]".format(i)
+            print "Start to play quest:[{0}]".format(qid)
             result = self.__getQuest(qtype, qid).json()
             #print "...Result = [{0}]".format(result['res'])
             #print result
@@ -196,10 +184,10 @@ class ChainChronicleAutomation():
                         self.logger.debug("購買體力果實完成")
                     else:
                         self.logger.warning("購買體力果實失敗, result = {0}".format(r['res']))
-			self.logger.info("開始友情抽換戒")
-			self.CC_Gacha(6, 15, 1, None)
+                        self.logger.info("開始友情抽換戒")
+                        self.CC_Gacha(6, 15, 1, None)
                 time.sleep(1)
-                current = current - 1
+                current -= 1
                 continue
             if self.config['General']['Delay'] > 0:
                 # self.logger.debug(self.config['General']['Delay'])
@@ -253,6 +241,7 @@ class ChainChronicleAutomation():
                 #sys.exit(0)
             else:
                 self.logger.error("#{0} - 戰鬥失敗: Error Code = {1}".format(current, result['res']))
+                print result
                 return
 
             #魔神戰
@@ -921,17 +910,13 @@ class ChainChronicleAutomation():
     def CC_TotalWar(self, tid, ring=0, sell=1):
         # accept total war
         self.logger.debug(u"Accept TotalWar")
-        now = int(time.time()*1000)
-        hexNow = format(now + 5000, 'x')
+        url = 'http://v252.cc.mobimon.com.tw/totalwar/accept'
         cookies = {'sid': self.sid}
-        self.headers = {
-            'Cookie': 'sid={0}'.format(self.sid),
-            'nat': "cnt={0}&nature=cnt%3d{0}%26ring%3d0&ring={2}&timestamp={1}".format(hexNow, now, ring)
-            }
-        post_url = "http://v252.cc.mobimon.com.tw/totalwar/accept?ring={2}&cnt={0}&timestamp={1}".format(hexNow, now, ring)
-        payload = "nature=cnt%3d{0}%26ring%3d{1}".format(hexNow, ring)
-        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
-        # self.logger.debug(r)
+        headers = {'Cookie': 'sid={0}'.format(self.sid)}
+        data = {
+            'ring': ring
+        }
+        ret = self.poster.post_data(url, headers, cookies, **data)
 
         # get total war
         self.logger.debug(u"Start total war")
@@ -945,33 +930,26 @@ class ChainChronicleAutomation():
 
     def __start_total_war(self, tid):
         fid = 1683830
-        # http://v252.cc.mobimon.com.tw/totalwar/entry?tid=11&fid=1683830&pt=5&cnt=155ea5f9137&timestamp=1468515969575
-        now = int(time.time()*1000)
-        hexNow = format(now + 5000, 'x')
+        url = 'http://v252.cc.mobimon.com.tw/totalwar/entry'
         cookies = {'sid': self.sid}
-        self.headers = {
-            'Cookie': 'sid={0}'.format(self.sid),
-            'nat': "cnt={0}&fid={1}&nature=cnt%3d{0}%26fid%3d{1}%26pt%3d5%26tid%3d{3}&pt=5&tid={3}&timestamp={2}".format(hexNow, fid, now, tid)
-            }
-        post_url = "http://v252.cc.mobimon.com.tw/totalwar/entry?tid={3}&fid={1}&pt=5&cnt={0}&timestamp={2}".format(hexNow, fid, now, tid)
-        payload = "nature=cnt%3d{0}%26fid%3d{1}%26pt%3d5%26tid%3d{2}".format(hexNow, fid, tid)
-        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
-        # self.logger.debug(r)
+        headers = {'Cookie': 'sid={0}'.format(self.sid)}
+        data = {
+            'tid': tid,
+            'fid': fid,
+            'pt': 0
+        }
+        r = self.poster.post_data(url, headers, cookies, **data)
         return r
 
     def __finish_total_war(self, tid, sell):
-        fid = 1683830
-        # http://v252.cc.mobimon.com.tw/totalwar/entry?tid=11&fid=1683830&pt=5&cnt=155ea5f9137&timestamp=1468515969575
-        now = int(time.time()*1000)
-        hexNow = format(now + 5000, 'x')
+        url = 'http://v252.cc.mobimon.com.tw/totalwar/result'
         cookies = {'sid': self.sid}
-        self.headers = {
-            'Cookie': 'sid={0}'.format(self.sid),
-            'nat': "cnt={0}&nature=cnt%3d{0}%26res%3d1%26tid%3d11&res=1&tid={2}&timestamp={1}".format(hexNow, now, tid)
-            }
-        post_url = "http://v252.cc.mobimon.com.tw/totalwar/result?res=1&tid={2}&cnt={0}&timestamp={1}".format(hexNow, now, tid)
-        payload = "nature=cnt%3D{0}%26res%3D1%26tid%3D{1}".format(hexNow, tid)
-        r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
+        headers = {'Cookie': 'sid={0}'.format(self.sid)}
+        data = {
+            'res': 1,
+            'tid': tid
+        }
+        r = self.poster.post_data(url, headers, cookies, **data)
         # self.logger.debug(r)
 
         if sell:
@@ -1002,12 +980,8 @@ if __name__ == "__main__":
 
     cc = ChainChronicleAutomation(configFile)
     config = cc.getConfigDictionary()
-
-
     logger = cc.getLogger()
     cc.CC_Login()
-
-
     if action == 'gacha':
         count = config['Gacha']['count']
         bSell = config['Gacha']['sell']
@@ -1015,15 +989,7 @@ if __name__ == "__main__":
         keptCards = None
         if config['Gacha']['keep_cards']:
             keptCards = [ int(n) for n in config['Gacha']['keep_cards'].split(',') ]
-
-        # for i in range(1, 3):
-        #    threading.Thread(target = cc.CC_Gacha, args = (gType, count, bSell, keptCards), name =  'thread-'  + str(i)).start()
         cc.CC_Gacha(gType, count, bSell, keptCards)
-    # elif action == 'raid_gacha':
-    #     count = config['RaidGacha']['count']
-    #     bSell = config['RaidGacha']['sell']
-    #     keepCardId = config['RaidGacha']['keepCardId']
-    #     cc.CC_RaidGacha(count, bSell, keepCardId)
     elif action == 'password':
         cc.CC_SetPassword('aaa123')
     elif action == 'sell':
@@ -1153,7 +1119,7 @@ if __name__ == "__main__":
         r = cc.CC_Subjugation(4)
 
     elif action =='totalwar':
-        max_count = 2000
+        max_count = 1
         for i in xrange(0, max_count):
             logger.debug(u"{0}/{1} 委托".format(i, max_count))
             r = cc.CC_TotalWar(11, ring=1)
