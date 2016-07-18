@@ -253,7 +253,7 @@ class ChainChronicleAutomation():
             #魔神戰
             self.__PlayRaid(bRaid)
 
-            time.sleep(0.5)
+            time.sleep(0.7)
 
     def CC_SetPassword(self, password):
         now = int(time.time()*1000)
