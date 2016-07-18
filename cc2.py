@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*
+import ConfigParser
+import datetime
 import json
-import requests
+import logging
+import os
 import sys
 import time
-import logging
-import datetime
-import os
-from logging.handlers import RotatingFileHandler
-from pymongo import MongoClient
-import ConfigParser
-from random import randint
-import threading
 from Queue import Queue
+from logging.handlers import RotatingFileHandler
+from random import randint
 from threading import Thread
-import poster
+
+import requests
+from pymongo import MongoClient
+
+from utils import poster
+
 
 class ChainChronicleAutomation():
     def __init__(self, configFile):
