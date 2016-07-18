@@ -156,7 +156,7 @@ class ChainChronicleAutomation():
             if current > count and not bInfinte:
                 break
             print "Start to play quest:[{0}]".format(qid)
-            result = self.__getQuest(qtype, qid).json()
+            result = self.__getQuest(qtype, qid)
             #print "...Result = [{0}]".format(result['res'])
             #print result
             if (result['res'] == 103):
