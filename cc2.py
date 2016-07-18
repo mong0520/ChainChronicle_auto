@@ -5,6 +5,7 @@ import sys
 import time
 import logging
 import datetime
+import os
 from logging.handlers import RotatingFileHandler
 from pymongo import MongoClient
 import ConfigParser
@@ -17,8 +18,9 @@ import poster
 class ChainChronicleAutomation():
     def __init__(self, configFile):
         #self.config['General']['uid'] = "ANDO4779bf78-f0f7-4a16-8d41-3c0d9ab46e0c"
-        #self.config['General']['token'] = "APA91bEAKkkmD_eJ07r_NjRMRKJ2keH1A1Ju8mC2MDd9Iu9Bogxoy-HBl8SlCJJmMEM-aCMxnMEDNr-AC5TIiKmUHGRkk-lO1ypSdZhE8PhlQLjvBub3t81kwwwxIDQPw6CsarSI_BJ8"
-        self.__initLogger()
+        #self.config['General']['token'] = "APA91bEAKkkmD_eJ07r_NjRMRKJ2keH1A1Ju8mC2MDd9Iu9Bogxoy-HBl8SlCJJmMEM-aCMxnMEDNr-AC5TIiKmUHGRkk-lO1ypSdZhE8PhlQLjvBub3t81kwwwxIDQPw6CsarSI_BJ8"        
+        log_tailname = os.path.basename(os.path.splitext(configFile)[0])
+        self.__initLogger(log_tailname)
         self.poster = poster.Poster()
         self.sid = None
         self.headers = {
@@ -163,10 +165,11 @@ class ChainChronicleAutomation():
 
         if count == -1:
             bInfinte = True
-
+        self.logger.debug("Count = {0}".format(count))
         while True:
             current = current + 1
             self.CC_GetPresents(sell=False)
+            #time.sleep(0.5)
             if current > count and not bInfinte:
                 break
             print "Start to play quest:[{0}]".format(qid)
@@ -186,7 +189,7 @@ class ChainChronicleAutomation():
                     else:
                         self.logger.warning("購買體力果實失敗, result = {0}".format(r['res']))
                         self.logger.info("開始友情抽換戒")
-                        self.CC_Gacha(6, 15, 1, None)
+                        self.CC_Gacha(6, 20, 1, None)
                 time.sleep(1)
                 current -= 1
                 continue
@@ -199,7 +202,7 @@ class ChainChronicleAutomation():
                 time.sleep(sleep_in_sec)
             result = self.__getBattleResult(qid).json()
             if result['res'] == 0:
-                self.logger.info(u"#{0} - 戰鬥完成!".format(current))
+                self.logger.info(u"#{0} - Quest is completed!".format(current))
                 #self.logger.debug(result)
                 # 踏破活動
                 try:
@@ -242,13 +245,15 @@ class ChainChronicleAutomation():
                 #sys.exit(0)
             else:
                 self.logger.error("#{0} - 戰鬥失敗: Error Code = {1}".format(current, result['res']))
-                print result
-                return
+                self.logger.debug(result)
+                self.logger.debug("Retry")
+                current -= 1
+                time.sleep(1)
 
             #魔神戰
             self.__PlayRaid(bRaid)
 
-            time.sleep(1)
+            time.sleep(0.5)
 
     def CC_SetPassword(self, password):
         now = int(time.time()*1000)
@@ -303,7 +308,7 @@ class ChainChronicleAutomation():
                     for record in r['body'][1]['data']:
                     # for record in r:
                         #print record
-                        print r['body'][1]
+                        #print r['body'][1]
                         idx = record['idx']
                         # id = record['id']
                         # type = record['type']
@@ -758,7 +763,7 @@ class ChainChronicleAutomation():
             sys.exit(0)
         return r
 
-    def __initLogger(self):
+    def __initLogger(self, tail_name=None):
         fileFormatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
             '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
 
@@ -770,8 +775,9 @@ class ChainChronicleAutomation():
 
         self.logger = logging.getLogger("Chain Chronicle")
         self.logger.setLevel(logging.DEBUG)
-
-        rh = RotatingFileHandler("cc.log", maxBytes=10240*100, backupCount=3)
+        
+        log_name = "cc_{0}.log".format(tail_name)
+        rh = RotatingFileHandler(log_name, maxBytes=1024*10000, backupCount=5)
         rh.setLevel(logging.DEBUG)
         rh.setFormatter(fileFormatter)
 
@@ -970,7 +976,7 @@ class ChainChronicleAutomation():
 
     def CC_GetPresents(self, sell=False):
         # Get present list
-        self.logger.debug(u"Get present id")
+        # self.logger.debug(u"Get present id")
         url = 'http://v252.cc.mobimon.com.tw/present/list'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
@@ -978,7 +984,7 @@ class ChainChronicleAutomation():
         ret = self.poster.post_data(url, headers, cookies, **data)
         present_ids = [data['idx'] for data in ret['body'][0]['data']]
         self.logger.debug("Present count = {0}".format(len(present_ids)))
-        self.logger.debug("Present ids = {0}".format(present_ids))
+        # self.logger.debug("Present ids = {0}".format(present_ids))
 
         # Get present
         url = 'http://v252.cc.mobimon.com.tw/present/recv'
@@ -993,9 +999,10 @@ class ChainChronicleAutomation():
             if sell is True:
                 self.__sellItem(pid)
         return ret
-
+    
 
 if __name__ == "__main__":
+
     action = None
     if len(sys.argv) < 4:
         print "Usage: python %s setting.ini -action {quest | gacha | buy}" %sys.argv[0]
@@ -1035,8 +1042,11 @@ if __name__ == "__main__":
         for quest in quest_list:
             if not quest:
                 continue
-            qtype = quest.split(',')[0]
-            qid = quest.split(',')[1]
+            quest_info = quest.split(',')
+            qtype = quest_info[0]
+            qid = quest_info[1]
+            if len(quest_info) == 3:
+                count = int(quest_info[2])
             # print qtype
             # print qid
             try:
@@ -1139,14 +1149,31 @@ if __name__ == "__main__":
 
     elif action == 'status':
         r = cc.CC_GetAllData()
-        #logger.debug(type(r))
-        # logger.debug(json.dumps(r['body'][8]['data'], sort_keys=True, indent=2))
-        logger.info(json.dumps(r, sort_keys=True, indent=2))
+        item_mapping = {
+            #2: '魂力果實',
+            #3: '復活果實',
+            #5: '超魂力果實',
+            7: '轉蛋卷',
+            10: "金幣",
+            11: '聖靈幣',
+            13: '戒指',
+            15: '賭場幣',
+            20: '轉蛋幣',
+        }
+            
+        data_list = r['body'][8]['data']
+        #logger.info(json.dumps(data_list, sort_keys=True, indent=2))
+        for data in data_list:
+            try:
+                logger.debug("{0} = {1}".format(item_mapping[data['item_id']], data['cnt']))
+            except:
+                pass
+        #logger.info(json.dumps(r, sort_keys=True, indent=2))
     elif action =='subjugation':
         r = cc.CC_Subjugation(4)
 
     elif action =='totalwar':
-        max_count = 10
+        max_count = 800
         for i in xrange(0, max_count):
             logger.debug(u"{0}/{1} 委托".format(i, max_count))
             r = cc.CC_TotalWar(11, ring=1)
