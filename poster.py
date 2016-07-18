@@ -12,9 +12,14 @@ class Poster(object):
         kwargs['cnt'] = int(time.time() * 1000)
         kwargs['timestamp'] = format(kwargs['cnt'] + 5000, 'x')
         query_string = urllib.urlencode(kwargs)
-        payload = "nature=cnt%3d{0}%26t%3d6".format(kwargs['cnt'])
         post_url = '?'.join([url, query_string])
+
+        kwargs.pop('timestamp', None)
+        payload = urllib.quote_plus(urllib.urlencode(kwargs))
+        payload = 'nature=' + payload
+        #print payload
         # print post_url
         # print payload.lower()
         r = requests.post(post_url, data=payload, headers=headers, cookies=cookies).json()
         return r
+
