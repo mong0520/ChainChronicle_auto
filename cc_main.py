@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*
 import argparse
 import os
-import utils.cc_logger
-import utils.enhanced_config_parser
-import utils.poster
-import quest_client
-import recovery_client
-import item_client
-import gacha_client
-import explorer_client
-import alldata_client
-import raid_client
-import totalwar_client
-import present_client
+import sys
 import time
 import urllib
 import simplejson
 from random import randint
-import sys
+from lib import explorer_client
+from lib import gacha_client
+from lib import item_client
+from lib import quest_client
+from lib import raid_client
+from lib import recovery_client
+from lib import present_client
+from lib import totalwar_client
+from lib import alldata_client
+import utils.cc_logger
+import utils.enhanced_config_parser
+import utils.poster
 
 
 class ChainChronicle(object):
@@ -40,7 +40,9 @@ class ChainChronicle(object):
             'GACHA': self.do_gacha_section,
             'BUY': self.do_buy_item_section,
             'EXPLORER': self.do_explorer_section,
-            'TOTALWAR': self.do_totalwar_section
+            'TOTALWAR': self.do_totalwar_section,
+            'STATUS':  self.do_show_status,  # no need section in config
+            'DAILY_TICKET': self.do_daily_gacha_ticket  # no need section in config
         }
 
     def __init_logger(self, log_id):
@@ -83,13 +85,39 @@ class ChainChronicle(object):
         }
         payload = 'param=' + urllib.quote_plus(simplejson.dumps(payload_dict))
         ret = self.poster.post_data(url, headers, None, payload, **data)
-        self.logger.debug(ret['login']['sid'])
+        # self.logger.debug(ret['login']['sid'])
         try:
             self.account_info['sid'] = ret['login']['sid']
         except KeyError:
             msg = "無法登入, Message = {0}".format(ret['msg'])
             self.logger.error(msg)
             raise KeyError(msg)
+
+    def do_daily_gacha_ticket(self, section, *args, **kwargs):
+        r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
+        self.logger.debug(r)
+
+    def do_show_status(self, section, *args, **kwargs):
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        item_mapping = {
+            # 2: '魂力果實',
+            # 3: '復活果實',
+            # 5: '超魂力果實',
+            7: '轉蛋卷',
+            10: "金幣",
+            11: '聖靈幣',
+            13: '戒指',
+            15: '賭場幣',
+            20: '轉蛋幣',
+        }
+
+        data_list = r['body'][8]['data']
+        # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
+        for data in data_list:
+            try:
+                self.logger.debug("{0} = {1}".format(item_mapping[data['item_id']], data['cnt']))
+            except KeyError:
+                pass
 
     def do_quest_section(self, section, *args, **kwargs):
         self.logger.info("Do quest section: {0}".format(section))
@@ -102,9 +130,9 @@ class ChainChronicle(object):
         quest_info['max_event_point'] = self.config.getint(section, 'MaxEventPoint')
         quest_info['auto_sell'] = self.config.getint(section, 'AutoSell')
         try:
-            quest_info['clear_present'] = self.config.getint(section, 'ClearPresent')
+            quest_info['get_present'] = self.config.getint(section, 'GetPresent')
         except:
-            quest_info['clear_present'] = 0
+            quest_info['get_present'] = 0
         if quest_info['max_event_point'] == -1:
             quest_info['max_event_point'] = sys.maxint
         count = self.config.getint(section, 'Count')
@@ -154,19 +182,19 @@ class ChainChronicle(object):
                             # self.logger.debug(idx)
                             r = self.do_sell_item(idx)
                             if r['res'] == 0:
-                                self.logger.debug("\t-> 賣出卡片 {0}, result = {1}".format(idx, r['res']))
+                                self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(idx, r['res']))
                             else:
-                                self.logger.error("\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
+                                self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
                                 sys.exit(0)
-                    except Exception as e:
+                    except Exception:
                         self.logger.warning(u"無可販賣卡片")
 
                 # Get presents
-                self.do_present_process(quest_info['clear_present'], False)
+                self.do_present_process(quest_info['get_present'], False)
             elif result['res'] == 1:
-                self.logger.warning("#{0} - 戰鬥失敗，已被登出".format(current))
+                self.logger.warning(u"#{0} - 戰鬥失敗，已被登出".format(current))
                 sleep_sec = 60 * quest_info['retry_interval']
-                self.logger.info("等待{0}分鐘後再試...".format(quest_info['retry_interval']))
+                self.logger.info(u"等待{0}分鐘後再試...".format(quest_info['retry_interval']))
                 time.sleep(sleep_sec)
                 self.do_login()
             else:
@@ -276,7 +304,7 @@ class ChainChronicle(object):
         for i in range(0, 3):
             # get result
             while True:
-                r = explorer_client.get_explorer_result(i+1, self.account_info['sid'])
+                r = explorer_client.get_explorer_result(i + 1, self.account_info['sid'])
                 # No explorer data or get result success
                 if r['res'] == 2308 or r['res'] == 0:
                     break
@@ -284,7 +312,7 @@ class ChainChronicle(object):
                     self.logger.warning(u"探索尚未結束..稍後重試")
                     time.sleep(60)
                 else:
-                    self.logger.warning("未知的探索結果")
+                    self.logger.warning(u"未知的探索結果")
                     self.logger.warning(r)
                     break
 
@@ -300,19 +328,20 @@ class ChainChronicle(object):
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
 
     def do_buy_item_section(self, section, *args, **kwargs):
-        # ret = item_client.buy_item(data, self.account_info['sid'])
-        # return ret
-        pass
+        item_type = self.config.get(section, 'Type')
+        count = self.config.getint(section, 'Count')
+
+        for i in range(0, count):
+            self.logger.debug(u"#{0} 購買道具".format(i + 1))
+            ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+            if ret['res'] == 0:
+                self.logger.debug(u'    ->完成')
+            else:
+                self.logger.debug(u'    ->失敗')
+                self.logger.debug(ret)
 
     def buy_ap_fruit(self):
-        data = {
-            'kind': 'item',
-            'type': 'item',
-            'id': 1,
-            'val': 1,
-            'price': 10,
-        }
-        ret = item_client.buy_item(data, self.account_info['sid'])
+        ret = item_client.buy_ap_fruit(self.account_info['sid'])
         if ret['res'] == 0:
             self.logger.debug(u"購買體力果實完成")
         else:
@@ -509,10 +538,14 @@ class ChainChronicle(object):
 def main():
     parser = argparse.ArgumentParser(description="Chain Chronicle automation tool")
     parser.add_argument('-c', '--config', help='Config file path', required=True)
+    parser.add_argument('-a', '--action', help='Execute specific section of config file', required=False)
     args = parser.parse_args()
     config_file = args.config
     cc = ChainChronicle(config_file)
     cc.load_config()
+    if args.action is not None:
+        # force overwrite config flow and just do the action from args
+        cc.action_list = [args.action]
     cc.start()
 
 if __name__ == '__main__':
