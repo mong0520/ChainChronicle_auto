@@ -143,7 +143,7 @@ class ChainChronicle(object):
             current += 1
             if current > count and b_infinite is False:
                 break
-            self.logger.debug(u"#{0} 開始關卡".format(current))
+            self.logger.debug(u"#{0} 開始關卡: [{1}]".format(current, quest_info['qid']))
             result = quest_client.start_quest(quest_info, self.account_info['sid'])
             # self.logger.debug(result)
             if result['res'] == 0:
@@ -436,12 +436,12 @@ class ChainChronicle(object):
             return gacha_result
         return gacha_result
 
-    def do_present_process(self, b_flag, b_sell):
-        if b_flag is False:
+    def do_present_process(self, i_flag, b_sell):
+        if i_flag == 0:
             return
         sid = self.account_info['sid']
         present_ids = present_client.get_present_list(sid)
-        self.logger.debug(present_ids)
+        self.logger.debug('禮物清單: {0}'.format(present_ids))
         while len(present_ids) > 0:
             pid = present_ids.pop(0)
             self.logger.debug("接收禮物 {0}".format(pid))
