@@ -10,8 +10,9 @@ class Poster(object):
     
     @staticmethod
     def post_data(url, headers=None, cookies=None, payload=None, **kwargs):
-        kwargs['cnt'] = int(time.time() * 1000)
-        kwargs['timestamp'] = format(kwargs['cnt'] + 5000, 'x')
+        # kwargs['timestamp'] = int(time.time())
+        kwargs['timestamp'] = int(time.time() * 1000)
+        kwargs['cnt'] = format(kwargs['timestamp'] + 5000, 'x')
         query_string = urllib.urlencode(kwargs)
         post_url = '?'.join([url, query_string])
         kwargs.pop('timestamp', None)
