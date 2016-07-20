@@ -18,6 +18,7 @@ from lib import alldata_client
 import utils.cc_logger
 import utils.enhanced_config_parser
 import utils.poster
+import utils.card_helper
 
 
 class ChainChronicle(object):
@@ -42,6 +43,7 @@ class ChainChronicle(object):
             'EXPLORER': self.do_explorer_section,
             'TOTALWAR': self.do_totalwar_section,
             'STATUS':  self.do_show_status,  # no need section in config
+            'LIST_CARDS':  self.do_show_all_cards,  # no need section in config
             'DAILY_TICKET': self.do_daily_gacha_ticket  # no need section in config
         }
 
@@ -119,6 +121,31 @@ class ChainChronicle(object):
             except KeyError:
                 pass
 
+    def do_show_all_cards(self, section, *args, **kwargs):
+        """ 只列出四星/五星角色卡 """
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        card_list = r['body'][6]['data']
+
+        # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
+        for card in card_list:
+            if card['type'] != 0:  # not character card
+                continue
+            try:
+                cid = int(card['id'])
+                card_dict = utils.card_helper.find_card_by_id(cid)
+                if card_dict and card_dict['rarity'] >= 4:
+                    self.logger.debug(u"{0}, 界限突破：{1}, 等級: {2}, 稀有度: {3}".format(
+                        card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
+            except KeyError:
+                raise
+            except TypeError:
+                raise
+
+        
+
+
+
+
     def do_quest_section(self, section, *args, **kwargs):
         self.logger.info("Do quest section: {0}".format(section))
         quest_info = dict()
@@ -164,7 +191,7 @@ class ChainChronicle(object):
             result = quest_client.finish_quest(quest_info, self.account_info['sid'])
             # self.logger.debug("Quest finish result = {0}".format(result['res']))
             if result['res'] == 0:
-                self.logger.debug(u"    -> 關卡完成".format(current))
+                # self.logger.debug(u"    -> 關卡完成".format(current))
                 # 踏破
                 try:
                     result = self.__is_meet_event_point(result, quest_info['max_event_point'])
@@ -198,9 +225,10 @@ class ChainChronicle(object):
                 time.sleep(sleep_sec)
                 self.do_login()
             else:
-                self.logger.debug(u"    -> 關卡失敗".format(current))
+                self.logger.error(u"    -> 關卡失敗".format(current))
+                self.logger.debug(result)
                 return
-            time.sleep(1)
+            time.sleep(0.5)
             # 魔神戰
             if quest_info['raid'] == 1:
                 self.do_raid_quest()
@@ -422,6 +450,7 @@ class ChainChronicle(object):
                     gacha_result[idx] = cid
             except KeyError as e:
                 self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
+                print json.dumps(r, indent=4, sort_keys=True)
                 return gacha_result
             except Exception as e:
                 self.logger.error(u"轉蛋完成，但有未知的錯誤: {0}".format(r['res']))
@@ -441,12 +470,16 @@ class ChainChronicle(object):
             return
         sid = self.account_info['sid']
         present_ids = present_client.get_present_list(sid)
-        self.logger.debug('禮物清單: {0}'.format(present_ids))
+        # self.logger.debug('禮物清單: {0}'.format(present_ids))
         while len(present_ids) > 0:
             pid = present_ids.pop(0)
             self.logger.debug("接收禮物 {0}".format(pid))
             ret = present_client.receieve_present(pid, sid)
-            self.logger.debug("    -> 結果：{0}".format(ret['res']))
+            if ret['res'] == 0:
+                # self.logger.debug(u"    -> 接收成功")
+                pass
+            else:
+                self.logger.debug(u"    -> 接收失敗: {0}".format(ret))
             if b_sell is True:
                 ret = self.do_sell_item(pid)
                 self.logger.debug("sell present result: {0}".format(ret['res']))
