@@ -449,12 +449,19 @@ class ChainChronicle(object):
                     tmp[idx] = cid
                     gacha_result[idx] = cid
             except KeyError as e:
-                self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
-                print json.dumps(r, indent=4, sort_keys=True)
-                return gacha_result
+                # self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
+                # print simplejson.dumps(r, indent=4, sort_keys=True)
+                # error handling for 新卡片
+                for record in r['body'][3]['data']:
+                    tmp = dict()
+                    idx = record['idx']
+                    cid = record['id']
+                    tmp[idx] = cid
+                    gacha_result[idx] = cid
             except Exception as e:
-                self.logger.error(u"轉蛋完成，但有未知的錯誤: {0}".format(r['res']))
+                self.logger.error(u"轉蛋完成，但有未知的錯誤，可能是包包滿了，無法賣出: {0}".format(r['res']))
                 self.logger.error(r)
+                raise
                 return gacha_result
 
         elif r['res'] == 703:

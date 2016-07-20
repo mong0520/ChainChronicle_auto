@@ -1026,7 +1026,7 @@ if __name__ == "__main__":
     elif action == 'password':
         cc.CC_SetPassword('aaa123')
     elif action == 'sell':
-        cc.CC_ClearItems(600)
+        cc.CC_ClearItems(1200)
     elif action == 'quest':
         now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         logger.info("#Start at: {0}".format(now))
