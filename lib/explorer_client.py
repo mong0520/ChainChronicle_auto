@@ -21,7 +21,7 @@ def start_explorer(parameter, sid):
         'explorer_idx': parameter['explorer_idx'],
         'location_id': parameter['location_id'],
         'card_idx': parameter['card_idx'],
-        'pick_up': parameter['pick_up'],
+        'pickup': parameter['pickup'],
         'interval': 1,
         'helper1': '588707',
         'helper2': '1913206'
@@ -30,7 +30,7 @@ def start_explorer(parameter, sid):
 
     if r['res'] == 2311:
         # self.logger.debug(u"pickup value error, retry")
-        parameter['pick_up'] = 0
+        parameter['pickup'] = 0
         start_explorer(parameter, sid)
 
     return r

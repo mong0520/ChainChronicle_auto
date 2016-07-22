@@ -19,6 +19,7 @@ import utils.cc_logger
 import utils.enhanced_config_parser
 import utils.poster
 import utils.card_helper
+from pymongo import MongoClient
 
 
 class ChainChronicle(object):
@@ -46,6 +47,11 @@ class ChainChronicle(object):
             'LIST_CARDS':  self.do_show_all_cards,  # no need section in config
             'DAILY_TICKET': self.do_daily_gacha_ticket  # no need section in config
         }
+        client = MongoClient('127.0.0.1', 27017)
+        #client.the_database.authenticate('admin', 'xxx', source = 'admin')
+        self.db = client.cc
+
+
 
     def __init_logger(self, log_id):
         self.logger = utils.cc_logger.CCLogger.get_logger(log_id)
@@ -352,8 +358,9 @@ class ChainChronicle(object):
             parameter['explorer_idx'] = i+1
             parameter['location_id'] = area
             parameter['card_idx'] = card_idx
-            parameter['pick_up'] = 1
+            parameter['pickup'] = 1
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+            print r
 
     def do_buy_item_section(self, section, *args, **kwargs):
         item_type = self.config.get(section, 'Type')
