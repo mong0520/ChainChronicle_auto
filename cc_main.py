@@ -152,7 +152,7 @@ class ChainChronicle(object):
         quest_info['qtype'] = self.config.get(section, 'QuestId').split(',')[0]
         quest_info['qid'] = self.config.get(section, 'QuestId').split(',')[1]
         quest_info['raid'] = self.config.getint(section, 'AutoRaid')
-        quest_info['fid'] = 196530
+        quest_info['fid'] = 1965350
         quest_info['retry_interval'] = self.config.getint(section, 'RetryDuration')
         quest_info['max_event_point'] = self.config.getint(section, 'MaxEventPoint')
         quest_info['auto_sell'] = self.config.getint(section, 'AutoSell')
@@ -460,7 +460,7 @@ class ChainChronicle(object):
                     gacha_result[idx] = cid
             except Exception as e:
                 self.logger.error(u"轉蛋完成，但有未知的錯誤，可能是包包滿了，無法賣出: {0}".format(r['res']))
-                self.logger.error(r)
+                self.logger.debug(simplejson.dumps(r))
                 raise
                 return gacha_result
 
