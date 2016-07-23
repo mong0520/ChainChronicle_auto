@@ -127,6 +127,10 @@ class ChainChronicle(object):
             except KeyError:
                 pass
 
+        user_info = r['body'][4]['data']
+        for key, data in user_info.iteritems():
+            self.logger.debug(u"{0} = {1}".format(key, data))
+
     def do_show_all_cards(self, section, *args, **kwargs):
         """ 只列出四星/五星角色卡 """
         r = alldata_client.get_alldata(self.account_info['sid'])
@@ -324,7 +328,7 @@ class ChainChronicle(object):
 
     def do_explorer_section(self, section, *args, **kwargs):
         # Hard code cid to exclude them to explorer
-        except_card_idx = [7017, 7024, 7015, 51]
+        except_card_id = [7017, 7024, 7015, 51]
         r = explorer_client.get_explorer_information(self.account_info['sid'])
         if r['res'] != 0:
             self.logger.error(u"無法取得探索資訊")
@@ -334,6 +338,11 @@ class ChainChronicle(object):
         # self.logger.debug(pickup_list)
 
         explorer_area = self.config.getlist(section, 'area')
+        
+        # debug section
+        # card_idx = self.find_best_idx_to_explorer(pickup_list[3], except_card_id)
+        # print card_idx
+        #sys.exit(0)
 
         for i in range(0, 3):
             # get result
@@ -518,7 +527,7 @@ class ChainChronicle(object):
         self.logger.info("等待{0}秒後完成...".format(sleep_in_sec))
         time.sleep(sleep_in_sec)
 
-    def find_best_idx_to_explorer(self, area_pickup_list, except_card_idx=[]):
+    def find_best_idx_to_explorer(self, area_pickup_list, except_card_id=[]):
         # for pickup in pickup_list:
         # self.logger.debug(pickup)
         # card_list = self.CC_GetAllData()['body'][6]['data']
@@ -529,6 +538,9 @@ class ChainChronicle(object):
         self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
         temp_idx = None
         for card in card_list:
+            if card['id'] in except_card_id:
+                self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
+                continue
             if card['type'] == 0:
                 temp_idx = card['idx']
                 temp_id = card['id']
@@ -544,8 +556,6 @@ class ChainChronicle(object):
                             int(area_pickup_list['weapontype']) == card_doc['battletype']):
 
                         temp_idx = card['idx']
-                        if temp_id in except_card_idx:
-                            continue
                         if card_doc['rarity'] == 5:
                             continue
                         self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
@@ -562,6 +572,7 @@ class ChainChronicle(object):
             else:
                 # card is not character
                 continue
+        self.logger.warning(u"找不到適合的探索角色，使用[{0}]".format(card_doc['name']))
         return temp_idx
 
     def __is_meet_event_point(self, result, max_event_point):
