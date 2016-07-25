@@ -18,6 +18,8 @@ from lib import alldata_client
 import utils.cc_logger
 import utils.enhanced_config_parser
 import utils.poster
+import utils.card_helper
+from pymongo import MongoClient
 
 
 class ChainChronicle(object):
@@ -42,8 +44,14 @@ class ChainChronicle(object):
             'EXPLORER': self.do_explorer_section,
             'TOTALWAR': self.do_totalwar_section,
             'STATUS':  self.do_show_status,  # no need section in config
+            'LIST_CARDS':  self.do_show_all_cards,  # no need section in config
             'DAILY_TICKET': self.do_daily_gacha_ticket  # no need section in config
         }
+        client = MongoClient('127.0.0.1', 27017)
+        #client.the_database.authenticate('admin', 'xxx', source = 'admin')
+        self.db = client.cc
+
+
 
     def __init_logger(self, log_id):
         self.logger = utils.cc_logger.CCLogger.get_logger(log_id)
@@ -119,13 +127,42 @@ class ChainChronicle(object):
             except KeyError:
                 pass
 
+        user_info = r['body'][4]['data']
+        for key, data in user_info.iteritems():
+            self.logger.debug(u"{0} = {1}".format(key, data))
+
+    def do_show_all_cards(self, section, *args, **kwargs):
+        """ 只列出四星/五星角色卡 """
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        card_list = r['body'][6]['data']
+
+        # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
+        for card in card_list:
+            if card['type'] != 0:  # not character card
+                continue
+            try:
+                cid = int(card['id'])
+                card_dict = utils.card_helper.find_card_by_id(cid)
+                if card_dict and card_dict['rarity'] >= 4:
+                    self.logger.debug(u"{0}, 界限突破：{1}, 等級: {2}, 稀有度: {3}".format(
+                        card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
+            except KeyError:
+                raise
+            except TypeError:
+                raise
+
+        
+
+
+
+
     def do_quest_section(self, section, *args, **kwargs):
         self.logger.info("Do quest section: {0}".format(section))
         quest_info = dict()
         quest_info['qtype'] = self.config.get(section, 'QuestId').split(',')[0]
         quest_info['qid'] = self.config.get(section, 'QuestId').split(',')[1]
         quest_info['raid'] = self.config.getint(section, 'AutoRaid')
-        quest_info['fid'] = 196530
+        quest_info['fid'] = 1965350
         quest_info['retry_interval'] = self.config.getint(section, 'RetryDuration')
         quest_info['max_event_point'] = self.config.getint(section, 'MaxEventPoint')
         quest_info['auto_sell'] = self.config.getint(section, 'AutoSell')
@@ -164,7 +201,7 @@ class ChainChronicle(object):
             result = quest_client.finish_quest(quest_info, self.account_info['sid'])
             # self.logger.debug("Quest finish result = {0}".format(result['res']))
             if result['res'] == 0:
-                self.logger.debug(u"    -> 關卡完成".format(current))
+                # self.logger.debug(u"    -> 關卡完成".format(current))
                 # 踏破
                 try:
                     result = self.__is_meet_event_point(result, quest_info['max_event_point'])
@@ -198,9 +235,10 @@ class ChainChronicle(object):
                 time.sleep(sleep_sec)
                 self.do_login()
             else:
-                self.logger.debug(u"    -> 關卡失敗".format(current))
+                self.logger.error(u"    -> 關卡失敗".format(current))
+                self.logger.debug(result)
                 return
-            time.sleep(1)
+            time.sleep(0.5)
             # 魔神戰
             if quest_info['raid'] == 1:
                 self.do_raid_quest()
@@ -290,7 +328,7 @@ class ChainChronicle(object):
 
     def do_explorer_section(self, section, *args, **kwargs):
         # Hard code cid to exclude them to explorer
-        except_card_idx = [7017, 7024, 7015, 51]
+        except_card_id = [7017, 7024, 7015, 51]
         r = explorer_client.get_explorer_information(self.account_info['sid'])
         if r['res'] != 0:
             self.logger.error(u"無法取得探索資訊")
@@ -300,6 +338,11 @@ class ChainChronicle(object):
         # self.logger.debug(pickup_list)
 
         explorer_area = self.config.getlist(section, 'area')
+        
+        # debug section
+        # card_idx = self.find_best_idx_to_explorer(pickup_list[3], except_card_id)
+        # print card_idx
+        #sys.exit(0)
 
         for i in range(0, 3):
             # get result
@@ -317,15 +360,16 @@ class ChainChronicle(object):
                     break
 
             area = int(explorer_area[i])
-            card_idx = self.find_best_idx_to_explorer(pickup_list[area], except_card_idx)
+            card_idx = self.find_best_idx_to_explorer(pickup_list[area], except_card_id)
 
             # go to explorer
             parameter = dict()
             parameter['explorer_idx'] = i+1
             parameter['location_id'] = area
             parameter['card_idx'] = card_idx
-            parameter['pick_up'] = 1
+            parameter['pickup'] = 1
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+            print r
 
     def do_buy_item_section(self, section, *args, **kwargs):
         item_type = self.config.get(section, 'Type')
@@ -421,11 +465,19 @@ class ChainChronicle(object):
                     tmp[idx] = cid
                     gacha_result[idx] = cid
             except KeyError as e:
-                self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
-                return gacha_result
+                # self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
+                # print simplejson.dumps(r, indent=4, sort_keys=True)
+                # error handling for 新卡片
+                for record in r['body'][3]['data']:
+                    tmp = dict()
+                    idx = record['idx']
+                    cid = record['id']
+                    tmp[idx] = cid
+                    gacha_result[idx] = cid
             except Exception as e:
-                self.logger.error(u"轉蛋完成，但有未知的錯誤: {0}".format(r['res']))
-                self.logger.error(r)
+                self.logger.error(u"轉蛋完成，但有未知的錯誤，可能是包包滿了，無法賣出: {0}".format(r['res']))
+                self.logger.debug(simplejson.dumps(r))
+                raise
                 return gacha_result
 
         elif r['res'] == 703:
@@ -441,12 +493,16 @@ class ChainChronicle(object):
             return
         sid = self.account_info['sid']
         present_ids = present_client.get_present_list(sid)
-        self.logger.debug('禮物清單: {0}'.format(present_ids))
+        # self.logger.debug('禮物清單: {0}'.format(present_ids))
         while len(present_ids) > 0:
             pid = present_ids.pop(0)
             self.logger.debug("接收禮物 {0}".format(pid))
             ret = present_client.receieve_present(pid, sid)
-            self.logger.debug("    -> 結果：{0}".format(ret['res']))
+            if ret['res'] == 0:
+                # self.logger.debug(u"    -> 接收成功")
+                pass
+            else:
+                self.logger.debug(u"    -> 接收失敗: {0}".format(ret))
             if b_sell is True:
                 ret = self.do_sell_item(pid)
                 self.logger.debug("sell present result: {0}".format(ret['res']))
@@ -471,7 +527,7 @@ class ChainChronicle(object):
         self.logger.info("等待{0}秒後完成...".format(sleep_in_sec))
         time.sleep(sleep_in_sec)
 
-    def find_best_idx_to_explorer(self, area_pickup_list, except_card_idx=[]):
+    def find_best_idx_to_explorer(self, area_pickup_list, except_card_id=[]):
         # for pickup in pickup_list:
         # self.logger.debug(pickup)
         # card_list = self.CC_GetAllData()['body'][6]['data']
@@ -482,6 +538,9 @@ class ChainChronicle(object):
         self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
         temp_idx = None
         for card in card_list:
+            if card['id'] in except_card_id:
+                self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
+                continue
             if card['type'] == 0:
                 temp_idx = card['idx']
                 temp_id = card['id']
@@ -497,8 +556,6 @@ class ChainChronicle(object):
                             int(area_pickup_list['weapontype']) == card_doc['battletype']):
 
                         temp_idx = card['idx']
-                        if temp_id in except_card_idx:
-                            continue
                         if card_doc['rarity'] == 5:
                             continue
                         self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
@@ -515,6 +572,7 @@ class ChainChronicle(object):
             else:
                 # card is not character
                 continue
+        self.logger.warning(u"找不到適合的探索角色，使用[{0}]".format(card_doc['name']))
         return temp_idx
 
     def __is_meet_event_point(self, result, max_event_point):

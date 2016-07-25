@@ -808,7 +808,9 @@ class ChainChronicleAutomation():
         # self.logger.debug(cards)
         count = 0
         idx = 0
+        print cards
         while(count < max_sell_count):
+            print idx
             c = cards[idx]
             idx += 1
             # self.logger.debug("Now Trying to sell item {0}".format(c['id']))
@@ -820,6 +822,8 @@ class ChainChronicleAutomation():
                 self.logger.debug(u"賣出物品 {0}".format(c['id']))
                 r = self.__sellItem(c['idx'])
                 count += 1
+            elif 'type' in c and c['type'] == 0 and 'maxlv' in c and c['maxlv'] >= 70:
+                continue 
             elif 'locked' in c and c['locked']:
                 self.logger.debug(u"聖靈幣鎖住，無法販賣")
                 continue
@@ -1026,7 +1030,7 @@ if __name__ == "__main__":
     elif action == 'password':
         cc.CC_SetPassword('aaa123')
     elif action == 'sell':
-        cc.CC_ClearItems(600)
+        cc.CC_ClearItems(1200)
     elif action == 'quest':
         now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         logger.info("#Start at: {0}".format(now))
