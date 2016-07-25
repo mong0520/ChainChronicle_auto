@@ -360,7 +360,7 @@ class ChainChronicle(object):
                     break
 
             area = int(explorer_area[i])
-            card_idx = self.find_best_idx_to_explorer(pickup_list[area], except_card_idx)
+            card_idx = self.find_best_idx_to_explorer(pickup_list[area], except_card_id)
 
             # go to explorer
             parameter = dict()
