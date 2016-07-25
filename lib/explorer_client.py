@@ -27,12 +27,6 @@ def start_explorer(parameter, sid):
         'helper2': '1913206'
     }
     r = poster.post_data(url, headers, cookies, payload=None, **data)
-
-    if r['res'] == 2311:
-        # self.logger.debug(u"pickup value error, retry")
-        parameter['pickup'] = 0
-        start_explorer(parameter, sid)
-
     return r
 
 

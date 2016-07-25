@@ -15,6 +15,7 @@ from lib import recovery_client
 from lib import present_client
 from lib import totalwar_client
 from lib import alldata_client
+from lib import subjugation_client
 import utils.cc_logger
 import utils.enhanced_config_parser
 import utils.poster
@@ -43,15 +44,15 @@ class ChainChronicle(object):
             'BUY': self.do_buy_item_section,
             'EXPLORER': self.do_explorer_section,
             'TOTALWAR': self.do_totalwar_section,
+            'SUBJUGATION': self.do_subjugation,
             'STATUS':  self.do_show_status,  # no need section in config
             'LIST_CARDS':  self.do_show_all_cards,  # no need section in config
-            'DAILY_TICKET': self.do_daily_gacha_ticket  # no need section in config
+            'DAILY_TICKET': self.do_daily_gacha_ticket,  # no need section in config
+            'LIST_ALLDATA': self.do_show_all_data  # no need section in config
         }
         client = MongoClient('127.0.0.1', 27017)
-        #client.the_database.authenticate('admin', 'xxx', source = 'admin')
+        # client.the_database.authenticate('admin', 'xxx', source = 'admin')
         self.db = client.cc
-
-
 
     def __init_logger(self, log_id):
         self.logger = utils.cc_logger.CCLogger.get_logger(log_id)
@@ -105,6 +106,10 @@ class ChainChronicle(object):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
         self.logger.debug(r)
 
+    def do_show_all_data(self, section, *args, **kwargs):
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        print(simplejson.dumps(r, sort_keys=True, indent=2))
+
     def do_show_status(self, section, *args, **kwargs):
         r = alldata_client.get_alldata(self.account_info['sid'])
         item_mapping = {
@@ -150,11 +155,6 @@ class ChainChronicle(object):
                 raise
             except TypeError:
                 raise
-
-        
-
-
-
 
     def do_quest_section(self, section, *args, **kwargs):
         self.logger.info("Do quest section: {0}".format(section))
@@ -275,6 +275,71 @@ class ChainChronicle(object):
         else:
             pass
 
+    def do_subjugation(self, section, *args, **kwargs):
+        parameter = dict()
+        parameter['jid'] = self.config.getint(section, 'Jid')
+        parties = self.config.options_with_prefix(section, 'pt_')
+        parameter['pt_cids'] = list()
+        for party in parties:
+            parameter['pt_cids'].append(self.config.getlist(section, party))
+
+        self.logger.debug(u"取得討伐戰資料")
+        r = subjugation_client.check_participant(parameter, self.account_info['sid'])
+        if r != 0:
+            self.logger.debug(r)
+            return
+
+        # get ecnt
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        try:
+            ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
+            # ecnt = 16
+        except KeyError:
+            self.logger.debug("Cant get ecnt data")
+            return
+
+        self.logger.info(u"第{0}次討伐".format(ecnt))
+        self.logger.debug(u"取得討伐戰資料")
+        r = subjugation_client.try_subjugation()
+        if r['res'] == 1916:
+            self.logger.warning("Not enough brave, exit")
+            return
+        elif r['res'] == 1917:
+            self.logger.warning(u"已經在討伐中")
+            self.logger.debug(r)
+        else:
+            self.logger.debug(u"Unknown result {0}".result(r))
+            return
+
+        self.logger.debug(u"取得關卡id")
+        base_id_list = list()
+        wave_list = list()
+        for data in r['body'][1]['data']:
+            base_id_list.append(data['base_id'])
+            wave_list.append(data['max_wave'])
+        parameter['wave_list'] = wave_list
+
+        self.logger.debug(u"關卡id = {0}".format(base_id_list))
+        # Start
+
+        # if len(pt_cids) < len(base_id_list), it will through exception
+        for idx, bid in enumerate(base_id_list):
+            self.logger.debug(u"Using Party {0}".format(idx))
+            self.logger.debug(u'討伐關卡: {0}'.format(bid))
+            parameter['bid'] = bid
+            parameter['pt'] = idx
+            parameter['wave'] = wave_list[idx]
+            parameter['pt_cid'] = parameter['pt_cids'][idx]
+
+            # Start entry
+            r = subjugation_client.start_subjugation(parameter, self.account_info['sid'])
+            self.logger.debug("Start entry = {0}".format(r))
+
+            # Get Result
+            r = subjugation_client.finish_subjugation(parameter)
+            self.logger.debug("End entry = {0}".format(r))
+            self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
+
     def do_gacha_section(self, section, *args, **kwargs):
         gacha_info = dict()
 
@@ -369,7 +434,11 @@ class ChainChronicle(object):
             parameter['card_idx'] = card_idx
             parameter['pickup'] = 1
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
-            print r
+            if r['res'] == 2311:
+                # self.logger.debug(u"pickup value error, retry")
+                parameter['pickup'] = 0
+                explorer_client.start_explorer(parameter, self.account_info['sid'])
+
 
     def do_buy_item_section(self, section, *args, **kwargs):
         item_type = self.config.get(section, 'Type')
@@ -450,7 +519,7 @@ class ChainChronicle(object):
         return ret
 
     def do_gacha(self, g_type):
-        gacha_result = {}
+        gacha_result = dict
         parameter = dict()
         parameter['type'] = g_type
         r = gacha_client.gacha(parameter, self.account_info['sid'])
@@ -464,7 +533,7 @@ class ChainChronicle(object):
                     cid = record['id']
                     tmp[idx] = cid
                     gacha_result[idx] = cid
-            except KeyError as e:
+            except KeyError:
                 # self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
                 # print simplejson.dumps(r, indent=4, sort_keys=True)
                 # error handling for 新卡片
@@ -474,10 +543,10 @@ class ChainChronicle(object):
                     cid = record['id']
                     tmp[idx] = cid
                     gacha_result[idx] = cid
-            except Exception as e:
+            except Exception:
                 self.logger.error(u"轉蛋完成，但有未知的錯誤，可能是包包滿了，無法賣出: {0}".format(r['res']))
                 self.logger.debug(simplejson.dumps(r))
-                raise
+                # raise
                 return gacha_result
 
         elif r['res'] == 703:
@@ -543,7 +612,6 @@ class ChainChronicle(object):
                 continue
             if card['type'] == 0:
                 temp_idx = card['idx']
-                temp_id = card['id']
                 card_doc = self.db.charainfo.find_one({"cid": card['id']})
                 if card_doc:
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
@@ -597,10 +665,17 @@ def main():
     parser = argparse.ArgumentParser(description="Chain Chronicle automation tool")
     parser.add_argument('-c', '--config', help='Config file path', required=True)
     parser.add_argument('-a', '--action', help='Execute specific section of config file', required=False)
+    parser.add_argument('-l', '--list_command', help='List commands', required=False, action='store_true')
+
     args = parser.parse_args()
     config_file = args.config
     cc = ChainChronicle(config_file)
     cc.load_config()
+    if args.list_command:
+        print "Valid actions:"
+        print cc.action_mapping.keys()
+        sys.exit(0)
+
     if args.action is not None:
         # force overwrite config flow and just do the action from args
         cc.action_list = [args.action]
