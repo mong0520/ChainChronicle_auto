@@ -216,7 +216,7 @@ class ChainChronicle(object):
                         for earn in result['body'][1]['data']:
                             # id = earn['id']
                             idx = earn['idx']
-                            # self.logger.debug(idx)
+                            self.logger.debug(earn)
                             r = self.do_sell_item(idx)
                             if r['res'] == 0:
                                 self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(idx, r['res']))
