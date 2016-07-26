@@ -2,8 +2,12 @@ import requests
 import time
 import simplejson as json
 import re
+import sys
 
-date = '20160721_252'
+try:
+    date = sys.argv[1]
+except IndexError as e:
+    print "Please speicfy date argument, for example '20160721_252'"
 timestamp = int(time.time() * 1000) 
 cnt = format(timestamp + 5000, 'x')
 
@@ -25,4 +29,3 @@ result.sort()
 
 for r in result:
     print r
-#print json.dumps(card_id_list, indent=2, sort_keys=True)
