@@ -3,15 +3,40 @@ import time
 import simplejson as json
 import re
 import sys
+from Queue import Queue
+from threading import Thread
+import wget
+import os
+
+q = Queue(maxsize=0)
+num_threads = 10
+timestamp = int(time.time() * 1000)
+cnt = format(timestamp + 5000, 'x')
+pattern = "cha_2d_card_(\d+)\.bdl"
+output_path = 'resource'
+
+
+def do_stuff(q):
+    while True:
+        url = q.get()
+        if url:
+            filename = wget.download(url, out=output_path)
+            file_size = os.stat(filename).st_size
+            if file_size and file_size < 5000:
+                os.remove(filename)
+            q.task_done()
 
 try:
     date = sys.argv[1]
 except IndexError as e:
     print "Please speicfy date argument, for example '20160721_252'"
-timestamp = int(time.time() * 1000) 
-cnt = format(timestamp + 5000, 'x')
+    sys.exit(0)
 
-pattern = "cha_2d_card_(\d+)\.bdl"
+for i in range(num_threads):
+    worker = Thread(target=do_stuff, args=(q,))
+    worker.setDaemon(True)
+    worker.start()
+
 
 r = requests.get('http://content.cc.mobimon.com.tw/game/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp))
 raw_data = json.loads(r.text)
@@ -28,4 +53,11 @@ for card_id in card_id_list:
 result.sort()
 
 for r in result:
-    print r
+    url = 'http://content.cc.mobimon.com.tw/game/{0}/Resource/Card/cha_2d_card_{1}.scr'.format(date, r)
+    q.put(url)
+
+q.join()
+
+
+# Remove incorrect files
+
