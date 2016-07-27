@@ -1,2 +1,0 @@
-ChainChronicleDecode.exe
-del *.scr
