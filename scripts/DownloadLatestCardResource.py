@@ -39,7 +39,12 @@ for i in range(num_threads):
 
 
 r = requests.get('http://content.cc.mobimon.com.tw/game/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp))
-raw_data = json.loads(r.text)
+
+try:
+    raw_data = json.loads(r.text)
+except:
+    print "Unable to get response data, exit"
+    sys.exit(0)
 
 card_id_list = raw_data['files']['Card_OrgSize'].keys()
 result = list()
