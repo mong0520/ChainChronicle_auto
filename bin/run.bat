@@ -1,0 +1,2 @@
+ChainChronicleDecode.exe
+del *.scr
