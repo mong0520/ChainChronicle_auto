@@ -466,15 +466,17 @@ class ChainChronicle(object):
         for i in xrange(0, gacha_info['count']):
             self.logger.info(u"#{0}: 轉蛋開始！".format(i + 1))
             gacha_result = self.do_gacha(gacha_info['gacha_type'])
-            self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            if gacha_result is None or len(gacha_result) == 0:
+            #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+            self.logger.debug(u"得到卡片: {0}".format(gacha_result))
+            #if gacha_result is None or len(gacha_result) == 0:
+            if not gacha_result:
                 self.logger.debug("Gacha Error")
                 break
 
             # Auto sell cards and keep some cards
             if gacha_info['auto_sell'] == 1:
                 for cidx, cid in gacha_result.iteritems():
-                    if cid in gacha_info['keep_cards']:
+                    if str(cid) in gacha_info['keep_cards']:
                         continue
                     else:
                         ret = self.do_sell_item(cidx)
@@ -519,7 +521,7 @@ class ChainChronicle(object):
         return ret
 
     def do_gacha(self, g_type):
-        gacha_result = dict
+        gacha_result = dict()
         parameter = dict()
         parameter['type'] = g_type
         r = gacha_client.gacha(parameter, self.account_info['sid'])

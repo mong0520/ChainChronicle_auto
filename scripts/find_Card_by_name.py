@@ -9,7 +9,7 @@ try:
     #quest_doc = collection.find({"name": {"$regex": sys.argv[1]} })
     quest_doc = collection.find({"name": {"$regex": sys.argv[1]} }, {"_id": 0})
     for doc in quest_doc:
-        #print json.dumps(doc, encoding="UTF-8", ensure_ascii=False)
+        print json.dumps(doc, encoding="UTF-8", ensure_ascii=False)
         # print doc
         print doc['cid']
         print "%s %s" % (doc['title'], doc['name'])
