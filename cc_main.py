@@ -291,18 +291,14 @@ class ChainChronicle(object):
 
         # get ecnt
         r = alldata_client.get_alldata(self.account_info['sid'])
-        r_json = simplejson.dumps(r, indent=2)
+        # r_json = simplejson.dumps(r, indent=2)
         # print r_json
         try:
             ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
             parameter['ecnt'] = ecnt
-            # ecnt = 16
         except KeyError:
             self.logger.debug("Cant get ecnt data")
             parameter['ecnt'] = 1
-            # return
-        # print ecnt
-        # sys.exit(0)
 
         try:
             trying = r['body'][18]['data']['trying']
@@ -310,23 +306,14 @@ class ChainChronicle(object):
             trying = False
         self.logger.info(u"第{0}次討伐".format(parameter['ecnt']))
         self.logger.debug(u"取得討伐戰資料")
-
         if trying is False:
             r = subjugation_client.try_subjugation(parameter, self.account_info['sid'])
             if r['res'] == 0:
                 self.logger.debug(u"進入討伐戰")
                 data_idx = 1
-            elif r['res'] == 1916:
-                self.logger.warning("Not enough brave, exit")
-                return
-            elif r['res'] == 1917:
-                self.logger.warning(u"已經在討伐中")
-                print simplejson.dumps(r, indent=2)
-                return
             else:
-                print simplejson.dumps(r, indent=2)
+                self.logger.error(r['msg'])
                 return
-
         else:
             self.logger.warning(u"已經在討伐中")
             data_idx = 19
@@ -334,7 +321,6 @@ class ChainChronicle(object):
         self.logger.debug(u"取得關卡id")
         base_id_list = list()
         wave_list = list()
-        # 如果已經進入討伐，則id變成19
         for data in r['body'][data_idx]['data']:
             base_id_list.append(data['base_id'])
             wave_list.append(data['max_wave'])
@@ -342,10 +328,9 @@ class ChainChronicle(object):
 
         self.logger.debug(u"關卡id = {0}".format(base_id_list))
         # Start
-
         # if len(pt_cids) < len(base_id_list), it will through exception
         for idx, bid in enumerate(base_id_list):
-            self.logger.debug(u"Using Party {0}".format(idx))
+            # self.logger.debug(u"Using Party {0}".format(idx))
             self.logger.debug(u'討伐關卡: {0}'.format(bid))
             parameter['bid'] = bid
             parameter['pt'] = idx
