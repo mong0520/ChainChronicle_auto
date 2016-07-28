@@ -351,10 +351,15 @@ class ChainChronicle(object):
             if r['res'] != 0:
                 self.logger.debug(r)
                 return
+            else:
+                self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
+                # 檢查是否有bonus據點
+                data = simplejson.dumps(r, indent=2)
+                print data
+                
             # result = simplejson.dumps(r, indent=2)
             # print result
             # self.logger.debug("End entry = {0}".format(r))
-            self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
 
     def do_gacha_section(self, section, *args, **kwargs):
         gacha_info = dict()
