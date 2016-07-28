@@ -283,37 +283,42 @@ class ChainChronicle(object):
         for party in parties:
             parameter['pt_cids'].append(self.config.getlist(section, party))
 
-        self.logger.debug(u"取得討伐戰資料")
+        self.logger.debug(u"取得討伐戰資料 {0}".format(parameter['jid']))
         r = subjugation_client.check_participant(parameter, self.account_info['sid'])
-        if r != 0:
-            self.logger.debug(r)
-            return
+        # if != 0:
+            # self.logger.debug(r)
+            # return
 
         # get ecnt
         r = alldata_client.get_alldata(self.account_info['sid'])
+        # print simplejson.dumps(r, indent=2)
         try:
             ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
+            parameter['ecnt'] = ecnt
             # ecnt = 16
         except KeyError:
             self.logger.debug("Cant get ecnt data")
             return
-
+        # print ecnt
+        # sys.exit(0)
         self.logger.info(u"第{0}次討伐".format(ecnt))
         self.logger.debug(u"取得討伐戰資料")
-        r = subjugation_client.try_subjugation()
+        r = subjugation_client.try_subjugation(parameter, self.account_info['sid'])
         if r['res'] == 1916:
             self.logger.warning("Not enough brave, exit")
             return
         elif r['res'] == 1917:
             self.logger.warning(u"已經在討伐中")
-            self.logger.debug(r)
+            print simplejson.dumps(r, indent=2)
+            #return
         else:
-            self.logger.debug(u"Unknown result {0}".result(r))
+            print simplejson.dumps(r, indent=2)
             return
 
         self.logger.debug(u"取得關卡id")
         base_id_list = list()
         wave_list = list()
+        # 如果已經進入討伐，則id變成19
         for data in r['body'][1]['data']:
             base_id_list.append(data['base_id'])
             wave_list.append(data['max_wave'])
@@ -336,7 +341,7 @@ class ChainChronicle(object):
             self.logger.debug("Start entry = {0}".format(r))
 
             # Get Result
-            r = subjugation_client.finish_subjugation(parameter)
+            r = subjugation_client.finish_subjugation(parameter, self.account_info['sid'])
             self.logger.debug("End entry = {0}".format(r))
             self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
 
