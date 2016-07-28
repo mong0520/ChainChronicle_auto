@@ -301,9 +301,16 @@ class ChainChronicle(object):
             parameter['ecnt'] = 1
 
         try:
+            rare_expedition_cnt = r['body'][18]['data']['rare_expedition']['expedition_cnt']
+        except:
+            pass
+
+
+        try:
             trying = r['body'][18]['data']['trying']
         except:
             trying = False
+        # parameter['ecnt'] = 9
         self.logger.info(u"第{0}次討伐".format(parameter['ecnt']))
         self.logger.debug(u"取得討伐戰資料")
         if trying is False:
@@ -321,12 +328,34 @@ class ChainChronicle(object):
         self.logger.debug(u"取得關卡id")
         base_id_list = list()
         wave_list = list()
+        rare_base_id = None
+        rare_max_wave = None
+        # print simplejson.dumps(r['body'][data_idx]['data'])
         for data in r['body'][data_idx]['data']:
-            base_id_list.append(data['base_id'])
-            wave_list.append(data['max_wave'])
+            try:
+                is_rare = data['rare']
+            except:
+                is_rare = False
+
+            if is_rare:
+                # rare base id should be played in the end
+                rare_base_id = data['base_id']
+                rare_max_wave = data['max_wave']
+            else:
+                base_id_list.append(data['base_id'])
+                wave_list.append(data['max_wave'])
+
+        # append rare id in the end
+        if rare_base_id is not None:
+            base_id_list.append(rare_base_id)
+            wave_list.append(rare_max_wave)
+
         parameter['wave_list'] = wave_list
 
         self.logger.debug(u"關卡id = {0}".format(base_id_list))
+        self.logger.debug(u"wave_list = {0}".format(wave_list))
+        # sys.exit(0)
+
         # Start
         # if len(pt_cids) < len(base_id_list), it will through exception
         for idx, bid in enumerate(base_id_list):
@@ -338,6 +367,7 @@ class ChainChronicle(object):
             parameter['pt_cid'] = parameter['pt_cids'][idx]
 
             # Start entry
+            # print parameter
             r = subjugation_client.start_subjugation(parameter, self.account_info['sid'])
             if r['res'] != 0:
                 self.logger.debug(r)
@@ -355,7 +385,7 @@ class ChainChronicle(object):
                 self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
                 # 檢查是否有bonus據點
                 data = simplejson.dumps(r, indent=2)
-                print data
+                # print data
                 
             # result = simplejson.dumps(r, indent=2)
             # print result
