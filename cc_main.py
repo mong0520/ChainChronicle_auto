@@ -528,6 +528,14 @@ class ChainChronicle(object):
             gacha_result = self.do_gacha(gacha_info['gacha_type'])
             #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             self.logger.debug(u"得到卡片: {0}".format(gacha_result))
+            cids = gacha_result.values()
+            for cid in cids:
+                card = self.db.charainfo.find_one({"cid": cid})
+                print card
+                if not card:
+                    self.logger.debug(cid)
+                else:
+                    self.logger.debug(card['Name'])
             #if gacha_result is None or len(gacha_result) == 0:
             if not gacha_result:
                 self.logger.debug("Gacha Error")
