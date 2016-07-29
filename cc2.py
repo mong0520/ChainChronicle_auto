@@ -507,7 +507,7 @@ class ChainChronicleAutomation():
             # get ecnt
             # r = cc.CC_GetAllData()
             # ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
-            ecnt = 16
+            ecnt = 0
             self.logger.info(u"第{0}次討伐".format(ecnt))
             # sys.exit(0)
 
@@ -1173,7 +1173,7 @@ if __name__ == "__main__":
                 pass
         #logger.info(json.dumps(r, sort_keys=True, indent=2))
     elif action =='subjugation':
-        r = cc.CC_Subjugation(4)
+        r = cc.CC_Subjugation(5)
 
     elif action =='totalwar':
         max_count = 800

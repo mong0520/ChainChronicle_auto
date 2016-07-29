@@ -59,7 +59,7 @@ def finish_subjugation(parameter, sid):
         'jid': parameter['jid'],
         'bid': parameter['bid'],
         'wc': parameter['wave'],
-        'bt': parameter['bt'],
+        'bt': 6176,
         'cc': 1,
         'time': '0.00',
         'fid': 1965350,

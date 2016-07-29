@@ -8,6 +8,6 @@ cid_doc = collection.find({})
 print cid_doc
 for doc in cid_doc:
     if 'cid' in doc:
-        print "%s" % doc['cid']
+        print u"%s: %s" % (doc['cid'], doc['name'])
     else:
         print doc

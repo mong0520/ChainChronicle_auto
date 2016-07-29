@@ -225,7 +225,7 @@ class ChainChronicle(object):
                         for earn in result['body'][1]['data']:
                             # id = earn['id']
                             idx = earn['idx']
-                            # self.logger.debug(idx)
+                            self.logger.debug(earn)
                             r = self.do_sell_item(idx)
                             if r['res'] == 0:
                                 self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(idx, r['res']))
@@ -292,48 +292,83 @@ class ChainChronicle(object):
         for party in parties:
             parameter['pt_cids'].append(self.config.getlist(section, party))
 
-        self.logger.debug(u"取得討伐戰資料")
-        r = subjugation_client.check_participant(parameter, self.account_info['sid'])
-        if r != 0:
-            self.logger.debug(r)
-            return
+        # self.logger.debug(u"取得討伐戰資料")
+        # r = subjugation_client.check_participant(parameter, self.account_info['sid'])
+        # if != 0:
+            # self.logger.debug(r)
+            # return
 
         # get ecnt
         r = alldata_client.get_alldata(self.account_info['sid'])
+        # r_json = simplejson.dumps(r, indent=2)
+        # print r_json
         try:
             ecnt = r['body'][18]['data']['reached_expedition_cnt'] + 1
-            # ecnt = 16
+            parameter['ecnt'] = ecnt
         except KeyError:
             self.logger.debug("Cant get ecnt data")
-            return
+            parameter['ecnt'] = 1
 
-        self.logger.info(u"第{0}次討伐".format(ecnt))
+        try:
+            rare_expedition_cnt = r['body'][18]['data']['rare_expedition']['expedition_cnt']
+        except:
+            pass
+
+
+        try:
+            trying = r['body'][18]['data']['trying']
+        except:
+            trying = False
+        # parameter['ecnt'] = 9
+        self.logger.info(u"第{0}次討伐".format(parameter['ecnt']))
         self.logger.debug(u"取得討伐戰資料")
-        r = subjugation_client.try_subjugation()
-        if r['res'] == 1916:
-            self.logger.warning("Not enough brave, exit")
-            return
-        elif r['res'] == 1917:
-            self.logger.warning(u"已經在討伐中")
-            self.logger.debug(r)
+        if trying is False:
+            r = subjugation_client.try_subjugation(parameter, self.account_info['sid'])
+            if r['res'] == 0:
+                self.logger.debug(u"進入討伐戰")
+                data_idx = 1
+            else:
+                self.logger.error(r['msg'])
+                return
         else:
-            self.logger.debug(u"Unknown result {0}".result(r))
-            return
+            self.logger.warning(u"已經在討伐中")
+            data_idx = 19
 
         self.logger.debug(u"取得關卡id")
         base_id_list = list()
         wave_list = list()
-        for data in r['body'][1]['data']:
-            base_id_list.append(data['base_id'])
-            wave_list.append(data['max_wave'])
+        rare_base_id = None
+        rare_max_wave = None
+        # print simplejson.dumps(r['body'][data_idx]['data'])
+        for data in r['body'][data_idx]['data']:
+            try:
+                is_rare = data['rare']
+            except:
+                is_rare = False
+
+            if is_rare:
+                # rare base id should be played in the end
+                rare_base_id = data['base_id']
+                rare_max_wave = data['max_wave']
+            else:
+                base_id_list.append(data['base_id'])
+                wave_list.append(data['max_wave'])
+
+        # append rare id in the end
+        if rare_base_id is not None:
+            base_id_list.append(rare_base_id)
+            wave_list.append(rare_max_wave)
+
         parameter['wave_list'] = wave_list
 
         self.logger.debug(u"關卡id = {0}".format(base_id_list))
-        # Start
+        self.logger.debug(u"wave_list = {0}".format(wave_list))
+        # sys.exit(0)
 
+        # Start
         # if len(pt_cids) < len(base_id_list), it will through exception
         for idx, bid in enumerate(base_id_list):
-            self.logger.debug(u"Using Party {0}".format(idx))
+            # self.logger.debug(u"Using Party {0}".format(idx))
             self.logger.debug(u'討伐關卡: {0}'.format(bid))
             parameter['bid'] = bid
             parameter['pt'] = idx
@@ -341,13 +376,29 @@ class ChainChronicle(object):
             parameter['pt_cid'] = parameter['pt_cids'][idx]
 
             # Start entry
+            # print parameter
             r = subjugation_client.start_subjugation(parameter, self.account_info['sid'])
-            self.logger.debug("Start entry = {0}".format(r))
+            if r['res'] != 0:
+                self.logger.debug(r)
+                return
+            # result = simplejson.dumps(r, indent=2)
+            # print result
+            # self.logger.debug("Start entry = {0}".format(r))
 
             # Get Result
-            r = subjugation_client.finish_subjugation(parameter)
-            self.logger.debug("End entry = {0}".format(r))
-            self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
+            r = subjugation_client.finish_subjugation(parameter, self.account_info['sid'])
+            if r['res'] != 0:
+                self.logger.debug(r)
+                return
+            else:
+                self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
+                # 檢查是否有bonus據點
+                data = simplejson.dumps(r, indent=2)
+                # print data
+                
+            # result = simplejson.dumps(r, indent=2)
+            # print result
+            # self.logger.debug("End entry = {0}".format(r))
 
     def do_gacha_section(self, section, *args, **kwargs):
         gacha_info = dict()
@@ -475,15 +526,17 @@ class ChainChronicle(object):
         for i in xrange(0, gacha_info['count']):
             self.logger.info(u"#{0}: 轉蛋開始！".format(i + 1))
             gacha_result = self.do_gacha(gacha_info['gacha_type'])
-            self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            if gacha_result is None or len(gacha_result) == 0:
+            #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+            self.logger.debug(u"得到卡片: {0}".format(gacha_result))
+            #if gacha_result is None or len(gacha_result) == 0:
+            if not gacha_result:
                 self.logger.debug("Gacha Error")
                 break
 
             # Auto sell cards and keep some cards
             if gacha_info['auto_sell'] == 1:
                 for cidx, cid in gacha_result.iteritems():
-                    if cid in gacha_info['keep_cards']:
+                    if str(cid) in gacha_info['keep_cards']:
                         continue
                     else:
                         ret = self.do_sell_item(cidx)
@@ -528,7 +581,7 @@ class ChainChronicle(object):
         return ret
 
     def do_gacha(self, g_type):
-        gacha_result = dict
+        gacha_result = dict()
         parameter = dict()
         parameter['type'] = g_type
         r = gacha_client.gacha(parameter, self.account_info['sid'])
