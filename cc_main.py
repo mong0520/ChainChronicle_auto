@@ -16,6 +16,7 @@ from lib import present_client
 from lib import totalwar_client
 from lib import alldata_client
 from lib import subjugation_client
+from lib import user_client
 import utils.cc_logger
 import utils.enhanced_config_parser
 import utils.poster
@@ -48,7 +49,8 @@ class ChainChronicle(object):
             'STATUS':  self.do_show_status,  # no need section in config
             'LIST_CARDS':  self.do_show_all_cards,  # no need section in config
             'DAILY_TICKET': self.do_daily_gacha_ticket,  # no need section in config
-            'LIST_ALLDATA': self.do_show_all_data  # no need section in config
+            'LIST_ALLDATA': self.do_show_all_data,  # no need section in config
+            'PASSWORD': self.do_set_password  # no need section in config
         }
         client = MongoClient('127.0.0.1', 27017)
         # client.the_database.authenticate('admin', 'xxx', source = 'admin')
@@ -105,6 +107,13 @@ class ChainChronicle(object):
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
         self.logger.debug(r)
+
+    def do_set_password(self, section, *args, **kwargs):
+        r = user_client.get_account(self.account_info['sid'])
+        print(simplejson.dumps(r, sort_keys=True, indent=2))
+
+        r = user_client.set_password('aaa123', self.account_info['sid'])
+        print(simplejson.dumps(r, sort_keys=True, indent=2))
 
     def do_show_all_data(self, section, *args, **kwargs):
         r = alldata_client.get_alldata(self.account_info['sid'])
