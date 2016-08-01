@@ -7,9 +7,10 @@ def gacha(parammeter, sid):
     url = 'http://prod4.cc.mobimon.com.tw/gacha'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
-    if parammeter['type'] in [3]:  # Raid Gacha and Sugjugation Gacha
+    if parammeter['type'] in [3, 8]:  # Raid Gacha and Sugjugation Gacha
         parammeter['batch_count'] = 10
-        sleep_time = 5
+        #sleep_time = 5
+        sleep_time = 1
     else:
         parammeter['batch_count'] = 1
         sleep_time = 0

@@ -45,7 +45,7 @@ class ChainChronicle(object):
             'BUY': self.do_buy_item_section,
             'EXPLORER': self.do_explorer_section,
             'TOTALWAR': self.do_totalwar_section,
-            'SUBJUGATION': self.do_subjugation,
+            'SUBJUGATION': self.do_subjugation_section,
             'STATUS':  self.do_show_status,  # no need section in config
             'LIST_CARDS':  self.do_show_all_cards,  # no need section in config
             'DAILY_TICKET': self.do_daily_gacha_ticket,  # no need section in config
@@ -284,6 +284,16 @@ class ChainChronicle(object):
         else:
             pass
 
+    def do_subjugation_section(self, section, *args, **kwargs):
+        try:
+            count = self.config.getint(section, 'Count')
+        except:
+            count = 1
+        if count == -1:
+            count = sys.maxint
+        for i in range(0, count):
+            self.do_subjugation(section, *args, **kwargs)
+
     def do_subjugation(self, section, *args, **kwargs):
         parameter = dict()
         parameter['jid'] = self.config.getint(section, 'Jid')
@@ -319,7 +329,10 @@ class ChainChronicle(object):
             trying = r['body'][18]['data']['trying']
         except:
             trying = False
-        # parameter['ecnt'] = 9
+        
+        if parameter['ecnt'] > 40:
+            parameter['ecnt'] = 40
+        # parameter['ecnt'] = 40
         self.logger.info(u"第{0}次討伐".format(parameter['ecnt']))
         self.logger.debug(u"取得討伐戰資料")
         if trying is False:
@@ -366,7 +379,8 @@ class ChainChronicle(object):
         # sys.exit(0)
 
         # Start
-        # if len(pt_cids) < len(base_id_list), it will through exception
+        # base_id_list = [6]
+        # wave_list = [3]
         for idx, bid in enumerate(base_id_list):
             # self.logger.debug(u"Using Party {0}".format(idx))
             self.logger.debug(u'討伐關卡: {0}'.format(bid))
@@ -378,7 +392,15 @@ class ChainChronicle(object):
             # Start entry
             # print parameter
             r = subjugation_client.start_subjugation(parameter, self.account_info['sid'])
-            if r['res'] != 0:
+            if r['res'] == 0:
+                pass
+            elif r['res'] == 1919:
+                self.logger.debug(u"already finished")
+                continue
+            elif r['res'] == 1905:
+                self.logger.debug(r)
+                continue
+            else:
                 self.logger.debug(r)
                 return
             # result = simplejson.dumps(r, indent=2)
@@ -387,14 +409,11 @@ class ChainChronicle(object):
 
             # Get Result
             r = subjugation_client.finish_subjugation(parameter, self.account_info['sid'])
-            if r['res'] != 0:
+            if r['res'] == 0:
+                self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
+            else:
                 self.logger.debug(r)
                 return
-            else:
-                self.logger.debug(u'討伐關卡: {0} 完成'.format(bid))
-                # 檢查是否有bonus據點
-                data = simplejson.dumps(r, indent=2)
-                # print data
                 
             # result = simplejson.dumps(r, indent=2)
             # print result
@@ -524,18 +543,19 @@ class ChainChronicle(object):
     def do_gacha_process(self, gacha_info):
         """Gacha and sell"""
         for i in xrange(0, gacha_info['count']):
+            if gacha_info['gacha_type'] in [3, 8]:
+                time.sleep(3)
             self.logger.info(u"#{0}: 轉蛋開始！".format(i + 1))
             gacha_result = self.do_gacha(gacha_info['gacha_type'])
             #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            self.logger.debug(u"得到卡片: {0}".format(gacha_result))
+            self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             cids = gacha_result.values()
             for cid in cids:
                 card = self.db.charainfo.find_one({"cid": cid})
-                print card
                 if not card:
                     self.logger.debug(cid)
                 else:
-                    self.logger.debug(card['Name'])
+                    self.logger.debug(card['name'])
             #if gacha_result is None or len(gacha_result) == 0:
             if not gacha_result:
                 self.logger.debug("Gacha Error")
@@ -622,6 +642,10 @@ class ChainChronicle(object):
         elif r['res'] == 703:
             self.logger.error(u"轉蛋失敗，聖靈幣不足")
             return gacha_result
+        elif r['res'] == 207:
+            time.sleep(3)
+            self.logger.debug('retry')
+            return self.do_gacha(parameter['type'])
         else:
             self.logger.error(u"轉蛋失敗，未知的錯誤，無法繼續轉蛋:{0}, {1}".format(r['res'], r))
             return gacha_result

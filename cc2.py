@@ -805,10 +805,8 @@ class ChainChronicleAutomation():
     def CC_ClearItems(self, max_sell_count):
         all_data = self.CC_GetAllData()
         cards = all_data['body'][6]['data']
-        # self.logger.debug(cards)
         count = 0
         idx = 0
-        print cards
         while(count < max_sell_count):
             print idx
             c = cards[idx]
@@ -1030,7 +1028,7 @@ if __name__ == "__main__":
     elif action == 'password':
         cc.CC_SetPassword('aaa123')
     elif action == 'sell':
-        cc.CC_ClearItems(1200)
+        cc.CC_ClearItems(1000)
     elif action == 'quest':
         now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         logger.info("#Start at: {0}".format(now))
