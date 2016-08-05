@@ -18,7 +18,7 @@ data_mapping = {
 for data in data_mapping.keys():
     url = 'http://v252.cc.mobimon.com.tw/data/' + data
     r = utils.poster.Poster.post_data(url)
-    # print r[data]
+    print r[data]
     
     # Remove old data
     data_mapping[data].remove({})

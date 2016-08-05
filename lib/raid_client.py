@@ -5,7 +5,7 @@ import time
 
 def get_raid_boss_id(sid):
     poster = utils.poster.Poster
-    url = 'http://prod4.cc.mobimon.com.tw/raid/list'
+    url = 'http://v252.cc.mobimon.com.tw/raid/list'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -24,7 +24,7 @@ def get_raid_boss_id(sid):
 
 def start_raid_quest(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://prod4.cc.mobimon.com.tw/raid/entry'
+    url = 'http://v252.cc.mobimon.com.tw/raid/entry'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -41,7 +41,7 @@ def finish_raid_quest(parameter, sid):
     now = int(time.time() * 1000)
     hex_now = format(now + 5000, 'x')
     poster = utils.poster.Poster
-    url = 'http://prod4.cc.mobimon.com.tw/quest/result'
+    url = 'http://v252.cc.mobimon.com.tw/quest/result'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -58,7 +58,7 @@ def finish_raid_quest(parameter, sid):
 
 def get_raid_bonus(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://prod4.cc.mobimon.com.tw/raid/record'
+    url = 'http://v252.cc.mobimon.com.tw/raid/record'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
