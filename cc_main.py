@@ -254,16 +254,22 @@ class ChainChronicle(object):
                 self.do_raid_quest()
 
     def do_raid_quest(self):
-        r = raid_client.get_raid_boss_id(self.account_info['sid'])
-        try:
-            boss_id = r['boss_id']
-            boss_lv = r['boss_param']['lv']
-        except:
+        # r = raid_client.get_raid_boss_id(self.account_info['sid'])
+        # self.logger.debug(r)
+        # self.logger.debug(type(r))
+        # try:
+        #    boss_id = r['boss_id']
+        #    boss_lv = r['boss_param']['lv']
+        #except:
+        #    raise
             # 非魔神戰期間
-            return
+        #    return
+        boss_id = raid_client.get_raid_info(self.account_info['sid'], 'id')
+        boss_lv = raid_client.get_raid_info(self.account_info['sid'], 'lv')
         if boss_id:
             parameter = dict()
             parameter['boss_id'] = boss_id
+            parameter['fid'] = '1965350'
             self.logger.debug(u"魔神來襲！魔神等級: [{0}]".format(boss_lv))
             r = raid_client.start_raid_quest(parameter, self.account_info['sid'])
             if r['res'] == 0:
