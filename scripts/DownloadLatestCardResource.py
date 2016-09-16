@@ -37,8 +37,9 @@ for i in range(num_threads):
     worker.setDaemon(True)
     worker.start()
 
-
-r = requests.get('http://content.cc.mobimon.com.tw/game/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp))
+request_url = 'http://content.cc.mobimon.com.tw/CC/game09/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp)
+print request_url
+r = requests.get(request_url)
 
 try:
     raw_data = json.loads(r.text)
@@ -58,7 +59,7 @@ for card_id in card_id_list:
 result.sort()
 
 for r in result:
-    url = 'http://content.cc.mobimon.com.tw/game/{0}/Resource/Card/cha_2d_card_{1}.scr'.format(date, r)
+    url = 'http://content.cc.mobimon.com.tw/CC/game09/{0}/Resource/Card/cha_2d_card_{1}.scr'.format(date, r)
     q.put(url)
 
 q.join()
