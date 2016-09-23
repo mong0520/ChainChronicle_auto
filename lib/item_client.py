@@ -9,7 +9,7 @@ item_mapping = {
 
 def buy_item(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/token'
+    url = 'http://v267.cc.mobimon.com.tw/token'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -40,7 +40,7 @@ def buy_char_card(sid):
 
 def buy_item_with_type(card_type, sid):
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/token'
+    url = 'http://v267.cc.mobimon.com.tw/token'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -56,7 +56,7 @@ def buy_item_with_type(card_type, sid):
 
 def get_daily_gacha_ticket(sid):
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/token'
+    url = 'http://v267.cc.mobimon.com.tw/token'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

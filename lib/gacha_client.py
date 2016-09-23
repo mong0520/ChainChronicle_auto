@@ -4,7 +4,7 @@ import time
 
 def gacha(parammeter, sid):
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/gacha'
+    url = 'http://v267.cc.mobimon.com.tw/gacha'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     if parammeter['type'] in [3, 8]:  # Raid Gacha and Sugjugation Gacha

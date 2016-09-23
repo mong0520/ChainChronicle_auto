@@ -3,7 +3,7 @@ import utils.poster
 
 def get_explorer_information(sid):
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/explorer/list'
+    url = 'http://v267.cc.mobimon.com.tw/explorer/list'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -14,7 +14,7 @@ def get_explorer_information(sid):
 
 def start_explorer(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/explorer/entry'
+    url = 'http://v267.cc.mobimon.com.tw/explorer/entry'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -32,7 +32,7 @@ def start_explorer(parameter, sid):
 
 def get_explorer_result(idx, sid):
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/explorer/result'
+    url = 'http://v267.cc.mobimon.com.tw/explorer/result'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

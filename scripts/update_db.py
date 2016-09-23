@@ -16,12 +16,13 @@ data_mapping = {
 
 # Get latest charainfo data
 for data in data_mapping.keys():
-    url = 'http://v252.cc.mobimon.com.tw/data/' + data
+    url = 'http://v267.cc.mobimon.com.tw/data/' + data
     r = utils.poster.Poster.post_data(url)
     print r[data]
     
     # Remove old data
-    data_mapping[data].remove({})
+    if r[data] is not None:
+        data_mapping[data].remove({})
 
     # Insert latest data
     for element in r[data]:

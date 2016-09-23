@@ -4,7 +4,7 @@ import utils.poster
 def get_present_list(sid):
     # Get present list
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/present/list'
+    url = 'http://v267.cc.mobimon.com.tw/present/list'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {}
@@ -17,7 +17,7 @@ def get_present_list(sid):
 def receieve_present(pid, sid):
     # Get present
     poster = utils.poster.Poster
-    url = 'http://v252.cc.mobimon.com.tw/present/recv'
+    url = 'http://v267.cc.mobimon.com.tw/present/recv'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
 

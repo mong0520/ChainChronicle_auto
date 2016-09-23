@@ -82,8 +82,8 @@ class ChainChronicle(object):
                 action_function(action_name)
 
     def do_login(self):
-        #url = 'http://v252.cc.mobimon.com.tw/session/login'
-        url = 'http://v252.cc.mobimon.com.tw/session/login'
+        #url = 'http://v267.cc.mobimon.com.tw/session/login'
+        url = 'http://v267.cc.mobimon.com.tw/session/login'
         headers = {'Cookie': 'sid=INVALID'}
         data = {
             'UserUniqueID': self.account_info['uid'],
@@ -679,7 +679,7 @@ class ChainChronicle(object):
                 self.logger.debug("sell present result: {0}".format(ret['res']))
 
     def do_sell_item(self, cidx):
-        url = 'http://v252.cc.mobimon.com.tw/card/sell'
+        url = 'http://v267.cc.mobimon.com.tw/card/sell'
         cookies = {'sid': self.account_info['sid']}
         headers = {'Cookie': 'sid={0}'.format(self.account_info['sid'])}
         data = {
