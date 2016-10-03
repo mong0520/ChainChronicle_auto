@@ -209,7 +209,7 @@ class ChainChronicle(object):
                 self.__sleep(self.config.getint('GLOBAL', 'Delay'), salt=True)
 
             result = quest_client.finish_quest(quest_info, self.account_info['sid'])
-            # self.logger.debug("Quest finish result = {0}".format(result['res']))
+            # self.logger.debug("Quest finish result = {0}".format(result))
             if result['res'] == 0:
                 # self.logger.debug(u"    -> 關卡完成".format(current))
                 # 踏破
@@ -238,6 +238,11 @@ class ChainChronicle(object):
 
                 # Get presents
                 self.do_present_process(quest_info['get_present'], False)
+                # if 'recovery_val' in result.keys():
+                try:
+                    self.logger.debug(u'回復AP {0}'.format(result['recovery_val']))
+                except:
+                    pass
             elif result['res'] == 1:
                 self.logger.warning(u"#{0} - 戰鬥失敗，已被登出".format(current))
                 sleep_sec = 60 * quest_info['retry_interval']
