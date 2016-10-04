@@ -26,7 +26,7 @@ class CCAccountEmulator(threading.Thread):
 
 
 if __name__ == '__main__':
-    thread_count = 30
+    thread_count = 100
     threads = list()
     while True:
         del threads[:]

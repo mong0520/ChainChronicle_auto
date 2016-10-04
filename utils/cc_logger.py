@@ -1,6 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
-
+import os
 
 class CCLogger(object):
 
@@ -18,11 +18,15 @@ class CCLogger(object):
         # consoleFormatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
         # ' - %(message)s', datefmt='%B %d %H:%M:%S')
 
+        log_basepath = 'logs'
+        if not os.path.exists(log_basepath):
+            os.makedirs(log_basepath)
+
         CCLogger.__logger = logging.getLogger("Chain Chronicle")
         CCLogger.__logger.setLevel(logging.DEBUG)
-
         log_name = "cc_{0}.log".format(tail_name)
-        rh = RotatingFileHandler(log_name, maxBytes=1024 * 10000, backupCount=5)
+        log_path = os.path.join(log_basepath, log_name)
+        rh = RotatingFileHandler(log_path, maxBytes=1024 * 10000, backupCount=5)
         rh.setLevel(logging.DEBUG)
         rh.setFormatter(file_formatter)
 
