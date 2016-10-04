@@ -50,7 +50,9 @@ class ChainChronicle(object):
             'LIST_CARDS':  self.do_show_all_cards,  # no need section in config
             'DAILY_TICKET': self.do_daily_gacha_ticket,  # no need section in config
             'LIST_ALLDATA': self.do_show_all_data,  # no need section in config
-            'PASSWORD': self.do_set_password  # no need section in config
+            'PASSWORD': self.do_set_password,  # no need section in config
+            'PRESENT': self.do_get_present # no need section in config, get non-cards presents
+
         }
         client = MongoClient('127.0.0.1', 27017)
         # client.the_database.authenticate('admin', 'xxx', source = 'admin')
@@ -482,6 +484,7 @@ class ChainChronicle(object):
                 self.logger.debug(u"無法接受公會委拖")
                 return
 
+
     def do_explorer_section(self, section, *args, **kwargs):
         # Hard code cid to exclude them to explorer
         except_card_id = [7017, 7024, 7015, 51]
@@ -500,6 +503,9 @@ class ChainChronicle(object):
         # print card_idx
         #sys.exit(0)
 
+        # Get non-cards presents
+        self.do_present_process(1, 0, 'item')        
+
         for i in range(0, 3):
             # get result
             while True:
@@ -513,7 +519,7 @@ class ChainChronicle(object):
                 else:
                     self.logger.warning(u"未知的探索結果")
                     self.logger.warning(r)
-                    break
+                    break            
 
             area = int(explorer_area[i])
             print pickup_list[area], except_card_id
@@ -663,13 +669,16 @@ class ChainChronicle(object):
             self.logger.error(u"轉蛋失敗，未知的錯誤，無法繼續轉蛋:{0}, {1}".format(r['res'], r))
             return gacha_result
         return gacha_result
+    
+    def do_get_present(self, section, *args, **kwargs):
+        self.do_present_process(1, 0, 'item')
 
-    def do_present_process(self, i_flag, b_sell):
+    def do_present_process(self, i_flag, b_sell, item_type=None):
         if i_flag == 0:
             return
         sid = self.account_info['sid']
-        present_ids = present_client.get_present_list(sid)
-        # self.logger.debug('禮物清單: {0}'.format(present_ids))
+        present_ids = present_client.get_present_list(sid, item_type)
+        self.logger.debug('禮物清單: {0}'.format(present_ids))
         while len(present_ids) > 0:
             pid = present_ids.pop(0)
             self.logger.debug("接收禮物 {0}".format(pid))
