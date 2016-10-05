@@ -667,7 +667,8 @@ class ChainChronicle(object):
             return self.do_gacha(parameter['type'])
         else:
             self.logger.error(u"轉蛋失敗，未知的錯誤，無法繼續轉蛋:{0}, {1}".format(r['res'], r))
-            return gacha_result
+            sys.exit(0)
+            # return gacha_result
         return gacha_result
     
     def do_get_present(self, section, *args, **kwargs):

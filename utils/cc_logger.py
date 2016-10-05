@@ -31,7 +31,7 @@ class CCLogger(object):
         rh.setFormatter(file_formatter)
 
         console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
+        console.setLevel(logging.CRITICAL)
         console.setFormatter(console_formatter)
 
         CCLogger.__logger.addHandler(rh)
