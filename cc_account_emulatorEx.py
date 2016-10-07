@@ -71,8 +71,10 @@ if __name__ == '__main__':
         threads.append(CCAccountEmulator('config/fake_account.conf', uuid_chunk_list[i]))
   
     for t in threads:
+        print 'Thread {0} starts'.format(t)
         t.start()
     
     for t in threads:
+        print 'Thread {0} starts to join'.format(t)
         t.join()
     
