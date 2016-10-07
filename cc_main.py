@@ -22,11 +22,12 @@ import utils.enhanced_config_parser
 import utils.poster
 import utils.card_helper
 from pymongo import MongoClient
+import logging
 
 
 class ChainChronicle(object):
 
-    def __init__(self, c):
+    def __init__(self, c, console_log_level=logging.DEBUG):
         if os.path.isfile(c):
             self.config_file = c
         else:
@@ -37,7 +38,7 @@ class ChainChronicle(object):
         self.action_list = list()
         self.account_info = dict()
         log_id = os.path.basename(os.path.splitext(self.config_file)[0])
-        self.__init_logger(log_id)
+        self.__init_logger(log_id, console_log_level)
         self.config = utils.enhanced_config_parser.EnhancedConfigParser()
         self.action_mapping = {
             'QUEST': self.do_quest_section,
@@ -58,8 +59,8 @@ class ChainChronicle(object):
         # client.the_database.authenticate('admin', 'xxx', source = 'admin')
         self.db = client.cc
 
-    def __init_logger(self, log_id):
-        self.logger = utils.cc_logger.CCLogger.get_logger(log_id)
+    def __init_logger(self, log_id, level):
+        self.logger = utils.cc_logger.CCLogger.get_logger(log_id, level)
 
     def load_config(self):
         self.config.read(self.config_file)

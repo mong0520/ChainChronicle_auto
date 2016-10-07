@@ -2,11 +2,12 @@ from cc_main import ChainChronicle
 import uuid
 import threading
 import time
+import loggint
 
 class CCAccountEmulator(threading.Thread):
     def __init__(self, config='config/fake_account.conf'):
         threading.Thread.__init__(self)
-        self.cc = ChainChronicle(config)
+        self.cc = ChainChronicle(config, logging.CRITICAL)
         self.cc.load_config()
         self.overwrite_template_info()
                   
@@ -15,7 +16,7 @@ class CCAccountEmulator(threading.Thread):
 
     def overwrite_template_info(self):
         uuid = self.get_uuid()
-        self.cc.config.set('GENERAL', 'Uid', uuid)
+       self.cc.config.set('GENERAL', 'Uid', uuid)
         self.cc.config.set('QUEST', 'QuestId', '3,241902')
         self.cc.config.set('QUEST', 'Count', '10')
         self.cc.action_list = ['QUEST']

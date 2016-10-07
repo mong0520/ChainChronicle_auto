@@ -3,11 +3,12 @@ import uuid
 import threading
 import time
 import sys
+import logging
 
 class CCAccountEmulator(threading.Thread):
     def __init__(self, config, uuid_list):
         threading.Thread.__init__(self)
-        self.cc = ChainChronicle(config)
+        self.cc = ChainChronicle(config, console_log_level=logging.CRITICAL)
         self.cc.load_config()
         self.uuid_list = uuid_list
         self.counter = 0

@@ -6,7 +6,7 @@ class CCLogger(object):
 
     __logger = None
 
-    def __init__(self, tail_name='default'):
+    def __init__(self, tail_name='default', level=logging.DEBUG):
         if CCLogger.__logger:
             raise CCLogger.__logger
         file_formatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
@@ -31,16 +31,16 @@ class CCLogger(object):
         rh.setFormatter(file_formatter)
 
         console = logging.StreamHandler()
-        console.setLevel(logging.CRITICAL)
+        console.setLevel(level)
         console.setFormatter(console_formatter)
 
         CCLogger.__logger.addHandler(rh)
         CCLogger.__logger.addHandler(console)
 
     @staticmethod
-    def get_logger(log_id):
+    def get_logger(log_id, level):
         if CCLogger.__logger is None:
-            CCLogger(log_id)
+            CCLogger(log_id, level)
         return CCLogger.__logger
 
 
