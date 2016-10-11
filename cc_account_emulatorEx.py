@@ -4,6 +4,7 @@ import threading
 import time
 import sys
 import logging
+import traceback
 
 class CCAccountEmulator(threading.Thread):
     def __init__(self, config, uuid_list):
@@ -41,11 +42,12 @@ class CCAccountEmulator(threading.Thread):
                 self.cc.account_info['uid'] = uuid
                 print "Use uuid {0}".format(uuid)
                 self.cc.start()
-            except:
+            except Exception as e:
                 if self.counter >= len(self.uuid_list):
                     print 'reset uuid'
                     self.counter = 0
                 else:
+                    traceback.print_exc()  
                     print 'select next uuid'
                     self.counter += 1 
 

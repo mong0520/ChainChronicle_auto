@@ -55,9 +55,13 @@ class ChainChronicle(object):
             'PRESENT': self.do_get_present # no need section in config, get non-cards presents
 
         }
-        client = MongoClient('127.0.0.1', 27017)
-        # client.the_database.authenticate('admin', 'xxx', source = 'admin')
-        self.db = client.cc
+        try:
+            client = MongoClient('127.0.0.1', 27017)
+            # client.the_database.authenticate('admin', 'xxx', source = 'admin')
+            self.db = client.cc
+        except Exception as e:
+            self.warning('Unable to connect DB, disable DB related features')
+            self.db = None
 
     def __init_logger(self, log_id, level):
         self.logger = utils.cc_logger.CCLogger.get_logger(log_id, level)
@@ -571,7 +575,10 @@ class ChainChronicle(object):
             self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             cids = gacha_result.values()
             for cid in cids:
-                card = self.db.charainfo.find_one({"cid": cid})
+                if self.db:
+                    card = self.db.charainfo.find_one({"cid": cid})
+                else:
+                    card = None
                 if not card:
                     self.logger.debug(cid)
                 else:
@@ -730,7 +737,10 @@ class ChainChronicle(object):
                 continue
             if card['type'] == 0:
                 temp_idx = card['idx']
-                card_doc = self.db.charainfo.find_one({"cid": card['id']})
+                if self.db:
+                    card_doc = self.db.charainfo.find_one({"cid": card['id']})
+                else:
+                    card_doc = None
                 if card_doc:
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
                     # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
