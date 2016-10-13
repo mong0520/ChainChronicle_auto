@@ -36,8 +36,8 @@ class CCAccountEmulator(threading.Thread):
                 uuid = self.uuid_list[self.counter].strip()
                 self.counter += 1
                 self.cc.config.set('GENERAL', 'Uid', uuid)
-                self.cc.config.set('QUEST', 'QuestId', '3,241902')
-                self.cc.config.set('QUEST', 'Count', '10')
+                self.cc.config.set('QUEST', 'QuestId', '3,242204')
+                self.cc.config.set('QUEST', 'Count', '3')
                 self.cc.action_list = ['QUEST']
                 self.cc.account_info['uid'] = uuid
                 print "Use uuid {0}".format(uuid)
@@ -77,6 +77,6 @@ if __name__ == '__main__':
         t.start()
     
     for t in threads:
-        print 'Thread {0} starts to join'.format(t)
+        print 'Main thread starts to waiting Thread: {0}'.format(t)
         t.join()
     

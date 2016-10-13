@@ -89,18 +89,22 @@ class ChainChronicle(object):
                 action_function(action_name)
 
     def do_login(self):
-        #url = 'http://v267.cc.mobimon.com.tw/session/login'
-        url = 'http://v267.cc.mobimon.com.tw/session/login'
+        #url = 'http://v267b.cc.mobimon.com.tw/session/login'
+        url = 'http://v267b.cc.mobimon.com.tw/session/login'
         headers = {'Cookie': 'sid=INVALID'}
         data = {
             'UserUniqueID': self.account_info['uid'],
-            'Token': self.account_info['token']
+            'Token': self.account_info['token'],
+            'OS':1
         }
-        payload_dict = {
+        payload_dict = {       
           "APP": {
-            "time": time.time()
-          },
-          "DEV": data
+            "Version": "2.67",
+            "Revision": "2014",
+            "time": time.time(),
+            "Lang": "Chinese"
+        },
+            "DEV": data
         }
         payload = 'param=' + urllib.quote_plus(simplejson.dumps(payload_dict))
         ret = self.poster.post_data(url, headers, None, payload, **data)
@@ -108,7 +112,7 @@ class ChainChronicle(object):
         try:
             self.account_info['sid'] = ret['login']['sid']
         except KeyError:
-            msg = "無法登入, Message = {0}".format(ret['msg'])
+            msg = u"無法登入, Message = {0}".format(ret['msg'])
             self.logger.error(msg)
             raise KeyError(msg)
 
@@ -702,7 +706,7 @@ class ChainChronicle(object):
                 self.logger.debug("sell present result: {0}".format(ret['res']))
 
     def do_sell_item(self, cidx):
-        url = 'http://v267.cc.mobimon.com.tw/card/sell'
+        url = 'http://v267b.cc.mobimon.com.tw/card/sell'
         cookies = {'sid': self.account_info['sid']}
         headers = {'Cookie': 'sid={0}'.format(self.account_info['sid'])}
         data = {

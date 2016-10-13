@@ -3,7 +3,7 @@ import utils.poster
 
 def get_account(sid):
     poster = utils.poster.Poster
-    url = "http://v267.cc.mobimon.com.tw/user/get_account"
+    url = "http://v267b.cc.mobimon.com.tw/user/get_account"
     data = {}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}
@@ -13,7 +13,7 @@ def get_account(sid):
 
 def set_password(password, sid):
     poster = utils.poster.Poster
-    url = "http://v267.cc.mobimon.com.tw/user/set_password"
+    url = "http://v267b.cc.mobimon.com.tw/user/set_password"
     data = {'pass': password}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}
