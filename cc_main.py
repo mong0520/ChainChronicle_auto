@@ -1,28 +1,30 @@
 # -*- coding: utf-8 -*
 import argparse
+import logging
 import os
 import sys
 import time
 import urllib
-import simplejson
 from random import randint
+
+import simplejson
+
+import utils.cc_logger
+import utils.db_operator
+import utils.enhanced_config_parser
+import utils.poster
+from lib import alldata_client
 from lib import explorer_client
 from lib import gacha_client
 from lib import item_client
+from lib import present_client
 from lib import quest_client
 from lib import raid_client
 from lib import recovery_client
-from lib import present_client
-from lib import totalwar_client
-from lib import alldata_client
 from lib import subjugation_client
+from lib import totalwar_client
 from lib import user_client
-import utils.cc_logger
-import utils.enhanced_config_parser
-import utils.poster
-import utils.card_helper
-import logging
-import utils.db_operator
+
 
 class ChainChronicle(object):
 
