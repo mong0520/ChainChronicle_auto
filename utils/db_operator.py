@@ -63,12 +63,16 @@ class DBOperator(object):
         results = DBOperator.get_cards(field, value)
         for r in results:
             # print r.keys()
-            print '==========================='
-            print 'Name: {0}'.format(r['name'].encode('utf-8'))
-            print 'ID: {0}'.format(r['cid'])
-            print 'Title: {0}'.format(r['title'].encode('utf-8'))
-            print 'Profile: {0}'.format(r['profile'].encode('utf-8'))
-            print 'Rarity: {0}'.format(r['rarity'])
+            try:
+                print '==========================='
+                print 'ID: {0}'.format(r['cid'])
+                print 'Title: {0}'.format(r['title'].encode('utf-8'))
+                print 'Name: {0}'.format(r['name'].encode('utf-8'))
+                # print 'Home: {0}'.format(r['home'])
+                print 'Profile: {0}'.format(r['profile'].encode('utf-8'))
+                print 'Rarity: {0}'.format(r['rarity'])
+            except KeyError:
+                pass
 
     @staticmethod
     def dump_quest(quest_name):
