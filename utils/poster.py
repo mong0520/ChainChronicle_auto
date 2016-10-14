@@ -32,3 +32,7 @@ class Poster(object):
     @staticmethod
     def post_data_v2(url, headers=None, cookies=None, payload=None, **kwargs):
         return Poster.__post_data(url, headers, cookies, payload, **kwargs)
+
+    @staticmethod
+    def get_data(url):
+        return requests.get(url).json()
