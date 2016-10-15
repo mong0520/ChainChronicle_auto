@@ -575,7 +575,7 @@ class ChainChronicle(object):
             cids = gacha_result.values()
             for cid in cids:
                 cards = utils.db_operator.DBOperator.get_cards('cid', cid)
-                if not cards:
+                if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
                     self.logger.debug(cid)
                 else:
                     card = cards[0]  # cid is key index
