@@ -1,10 +1,14 @@
 from cc_main import ChainChronicle
-import uuid
 import threading
 import time
 import sys
 import logging
 import traceback
+
+FAKE_ACCOUNT_TEMPLATE = 'config/fake_account.conf'
+UUID_FILE = 'uuid.txt'
+QUEST_ID = '3,242204'
+BATCH_COUNT = 3
 
 class CCAccountEmulator(threading.Thread):
     def __init__(self, config, uuid_list):
@@ -14,9 +18,6 @@ class CCAccountEmulator(threading.Thread):
         self.uuid_list = uuid_list
         self.counter = 0
         self.overwrite_template_info()
-                  
-    def get_uuid(self):
-        return "%s%s" % ('ANDO', str(uuid.uuid4()))
 
     def overwrite_template_info(self):
         uuid = self.uuid_list[self.counter]
@@ -36,8 +37,8 @@ class CCAccountEmulator(threading.Thread):
                 uuid = self.uuid_list[self.counter].strip()
                 self.counter += 1
                 self.cc.config.set('GENERAL', 'Uid', uuid)
-                self.cc.config.set('QUEST', 'QuestId', '3,242204')
-                self.cc.config.set('QUEST', 'Count', '3')
+                self.cc.config.set('QUEST', 'QuestId', QUEST_ID)
+                self.cc.config.set('QUEST', 'Count', BATCH_COUNT)
                 self.cc.action_list = ['QUEST']
                 self.cc.account_info['uid'] = uuid
                 print "Use uuid {0}".format(uuid)
@@ -51,32 +52,37 @@ class CCAccountEmulator(threading.Thread):
                     print 'select next uuid'
                     self.counter += 1 
 
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in xrange(0, len(l), n):
         yield l[i:i + n]
 
-if __name__ == '__main__':
+
+def main():
     thread_count = 200
     threads = list()
-    with open('uuid.txt', 'r') as uuid:
+    with open(UUID_FILE, 'r') as uuid:
         uuid_list = [u.strip() for u in uuid.readlines()]
     line_count = len(uuid_list)
 
     # seperate 1000000 lines to 2000 part, each part has 5000 items
-    uuid_chunk_list = list(chunks(uuid_list, line_count/thread_count))
+    uuid_chunk_list = list(chunks(uuid_list, line_count / thread_count))
     # print len(uuid_chunk_list)
     # print len(uuid_chunk_list[0])
-    # sys.exit(0) 
+    # sys.exit(0)
     for i in xrange(0, thread_count):
-        #threads.append(CCAccountEmulator('config/fake_account.conf', uuid_list))
-        threads.append(CCAccountEmulator('config/fake_account.conf', uuid_chunk_list[i]))
-  
+        # threads.append(CCAccountEmulator('config/fake_account.conf', uuid_list))
+        threads.append(CCAccountEmulator(FAKE_ACCOUNT_TEMPLATE, uuid_chunk_list[i]))
+
     for t in threads:
         print 'Thread {0} starts'.format(t)
         t.start()
-    
+
     for t in threads:
         print 'Main thread starts to waiting Thread: {0}'.format(t)
         t.join()
-    
+
+if __name__ == '__main__':
+    main()
+
