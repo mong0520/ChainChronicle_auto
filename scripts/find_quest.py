@@ -2,10 +2,10 @@
 import argparse
 import sys
 sys.path.append('../')
-import utils.db_operator
 
 
 def query(args):
+    import utils.db_operator
     utils.db_operator.DBOperator.dump_quest(args.quest)
 
 
