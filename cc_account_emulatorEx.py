@@ -25,8 +25,8 @@ class CCAccountEmulator(threading.Thread):
             print 'reset uuid'
             self.counter = 0
         self.cc.config.set('GENERAL', 'Uid', uuid)
-        self.cc.config.set('QUEST', 'QuestId', '3,241902')
-        self.cc.config.set('QUEST', 'Count', '10')
+        self.cc.config.set('QUEST', 'QuestId', '3,230014')
+        self.cc.config.set('QUEST', 'Count', '7')
         self.cc.action_list = ['QUEST']
         self.cc.account_info['uid'] = uuid
 
