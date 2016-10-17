@@ -1,28 +1,29 @@
 # -*- coding: utf-8 -*
 import argparse
+import logging
 import os
 import sys
 import time
 import urllib
-import simplejson
 from random import randint
+
+import simplejson
+
+import utils.cc_logger
+import utils.db_operator
+import utils.enhanced_config_parser
+import utils.poster
+from lib import alldata_client
 from lib import explorer_client
 from lib import gacha_client
 from lib import item_client
+from lib import present_client
 from lib import quest_client
 from lib import raid_client
 from lib import recovery_client
-from lib import present_client
-from lib import totalwar_client
-from lib import alldata_client
 from lib import subjugation_client
+from lib import totalwar_client
 from lib import user_client
-import utils.cc_logger
-import utils.enhanced_config_parser
-import utils.poster
-import utils.card_helper
-from pymongo import MongoClient
-import logging
 
 
 class ChainChronicle(object):
@@ -55,13 +56,7 @@ class ChainChronicle(object):
             'PRESENT': self.do_get_present # no need section in config, get non-cards presents
 
         }
-        try:
-            client = MongoClient('127.0.0.1', 27017)
-            # client.the_database.authenticate('admin', 'xxx', source = 'admin')
-            self.db = client.cc
-        except Exception as e:
-            self.warning('Unable to connect DB, disable DB related features')
-            self.db = None
+
 
     def __init_logger(self, log_id, level):
         self.logger = utils.cc_logger.CCLogger.get_logger(log_id, level)
@@ -168,7 +163,7 @@ class ChainChronicle(object):
                 continue
             try:
                 cid = int(card['id'])
-                card_dict = utils.card_helper.find_card_by_id(cid)
+                card_dict = utils.db_operator.DBOperator.get_cards('cid', cid)[0]
                 if card_dict and card_dict['rarity'] >= 4:
                     self.logger.debug(u"{0}, 界限突破：{1}, 等級: {2}, 稀有度: {3}".format(
                         card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
@@ -579,14 +574,15 @@ class ChainChronicle(object):
             self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             cids = gacha_result.values()
             for cid in cids:
-                if self.db:
-                    card = self.db.charainfo.find_one({"cid": cid})
-                else:
-                    card = None
-                if not card:
+                cards = utils.db_operator.DBOperator.get_cards('cid', cid)
+                # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
+                # use BIF all() to check if the dict has key 'name' AND 'rarity'
+                if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
                     self.logger.debug(cid)
                 else:
-                    self.logger.debug(card['name'])
+                    card = cards[0]  # cid is key index
+                    msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
+                    self.logger.debug(msg)
             #if gacha_result is None or len(gacha_result) == 0:
             if not gacha_result:
                 self.logger.debug("Gacha Error")
@@ -632,11 +628,15 @@ class ChainChronicle(object):
         return ret['res']
 
     def do_recover_stamina(self):
-        """recovery stamina by using AP fruit"""
+        """recovery stamina by using AP fruit slice first, if failed, then try fruit"""
         parameter = dict()
         parameter['type'] = 1
-        parameter['item_id'] = 1
+        parameter['item_id'] = 16
+        parameter['use_cnt'] = 10
         ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+        if ret['res'] != 0:
+            parameter['item_id'] = 1
+            ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
         return ret
 
     def do_gacha(self, g_type):
@@ -741,10 +741,10 @@ class ChainChronicle(object):
                 continue
             if card['type'] == 0:
                 temp_idx = card['idx']
-                if self.db:
-                    card_doc = self.db.charainfo.find_one({"cid": card['id']})
-                else:
-                    card_doc = None
+                card_doc = None
+                card_doc_list = utils.db_operator.DBOperator.get_cards('cid', card['id'])
+                if len(card_doc_list) > 0:
+                    card_doc = card_doc_list[0]
                 if card_doc:
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
                     # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
