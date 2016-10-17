@@ -628,11 +628,15 @@ class ChainChronicle(object):
         return ret['res']
 
     def do_recover_stamina(self):
-        """recovery stamina by using AP fruit"""
+        """recovery stamina by using AP fruit slice first, if failed, then try fruit"""
         parameter = dict()
         parameter['type'] = 1
-        parameter['item_id'] = 1
+        parameter['item_id'] = 16
+        parameter['use_cnt'] = 10
         ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+        if ret['res'] != 0:
+            parameter['item_id'] = 1
+            ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
         return ret
 
     def do_gacha(self, g_type):

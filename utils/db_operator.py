@@ -75,14 +75,20 @@ class DBOperator(object):
                 pass
 
     @staticmethod
-    def dump_quest(quest_name):
+    def dump_quest(quest_name, verbose=False):
         quests = DBOperator.get_quests(quest_name)
-        for quest in quests:
-            print '==========================='
-            print 'Chapter: {0}'.format(quest['chapter_cnt'])
-            print 'ID: {0}'.format(quest['quest_id'])
-            print 'Name: {0}'.format(quest['name'].encode('utf-8'))
-            print 'Difficult: {0}'.format(quest['difficulty'])
+        if verbose:
+            for quest in quests:
+                print '==========================='
+                for k, v in quest.iteritems():
+                    print u'{0}: {1}'.format(k, v)
+        else:
+            for quest in quests:
+                print '==========================='
+                print 'Chapter: {0}'.format(quest['chapter_cnt'])
+                print 'ID: {0}'.format(quest['quest_id'])
+                print 'Name: {0}'.format(quest['name'].encode('utf-8'))
+                print 'Difficult: {0}'.format(quest['difficulty'])
 
 
 
