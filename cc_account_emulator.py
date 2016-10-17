@@ -38,7 +38,7 @@ class CCAccountEmulator(threading.Thread):
                 self.counter += 1
                 self.cc.config.set('GENERAL', 'Uid', uuid)
                 self.cc.config.set('QUEST', 'QuestId', QUEST_ID)
-                self.cc.config.set('QUEST', 'Count', BATCH_COUNT)
+                self.cc.config.set('QUEST', 'Count', str(BATCH_COUNT))
                 self.cc.action_list = ['QUEST']
                 self.cc.account_info['uid'] = uuid
                 print "Use uuid {0}".format(uuid)
