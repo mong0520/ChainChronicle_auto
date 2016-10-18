@@ -13,8 +13,8 @@ images = os.listdir(img_path)
 
 for img_name in images:
     org_filename = os.path.join(img_path, img_name)
-    updated_filename = os.path.join(img_path, 'updated_'+ img_name)
+    updated_filename = os.path.join(img_path, img_name)
     print org_filename
-    img = Image.open(os.path.join(img_path, img_name))
-    new_img = img.resize((960, 1440))
-    new_img.save(updated_filename, 'png')
+    with Image.open(os.path.join(img_path, img_name)) as img:
+        new_img = img.resize((960, 1440))
+    new_img.save(updated_filename, 'jpeg')
