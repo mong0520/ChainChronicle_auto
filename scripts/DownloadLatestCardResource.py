@@ -60,7 +60,7 @@ for card_id in card_id_list:
 result.sort()
 
 for r in result:
-    url = 'http://content.cc.mobimon.com.tw/CC/game09/{0}/Resource/Card/cha_2d_card_{1}.scr'.format(date, r)
+    url = 'http://content.cc.mobimon.com.tw/CC/267/{0}/Resource/Card/cha_2d_card_{1}.scr'.format(date, r)
     q.put(url)
 
 q.join()

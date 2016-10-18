@@ -1,9 +1,11 @@
-cd ..\bin
+copy  ..\bin\ChainChronicleDecode.exe resource\
+cd resource
 ChainChronicleDecode.exe
 
 del *.scr
-move *.jpg ..\img
+del *.exe
+copy *.jpg ..   \..\img
 
-cd ..\scripts
+cd ..\
 python resize_image.py ..\img
 pause
