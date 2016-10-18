@@ -29,7 +29,7 @@ def do_stuff(q):
 try:
     date = sys.argv[1]
 except IndexError as e:
-    print "Please speicfy date argument, for example '20160721_252'"
+    print "Please speicfy date argument, for example '20161013_522'"
     sys.exit(0)
 
 for i in range(num_threads):
@@ -37,7 +37,8 @@ for i in range(num_threads):
     worker.setDaemon(True)
     worker.start()
 
-request_url = 'http://content.cc.mobimon.com.tw/CC/game09/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp)
+#request_url = 'http://content.cc.mobimon.com.tw/CC/game09/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp)
+request_url = 'http://content.cc.mobimon.com.tw/CC/267/{0}/Bdl52_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp)
 print request_url
 r = requests.get(request_url)
 
