@@ -520,6 +520,10 @@ class ChainChronicle(object):
                 elif r['res'] == 2302:
                     self.logger.warning(u"探索尚未結束..稍後重試")
                     time.sleep(60)
+                elif r['res'] == 1:
+                    self.logging.warning(u'已被登出, 稍後重試')
+                    time.sleep(60*5)
+                    self.do_login()
                 else:
                     self.logger.warning(u"未知的探索結果")
                     self.logger.warning(r)
@@ -679,7 +683,7 @@ class ChainChronicle(object):
             return self.do_gacha(parameter['type'])
         else:
             self.logger.error(u"轉蛋失敗，未知的錯誤，無法繼續轉蛋:{0}, {1}".format(r['res'], r))
-            sys.exit(0)
+            raise Exception('Unable to gacha')
             # return gacha_result
         return gacha_result
     

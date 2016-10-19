@@ -4,11 +4,8 @@ import time
 import sys
 import logging
 import traceback
+import argparse
 
-FAKE_ACCOUNT_TEMPLATE = 'config/fake_account.conf'
-UUID_FILE = 'uuid.txt'
-QUEST_ID = '3,242204'
-BATCH_COUNT = 3
 
 class CCAccountEmulator(threading.Thread):
     def __init__(self, config, uuid_list):
@@ -17,19 +14,7 @@ class CCAccountEmulator(threading.Thread):
         self.cc.load_config()
         self.uuid_list = uuid_list
         self.counter = 0
-        self.overwrite_template_info()
 
-    def overwrite_template_info(self):
-        uuid = self.uuid_list[self.counter]
-        self.counter += 1
-        if self.counter >= len(self.uuid_list):
-            print 'reset uuid'
-            self.counter = 0
-        self.cc.config.set('GENERAL', 'Uid', uuid)
-        self.cc.config.set('QUEST', 'QuestId', '3,230014')
-        self.cc.config.set('QUEST', 'Count', '7')
-        self.cc.action_list = ['QUEST']
-        self.cc.account_info['uid'] = uuid
 
     def run(self):
         while True:
@@ -37,9 +22,6 @@ class CCAccountEmulator(threading.Thread):
                 uuid = self.uuid_list[self.counter].strip()
                 self.counter += 1
                 self.cc.config.set('GENERAL', 'Uid', uuid)
-                self.cc.config.set('QUEST', 'QuestId', QUEST_ID)
-                self.cc.config.set('QUEST', 'Count', str(BATCH_COUNT))
-                self.cc.action_list = ['QUEST']
                 self.cc.account_info['uid'] = uuid
                 print "Use uuid {0}".format(uuid)
                 self.cc.start()
@@ -60,9 +42,15 @@ def chunks(l, n):
 
 
 def main():
-    thread_count = 200
+    parser = argparse.ArgumentParser(description="Chain Chronicle Fake Account Emulator")
+    parser.add_argument('-c', '--config', help='fake account template', required=True, action='store')
+    parser.add_argument('-f', '--uuid_file', help='predefined uuid list', required=True, action='store')
+    parser.add_argument('-t', '--thread', help='thread count', required=True, action='store', type=int)
+    args = parser.parse_args()
+  
+    thread_count = args.thread
     threads = list()
-    with open(UUID_FILE, 'r') as uuid:
+    with open(args.uuid_file, 'r') as uuid:
         uuid_list = [u.strip() for u in uuid.readlines()]
     line_count = len(uuid_list)
 
@@ -73,7 +61,7 @@ def main():
     # sys.exit(0)
     for i in xrange(0, thread_count):
         # threads.append(CCAccountEmulator('config/fake_account.conf', uuid_list))
-        threads.append(CCAccountEmulator(FAKE_ACCOUNT_TEMPLATE, uuid_chunk_list[i]))
+        threads.append(CCAccountEmulator(args.config, uuid_chunk_list[i]))
 
     for t in threads:
         print 'Thread {0} starts'.format(t)
