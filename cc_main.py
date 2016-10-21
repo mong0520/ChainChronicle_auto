@@ -178,7 +178,7 @@ class ChainChronicle(object):
         quest_info['qtype'] = self.config.get(section, 'QuestId').split(',')[0]
         quest_info['qid'] = self.config.get(section, 'QuestId').split(',')[1]
         quest_info['raid'] = self.config.getint(section, 'AutoRaid')
-        quest_info['fid'] = 1965350
+        quest_info['fid'] = self.config.getint(section, 'Fid')
         quest_info['retry_interval'] = self.config.getint(section, 'RetryDuration')
         quest_info['max_event_point'] = self.config.getint(section, 'MaxEventPoint')
         quest_info['auto_sell'] = self.config.getint(section, 'AutoSell')
@@ -262,9 +262,9 @@ class ChainChronicle(object):
             time.sleep(0.5)
             # 魔神戰
             if quest_info['raid'] == 1:
-                self.do_raid_quest()
+                self.do_raid_quest(fid=quest_info['fid'])
 
-    def do_raid_quest(self):
+    def do_raid_quest(self, **kwargs):
         # r = raid_client.get_raid_boss_id(self.account_info['sid'])
         # self.logger.debug(r)
         # self.logger.debug(type(r))
@@ -280,7 +280,8 @@ class ChainChronicle(object):
         if boss_id:
             parameter = dict()
             parameter['boss_id'] = boss_id
-            parameter['fid'] = '1965350'
+            # parameter['fid'] = '1965350'
+            parameter['fid'] = kwargs['fid']
             self.logger.debug(u"魔神來襲！魔神等級: [{0}]".format(boss_lv))
             r = raid_client.start_raid_quest(parameter, self.account_info['sid'])
             if r['res'] == 0:
@@ -315,6 +316,7 @@ class ChainChronicle(object):
     def do_subjugation(self, section, *args, **kwargs):
         parameter = dict()
         parameter['jid'] = self.config.getint(section, 'Jid')
+        parameter['fid'] = self.config.getint(section, 'Fid')
         parties = self.config.options_with_prefix(section, 'pt_')
         parameter['pt_cids'] = list()
         for party in parties:
