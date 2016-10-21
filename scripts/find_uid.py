@@ -7,8 +7,10 @@ sys.path.append('../')
 import utils.poster
 import lib.friend_client as friend_client
 import argparse
+import find_cards
+import utils
 
-VALID_KEYS = ['uid', 'lv', 'sup_lv', 'name']
+VALID_KEYS = ['uid', 'lv', 'sup_lv', 'name', 'card']
 
 
 def get_sid():
@@ -48,7 +50,11 @@ def main():
     if 'friend' in result:
         for k, v in result['friend'].iteritems():
             if k in VALID_KEYS:
-                print u"{0} = {1}".format(k, v)
+                if k == 'card':
+                    r = utils.db_operator.DBOperator.dump_cards('cid', v['id'])
+                    print r
+                else:
+                    print u"{0} = {1}".format(k, v)
     else:
         print 'Query failed'
         print result
