@@ -24,6 +24,7 @@ from lib import recovery_client
 from lib import subjugation_client
 from lib import totalwar_client
 from lib import user_client
+from lib import friend_client
 
 
 class ChainChronicle(object):
@@ -53,7 +54,8 @@ class ChainChronicle(object):
             'DAILY_TICKET': self.do_daily_gacha_ticket,  # no need section in config
             'LIST_ALLDATA': self.do_show_all_data,  # no need section in config
             'PASSWORD': self.do_set_password,  # no need section in config
-            'PRESENT': self.do_get_present # no need section in config, get non-cards presents
+            'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
+            'QUERY_FID': self.do_query_fid # no need section in config, get non-cards presents
 
         }
 
@@ -688,7 +690,13 @@ class ChainChronicle(object):
             raise Exception('Unable to gacha')
             # return gacha_result
         return gacha_result
-    
+
+    def do_query_fid(self, section, *args, **kwargs):
+        oid = 114386130
+        result = friend_client.query_fid(self.account_info['sid'], oid) 
+        for key, data in result['friend'].iteritems():
+            self.logger.debug(u"{0} = {1}".format(key, data))
+ 
     def do_get_present(self, section, *args, **kwargs):
         self.do_present_process(1, 0, 'item')
 
