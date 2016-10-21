@@ -6,6 +6,7 @@ import simplejson
 sys.path.append('../')
 import utils.poster
 import lib.friend_client as friend_client
+import argparse
 
 VALID_KEYS = ['uid', 'lv', 'sup_lv', 'name']
 
@@ -38,8 +39,12 @@ def query_friend(sid, oid):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Chain Chronicle Query tool")
+    parser.add_argument('-i', '--oid', help='Open ID', required=True, action='store')
+    args = parser.parse_args()
+
     sid = get_sid()
-    result = query_friend(sid, sys.argv[1])
+    result = query_friend(sid, args.oid)
     if 'friend' in result:
         for k, v in result['friend'].iteritems():
             if k in VALID_KEYS:
