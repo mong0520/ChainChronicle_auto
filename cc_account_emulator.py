@@ -63,7 +63,7 @@ def main():
     parser.add_argument('-c', '--config', help='fake account template', required=True, action='store')
     parser.add_argument('-f', '--uuid_file', help='predefined uuid list', required=True, action='store')
     parser.add_argument('-t', '--thread', help='thread count', required=True, action='store', type=int)
-    parser.add_argument('-p', '--ac_point', help='target AC point to earn', required=True, action='store', type=int,
+    parser.add_argument('-p', '--ac_point', help='target AC point to earn', required=False, action='store', type=int,
                         default=None)
     args = parser.parse_args()
 
