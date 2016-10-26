@@ -454,6 +454,11 @@ class ChainChronicle(object):
             gacha_info['auto_sell'] = 0
 
         try:
+            gacha_info['verbose'] = self.config.get('Verbose')
+        except:
+            gacha_info['verbose'] = 0
+
+        try:
             gacha_info['keep_cards'] = self.config.getlist(section, 'KeepCards')
         except:
             gacha_info['keep_cards'] = list()
@@ -613,20 +618,19 @@ class ChainChronicle(object):
             gacha_result = self.do_gacha(gacha_info['gacha_type'])
             #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            cids = gacha_result.values()
-            """
-            for cid in cids:
-                cards = utils.db_operator.DBOperator.get_cards('cid', cid)
-                # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
-                # use BIF all() to check if the dict has key 'name' AND 'rarity'
-                if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
-                    self.logger.debug(cid)
-                else:
-                    card = cards[0]  # cid is key index
-                    msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
-                    self.logger.debug(msg)
+            if gacha_info['verbose']:
+                cids = gacha_result.values()
+                for cid in cids:
+                    cards = utils.db_operator.DBOperator.get_cards('cid', cid)
+                    # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
+                    # use BIF all() to check if the dict has key 'name' AND 'rarity'
+                    if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
+                        self.logger.debug(cid)
+                    else:
+                        card = cards[0]  # cid is key index
+                        msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
+                        self.logger.debug(msg)
             #if gacha_result is None or len(gacha_result) == 0:
-            """
             if not gacha_result:
                 self.logger.debug("Gacha Error")
                 break
