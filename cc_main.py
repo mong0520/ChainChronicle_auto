@@ -508,9 +508,6 @@ class ChainChronicle(object):
         for i in range(0, waste_money_round):
             parameter['explorer_idx'] = 1
             r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
-            if r['res'] != 0:
-                print r
-                break
             parameter['location_id'] = 0
             parameter['card_idx'] = 358771956
             parameter['pickup'] = 0
