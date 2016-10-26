@@ -47,7 +47,7 @@ class CCAccountEmulator(threading.Thread):
                     print 'reset uuid'
                     self.counter = 0
                 else:
-                    # traceback.print_exc()
+                    traceback.print_exc()
                     print 'select next uuid'
                     self.counter += 1 
 
