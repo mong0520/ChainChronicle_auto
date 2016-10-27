@@ -501,30 +501,37 @@ class ChainChronicle(object):
 
     def do_waste_money(self, section, *args, **kwargs):
         parameter = dict()
-        card_idx = [358771956]
-        waste_money_round = 211949980 / 1000
-        remaining = waste_money_round
+        parameter['explorer_idx'] = 1
+        parameter['location_id'] = 0
+        parameter['card_idx'] = 358771956
+        monitor_period = 1000
+        money_threshold = 1500000000
+        counter = 0
 
-        for i in range(0, waste_money_round):
-            parameter['explorer_idx'] = 1
+        while True:
+            if counter % monitor_period == 0:
+                r = alldata_client.get_alldata(self.account_info['sid'])
+                data = r['body'][8]['data']
+                for d in data:
+                    if d['item_id'] == 10:
+                        if d['cnt'] <= money_threshold:
+                            sys.exit(0)
+                        print "剩餘金幣 = {0}".format(d['cnt'])
+                        money_current = d['cnt']
+                        break
+
             r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
-            parameter['location_id'] = 0
-            parameter['card_idx'] = 358771956
+
             parameter['pickup'] = 0
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
             if r['res'] == 2311:
                 parameter['pickup'] = 1
                 explorer_client.start_explorer(parameter, self.account_info['sid'])
             elif r['res'] == 0:
-                pass
+                counter += 1
             else:
-               break
-            remaining -= 1
-            # sys.exit(0)
-            print 'remaining = {0} rounds'.format(remaining)
-
-
-
+                print r
+                break
 
 
     def do_explorer_section(self, section, *args, **kwargs):
