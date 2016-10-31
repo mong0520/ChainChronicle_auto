@@ -61,8 +61,6 @@ class ChainChronicle(object):
             'QUERY_FID': self.do_query_fid # no need section in config, get non-cards presents
 
         }
-        socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
-        socket.socket = socks.socksocket
     
 
     def __init_logger(self, log_id, level):
@@ -79,7 +77,21 @@ class ChainChronicle(object):
                     self.account_info['uid'] = self.config.get(section, 'Uid')
                     self.account_info['token'] = self.config.get(section, 'Token')
 
+    def __init_proxy(self):
+        try:
+            self.logger.debug('Use socks5 proxy')
+            socks_info = self.config.get('GLOBAL', 'Socks5')
+            print socks_info.split(':')
+            [socks5_addr, socks5_port] = socks_info.split(':')
+            socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
+            socket.socket = socks.socksocket
+        except Exception as e:
+            self.logger.warning(e)
+            self.logger.debug('Not use socks5 proxy')
+
+
     def start(self):
+        self.__init_proxy()
         self.do_login()
         for action in self.action_list:
             self.do_action(action)
