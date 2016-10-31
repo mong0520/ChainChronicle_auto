@@ -6,8 +6,11 @@ import sys
 import time
 import urllib
 from random import randint
-import socket
-import socks
+try:
+    import socket
+    import socks
+except:
+    pass
 
 import simplejson
 
@@ -61,6 +64,11 @@ class ChainChronicle(object):
             'QUERY_FID': self.do_query_fid # no need section in config, get non-cards presents
 
         }
+        try:
+            socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
+            socket.socket = socks.socksocket
+        except:
+            pass
     
 
     def __init_logger(self, log_id, level):
