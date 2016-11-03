@@ -64,11 +64,6 @@ class ChainChronicle(object):
             'QUERY_FID': self.do_query_fid # no need section in config, get non-cards presents
 
         }
-        try:
-            socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
-            socket.socket = socks.socksocket
-        except:
-            pass
     
 
     def __init_logger(self, log_id, level):
@@ -85,7 +80,7 @@ class ChainChronicle(object):
                     self.account_info['uid'] = self.config.get(section, 'Uid')
                     self.account_info['token'] = self.config.get(section, 'Token')
 
-    def __init_proxy(self):
+    def set_proxy(self):
         try:
             self.logger.debug('Use socks5 proxy')
             socks_info = self.config.get('GLOBAL', 'Socks5')
@@ -99,7 +94,6 @@ class ChainChronicle(object):
 
 
     def start(self):
-        self.__init_proxy()
         self.do_login()
         for action in self.action_list:
             self.do_action(action)
@@ -893,6 +887,7 @@ def main():
     if args.action is not None:
         # force overwrite config flow and just do the action from args
         cc.action_list = [args.action]
+    cc.set_proxy()
     cc.start()
 
 if __name__ == '__main__':

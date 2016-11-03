@@ -5,10 +5,16 @@ import sys
 import logging
 import traceback
 import argparse
+try:
+    import socket
+    import socks
+except:
+    pass
+
 
 
 class CCAccountEmulator(threading.Thread):
-    def __init__(self, thread_id, config, uuid_list, target_ac_point):
+    def __init__(self, thread_id, config, uuid_list, target_ac_point, proxy=False):
         threading.Thread.__init__(self)
         self.thread_id = thread_id
         self.cc = ChainChronicle(config, console_log_level=logging.CRITICAL)
@@ -16,6 +22,21 @@ class CCAccountEmulator(threading.Thread):
         self.uuid_list = uuid_list
         self.counter = 0
         self.target_ac_point = target_ac_point
+        if proxy:
+            self.set_proxy()
+
+    def set_proxy(self):
+        socks5_addr = '127.0.0.1'
+        socks5_port = 9050
+        try:
+            print 'Trying to set SOCKS5 Proxy'
+            socks.set_default_proxy(socks.SOCKS5, socks5_addr, socks5_port)
+            socket.socket = socks.socksocket
+        except Exception as e:
+            print e
+            print 'Failed to set Socks5 proxy'
+            sys.exit(0)
+
 
     def run(self):
         earned_ac_point = 0
@@ -90,7 +111,7 @@ def main():
 
     for i in xrange(0, thread_count):
         # threads.append(CCAccountEmulator('config/fake_account.conf', uuid_list))
-        threads.append(CCAccountEmulator(i, args.config, uuid_chunk_list[i], target_ac_per_thread))
+        threads.append(CCAccountEmulator(i, args.config, uuid_chunk_list[i], target_ac_per_thread, proxy=True))
 
     for t in threads:
         print 'Thread {0} starts'.format(t.thread_id)
