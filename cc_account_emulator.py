@@ -111,7 +111,7 @@ def main():
 
     for i in xrange(0, thread_count):
         # threads.append(CCAccountEmulator('config/fake_account.conf', uuid_list))
-        threads.append(CCAccountEmulator(i, args.config, uuid_chunk_list[i], target_ac_per_thread, proxy=True))
+        threads.append(CCAccountEmulator(i, args.config, uuid_chunk_list[i], target_ac_per_thread, proxy=False))
 
     for t in threads:
         print 'Thread {0} starts'.format(t.thread_id)
