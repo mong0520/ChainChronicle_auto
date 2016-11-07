@@ -44,7 +44,7 @@ class CCAccountEmulator(threading.Thread):
         # not garuanteed the accuracy
         quest_count = self.cc.config.getint('QUEST', 'Count')
         ac_earn_in_batch = int(10 * quest_count)
-        print 'Earned AC for one UUID in {0} counts: {1}'.format(quest_count, ac_earn_in_batch)
+        # print 'Earned AC for one UUID in {0} counts: {1}'.format(quest_count, ac_earn_in_batch)
 
         while True:
             try:
@@ -111,7 +111,7 @@ def main():
 
     for i in xrange(0, thread_count):
         # threads.append(CCAccountEmulator('config/fake_account.conf', uuid_list))
-        threads.append(CCAccountEmulator(i, args.config, uuid_chunk_list[i], target_ac_per_thread, proxy=False))
+        threads.append(CCAccountEmulator(i, args.config, uuid_chunk_list[i], target_ac_per_thread, proxy=True))
 
     for t in threads:
         print 'Thread {0} starts'.format(t.thread_id)
