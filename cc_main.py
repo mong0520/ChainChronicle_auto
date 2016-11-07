@@ -84,14 +84,13 @@ class ChainChronicle(object):
         try:
             self.logger.debug('Use socks5 proxy')
             socks_info = self.config.get('GLOBAL', 'Socks5')
-            print socks_info.split(':')
+            # print socks_info.split(':')
             [socks5_addr, socks5_port] = socks_info.split(':')
             socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
             socket.socket = socks.socksocket
         except Exception as e:
             self.logger.warning(e)
             self.logger.debug('Not use socks5 proxy')
-
 
     def start(self):
         self.do_login()

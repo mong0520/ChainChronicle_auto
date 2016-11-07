@@ -15,25 +15,9 @@ except:
     pass
 
 uuid_queue = Queue(maxsize=0)
-USE_PROXY = False
-
-
-def _set_proxy():
-    socks5_addr = '127.0.0.1'
-    socks5_port = 9050
-    try:
-        print 'Trying to set SOCKS5 Proxy'
-        socks.set_default_proxy(socks.SOCKS5, socks5_addr, socks5_port)
-        socket.socket = socks.socksocket
-    except Exception as e:
-        print e
-        print 'Failed to set Socks5 proxy'
-        sys.exit(0)
 
 
 def run(queue):
-    if USE_PROXY:
-        _set_proxy()
     while True:
         uuid = queue.get()
         # print "Use uuid {0}".format(uuid)
@@ -44,13 +28,14 @@ def run(queue):
             cc.config.set('GENERAL', 'Uid', uuid)
             cc.account_info['uid'] = uuid
             print "UUID: {0} starts".format(uuid)
+            cc.set_proxy()
             cc.start()
             queue.task_done()
             print "UUID: {0} completes".format(uuid)
         except Exception as e:
             print e
             queue.task_done()
-            print "### UUID: {0} failes ###".format(uuid)
+            print "### UUID: {0} fails ###".format(uuid)
 
 
 def main():
@@ -71,6 +56,10 @@ def main():
     with open(args.uuid_file, 'r') as uuid:
         for u in uuid.readlines():
             uuid_queue.put(u.strip())
+
+    while uuid_queue.qsize() > 0:
+        print '########## Queue size: {0} ##########'.format(uuid_queue.qsize())
+        time.sleep(10)
 
     uuid_queue.join()
 
