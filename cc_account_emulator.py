@@ -23,19 +23,8 @@ class CCAccountEmulator(threading.Thread):
         self.counter = 0
         self.target_ac_point = target_ac_point
         if proxy:
-            self.set_proxy()
+            self.cc.set_proxy()
 
-    def set_proxy(self):
-        socks5_addr = '127.0.0.1'
-        socks5_port = 9050
-        try:
-            print 'Trying to set SOCKS5 Proxy'
-            socks.set_default_proxy(socks.SOCKS5, socks5_addr, socks5_port)
-            socket.socket = socks.socksocket
-        except Exception as e:
-            print e
-            print 'Failed to set Socks5 proxy'
-            sys.exit(0)
 
 
     def run(self):

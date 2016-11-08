@@ -14,7 +14,6 @@ try:
 except:
     pass
 
-uuid_queue = Queue(maxsize=0)
 
 
 def run(queue):
@@ -27,7 +26,7 @@ def run(queue):
             cc.load_config()
             cc.config.set('GENERAL', 'Uid', uuid)
             cc.account_info['uid'] = uuid
-            print "UUID: {0} starts".format(uuid)
+            # print "UUID: {0} starts".format(uuid)
             cc.set_proxy()
             cc.start()
             queue.task_done()
@@ -46,22 +45,24 @@ def main():
     thread_count = args.thread
 
     # Start workers
-    print 'Starting {0} workers'.format(thread_count)
-    for i in range(thread_count):
-        worker = Thread(target=run, args=(uuid_queue,))
-        worker.setDaemon(True)
-        worker.start()
+    while True:
+        uuid_queue = Queue(maxsize=0)
+        print 'Starting {0} workers'.format(thread_count)
+        for i in range(thread_count):
+            worker = Thread(target=run, args=(uuid_queue,))
+            worker.setDaemon(True)
+            worker.start()
 
-    print 'Starting to add UUIDs to task queue'
-    with open(args.uuid_file, 'r') as uuid:
-        for u in uuid.readlines():
-            uuid_queue.put(u.strip())
+        print 'Starting to add UUIDs to task queue'
+        with open(args.uuid_file, 'r') as uuid:
+            for u in uuid.readlines():
+                uuid_queue.put(u.strip())
 
-    while uuid_queue.qsize() > 0:
-        print '########## Queue size: {0} ##########'.format(uuid_queue.qsize())
-        time.sleep(10)
+        while uuid_queue.qsize() > 0:
+            print '########## Queue size: {0} ##########'.format(uuid_queue.qsize())
+            time.sleep(10)
 
-    uuid_queue.join()
+        uuid_queue.join()
 
 
 if __name__ == '__main__':
