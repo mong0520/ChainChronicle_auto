@@ -29,6 +29,18 @@ def start_explorer(parameter, sid):
     r = poster.post_data(url, headers, cookies, payload=None, **data)
     return r
 
+def cancel_explorer(parameter, sid):
+    poster = utils.poster.Poster
+    url = 'http://v267b.cc.mobimon.com.tw/explorer/cancel'
+    cookies = {'sid': sid}
+    headers = {'Cookie': 'sid={0}'.format(sid)}
+    data = {
+        'explorer_idx': parameter['explorer_idx']
+    }
+    r = poster.post_data(url, headers, cookies, payload=None, **data)
+    return r
+
+
 
 def get_explorer_result(idx, sid):
     poster = utils.poster.Poster

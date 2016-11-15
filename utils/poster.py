@@ -2,7 +2,6 @@ import requests
 import time
 import urllib
 
-
 class Poster(object):
 
     def __init__(self):
@@ -22,6 +21,9 @@ class Poster(object):
 
         # print post_url
         # print payload
+        # use TOR
+        # socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
+        # socket.socket = socks.socksocket
         r = requests.post(post_url, data=payload, headers=headers, cookies=cookies)
         return r
 

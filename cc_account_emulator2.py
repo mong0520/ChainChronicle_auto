@@ -5,6 +5,7 @@ import sys
 import logging
 import traceback
 import argparse
+from multiprocessing import Pool
 try:
     import socket
     import socks
@@ -23,8 +24,19 @@ class CCAccountEmulator(threading.Thread):
         self.counter = 0
         self.target_ac_point = target_ac_point
         if proxy:
-            self.cc.set_proxy()
+            self.set_proxy()
 
+    def set_proxy(self):
+        socks5_addr = '127.0.0.1'
+        socks5_port = 9050
+        try:
+            print 'Trying to set SOCKS5 Proxy'
+            socks.set_default_proxy(socks.SOCKS5, socks5_addr, socks5_port)
+            socket.socket = socks.socksocket
+        except Exception as e:
+            print e
+            print 'Failed to set Socks5 proxy'
+            sys.exit(0)
 
 
     def run(self):
@@ -82,33 +94,7 @@ def main():
     threads = list()
     with open(args.uuid_file, 'r') as uuid:
         uuid_list = [u.strip() for u in uuid.readlines()]
-    line_count = len(uuid_list)
-
-    # seperate 1000000 lines to 2000 part, each part has 5000 items
-    uuid_chunk_list = list(chunks(uuid_list, line_count / thread_count))
-    # print len(uuid_chunk_list)
-    # print len(uuid_chunk_list[0])
-    # sys.exit(0)
-    if target_ac and target_ac >= 0:
-        target_ac_per_thread = args.ac_point / thread_count
-    else:
-        target_ac_per_thread = None
-
-    print 'Target AC point = {0}, thread count = {1}, so each thread should earn at least {2} AC point'.format(
-        args.ac_point, thread_count, target_ac_per_thread
-    )
-
-    for i in xrange(0, thread_count):
-        # threads.append(CCAccountEmulator('config/fake_account.conf', uuid_list))
-        threads.append(CCAccountEmulator(i, args.config, uuid_chunk_list[i], target_ac_per_thread, proxy=True))
-
-    for t in threads:
-        print 'Thread {0} starts'.format(t.thread_id)
-        t.start()
-
-    for t in threads:
-        print 'Main thread starts to waiting Thread: {0}'.format(t.thread_id)
-        t.join()
+    print len(uuid_list)
 
 if __name__ == '__main__':
     main()

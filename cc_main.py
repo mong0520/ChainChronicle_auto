@@ -6,6 +6,11 @@ import sys
 import time
 import urllib
 from random import randint
+try:
+    import socket
+    import socks
+except:
+    pass
 
 import simplejson
 
@@ -25,6 +30,7 @@ from lib import subjugation_client
 from lib import totalwar_client
 from lib import user_client
 from lib import friend_client
+from lib import weapon_client
 
 
 class ChainChronicle(object):
@@ -47,6 +53,7 @@ class ChainChronicle(object):
             'GACHA': self.do_gacha_section,
             'BUY': self.do_buy_item_section,
             'EXPLORER': self.do_explorer_section,
+            'WASTE_MONEY': self.do_waste_money,
             'TOTALWAR': self.do_totalwar_section,
             'SUBJUGATION': self.do_subjugation_section,
             'STATUS':  self.do_show_status,  # no need section in config
@@ -55,10 +62,11 @@ class ChainChronicle(object):
             'LIST_ALLDATA': self.do_show_all_data,  # no need section in config
             'PASSWORD': self.do_set_password,  # no need section in config
             'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
-            'QUERY_FID': self.do_query_fid # no need section in config, get non-cards presents
+            'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
+            'COMPOSE': self.do_compose
 
         }
-
+    
 
     def __init_logger(self, log_id, level):
         self.logger = utils.cc_logger.CCLogger.get_logger(log_id, level)
@@ -73,6 +81,18 @@ class ChainChronicle(object):
                     self.action_list = self.config.getlist(section, 'Flow')
                     self.account_info['uid'] = self.config.get(section, 'Uid')
                     self.account_info['token'] = self.config.get(section, 'Token')
+
+    def set_proxy(self):
+        try:
+            self.logger.debug('Use socks5 proxy')
+            socks_info = self.config.get('GLOBAL', 'Socks5')
+            # print socks_info.split(':')
+            [socks5_addr, socks5_port] = socks_info.split(':')
+            socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
+            socket.socket = socks.socksocket
+        except Exception as e:
+            self.logger.warning(e)
+            self.logger.debug('Not use socks5 proxy')
 
     def start(self):
         self.do_login()
@@ -94,7 +114,7 @@ class ChainChronicle(object):
             'Token': self.account_info['token'],
             'OS':1
         }
-        payload_dict = {       
+        payload_dict = {
           "APP": {
             "Version": "2.67",
             "Revision": "2014",
@@ -305,6 +325,19 @@ class ChainChronicle(object):
         else:
             pass
 
+    def do_compose(self, section, *args, **kwargs):
+        count = self.config.getint(section, 'Count')
+        item_type = 'itm_weapon'
+        for k in range(0, count):
+            weapon_list = list()
+            for i in range(0, 5):
+                ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+                weapon_list.append(ret['body'][1]['data'][0]['idx'])
+            ret = weapon_client.compose(self.account_info['sid'], weapon_list)
+            print ret
+
+
+
     def do_subjugation_section(self, section, *args, **kwargs):
         try:
             count = self.config.getint(section, 'Count')
@@ -351,7 +384,7 @@ class ChainChronicle(object):
             trying = r['body'][18]['data']['trying']
         except:
             trying = False
-        
+
         if parameter['ecnt'] > 40:
             parameter['ecnt'] = 40
         # parameter['ecnt'] = 40
@@ -436,7 +469,7 @@ class ChainChronicle(object):
             else:
                 self.logger.debug(r)
                 return
-                
+
             # result = simplejson.dumps(r, indent=2)
             # print result
             # self.logger.debug("End entry = {0}".format(r))
@@ -451,6 +484,11 @@ class ChainChronicle(object):
             gacha_info['auto_sell'] = self.config.getint(section, 'AutoSell')
         except :
             gacha_info['auto_sell'] = 0
+
+        try:
+            gacha_info['verbose'] = self.config.get('Verbose')
+        except:
+            gacha_info['verbose'] = 0
 
         try:
             gacha_info['keep_cards'] = self.config.getlist(section, 'KeepCards')
@@ -493,6 +531,41 @@ class ChainChronicle(object):
                 return
 
 
+    def do_waste_money(self, section, *args, **kwargs):
+        parameter = dict()
+        parameter['explorer_idx'] = 1
+        parameter['location_id'] = 0
+        parameter['card_idx'] = 358771956
+        monitor_period = 1000
+        money_threshold = 1500000000
+        counter = 0
+
+        while True:
+            if counter % monitor_period == 0:
+                r = alldata_client.get_alldata(self.account_info['sid'])
+                data = r['body'][8]['data']
+                for d in data:
+                    if d['item_id'] == 10:
+                        if d['cnt'] <= money_threshold:
+                            sys.exit(0)
+                        print "剩餘金幣 = {0}".format(d['cnt'])
+                        money_current = d['cnt']
+                        break
+
+            r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+
+            parameter['pickup'] = 0
+            r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+            if r['res'] == 2311:
+                parameter['pickup'] = 1
+                explorer_client.start_explorer(parameter, self.account_info['sid'])
+            elif r['res'] == 0:
+                counter += 1
+            else:
+                print r
+                break
+
+
     def do_explorer_section(self, section, *args, **kwargs):
         # Hard code cid to exclude them to explorer
         except_card_id = [7017, 7024, 7015, 51]
@@ -505,14 +578,14 @@ class ChainChronicle(object):
         # self.logger.debug(pickup_list)
 
         explorer_area = self.config.getlist(section, 'area')
-        
+
         # debug section
         # card_idx = self.find_best_idx_to_explorer(pickup_list[3], except_card_id)
         # print card_idx
         #sys.exit(0)
 
         # Get non-cards presents
-        self.do_present_process(1, 0, 'item')        
+        self.do_present_process(1, 0, 'item')
 
         for i in range(0, 3):
             # get result
@@ -531,11 +604,12 @@ class ChainChronicle(object):
                 else:
                     self.logger.warning(u"未知的探索結果")
                     self.logger.warning(r)
-                    break            
+                    break
 
             area = int(explorer_area[i])
             print pickup_list[area], except_card_id
-            card_idx = self.find_best_idx_to_explorer(pickup_list[area], except_card_id)
+            card_idx, card_id = self.find_best_idx_to_explorer(pickup_list[area], except_card_id)
+            except_card_id.append(card_id)
 
             # go to explorer
             parameter = dict()
@@ -580,17 +654,18 @@ class ChainChronicle(object):
             gacha_result = self.do_gacha(gacha_info['gacha_type'])
             #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            cids = gacha_result.values()
-            for cid in cids:
-                cards = utils.db_operator.DBOperator.get_cards('cid', cid)
-                # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
-                # use BIF all() to check if the dict has key 'name' AND 'rarity'
-                if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
-                    self.logger.debug(cid)
-                else:
-                    card = cards[0]  # cid is key index
-                    msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
-                    self.logger.debug(msg)
+            if gacha_info['verbose']:
+                cids = gacha_result.values()
+                for cid in cids:
+                    cards = utils.db_operator.DBOperator.get_cards('cid', cid)
+                    # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
+                    # use BIF all() to check if the dict has key 'name' AND 'rarity'
+                    if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
+                        self.logger.debug(cid)
+                    else:
+                        card = cards[0]  # cid is key index
+                        msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
+                        self.logger.debug(msg)
             #if gacha_result is None or len(gacha_result) == 0:
             if not gacha_result:
                 self.logger.debug("Gacha Error")
@@ -693,10 +768,10 @@ class ChainChronicle(object):
 
     def do_query_fid(self, section, *args, **kwargs):
         oid = 114386130
-        result = friend_client.query_fid(self.account_info['sid'], oid) 
+        result = friend_client.query_fid(self.account_info['sid'], oid)
         for key, data in result['friend'].iteritems():
             self.logger.debug(u"{0} = {1}".format(key, data))
- 
+
     def do_get_present(self, section, *args, **kwargs):
         self.do_present_process(1, 0, 'item')
 
@@ -760,6 +835,8 @@ class ChainChronicle(object):
                 if len(card_doc_list) > 0:
                     card_doc = card_doc_list[0]
                 if card_doc:
+                    if 'rarity' in card_doc and card_doc['rarity'] >= 5:
+                        continue
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
                     # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
                     # TODO: bug here, weapon type is not equal to battletype
@@ -770,11 +847,10 @@ class ChainChronicle(object):
                             int(area_pickup_list['weapontype']) == card_doc['battletype']):
 
                         temp_idx = card['idx']
-                        if card_doc['rarity'] == 5:
-                            continue
                         self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
                         self.logger.debug(u"{0} is picked to eplorer".format(temp_idx))
-                        return temp_idx
+                        # print card
+                        return temp_idx, card['id']
                     else:
                         # this card does not fit pick up criteria
                         continue
@@ -787,7 +863,7 @@ class ChainChronicle(object):
                 # card is not character
                 continue
         self.logger.warning(u"找不到適合的探索角色，使用[{0}]".format(card_doc['name']))
-        return temp_idx
+        return temp_idx, card['id']
 
     def __is_meet_event_point(self, result, max_event_point):
         # 踏破活動
@@ -825,6 +901,7 @@ def main():
     if args.action is not None:
         # force overwrite config flow and just do the action from args
         cc.action_list = [args.action]
+    cc.set_proxy()
     cc.start()
 
 if __name__ == '__main__':
