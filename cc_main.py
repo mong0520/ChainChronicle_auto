@@ -30,6 +30,7 @@ from lib import subjugation_client
 from lib import totalwar_client
 from lib import user_client
 from lib import friend_client
+from lib import weapon_client
 
 
 class ChainChronicle(object):
@@ -61,7 +62,8 @@ class ChainChronicle(object):
             'LIST_ALLDATA': self.do_show_all_data,  # no need section in config
             'PASSWORD': self.do_set_password,  # no need section in config
             'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
-            'QUERY_FID': self.do_query_fid # no need section in config, get non-cards presents
+            'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
+            'COMPOSE': self.do_compose
 
         }
     
@@ -322,6 +324,19 @@ class ChainChronicle(object):
 
         else:
             pass
+
+    def do_compose(self, section, *args, **kwargs):
+        count = self.config.getint(section, 'Count')
+        item_type = 'itm_weapon'
+        for k in range(0, count):
+            weapon_list = list()
+            for i in range(0, 5):
+                ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+                weapon_list.append(ret['body'][1]['data'][0]['idx'])
+            ret = weapon_client.compose(self.account_info['sid'], weapon_list)
+            print ret
+
+
 
     def do_subjugation_section(self, section, *args, **kwargs):
         try:
