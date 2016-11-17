@@ -63,10 +63,11 @@ class ChainChronicle(object):
             'PASSWORD': self.do_set_password,  # no need section in config
             'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
             'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
-            'COMPOSE': self.do_compose
+            'COMPOSE': self.do_compose,
+            'COMPOSE_EX': self.do_compose_ex
 
         }
-    
+
 
     def __init_logger(self, log_id, level):
         self.logger = utils.cc_logger.CCLogger.get_logger(log_id, level)
@@ -101,7 +102,7 @@ class ChainChronicle(object):
 
     def do_action(self, action_name):
         for action, action_function in self.action_mapping.iteritems():
-            if action in action_name:
+            if action == action_name:
                 self.logger.info("### Current Flow = {0} ###".format(action_name))
                 action_function(action_name)
 
@@ -325,16 +326,136 @@ class ChainChronicle(object):
         else:
             pass
 
+    # def do_compose(self, section, *args, **kwargs):
+    #     '''
+    #     只合三星*5
+    #     '''
+    #     count = self.config.getint(section, 'Count')
+    #     item_type = 'itm_weapon'
+    #     for k in range(0, count):
+    #         weapon_list = list()
+    #         for i in range(0, 5):
+    #             ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+    #             weapon_list.append(ret['body'][1]['data'][0]['idx'])
+    #         ret = weapon_client.compose(self.account_info['sid'], weapon_list)
+    #         print ret
+
     def do_compose(self, section, *args, **kwargs):
+        """
+        以1張5星 +  4張4星鍊金
+        """
         count = self.config.getint(section, 'Count')
         item_type = 'itm_weapon'
-        for k in range(0, count):
-            weapon_list = list()
+        weapon_list_rank3 = list()
+        weapon_list_rank4 = list()
+        # weapon_list_rank5 = list()
+        weapon_base_rank5_idx = None # 基底武器
+        for i in range(0, count):
+            # 50戒
             for i in range(0, 5):
                 ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
-                weapon_list.append(ret['body'][1]['data'][0]['idx'])
-            ret = weapon_client.compose(self.account_info['sid'], weapon_list)
-            print ret
+                weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
+
+            self.logger.info(u'開始鍊金 -  3星*5')
+            ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
+            weapon_list_rank3[:] = []
+            # pprint.pprint(ret)
+            idx = ret['body'][1]['data'][0]['idx']
+            item_id = ret['body'][1]['data'][0]['id']
+            # print idx, item_id
+            # print item_id
+            # weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+            # self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+
+            weapon_list_rank4.append(idx)
+            if weapon_base_rank5_idx:
+                if len(weapon_list_rank4) == 4:
+                    self.logger.info(u'開始鍊金 -  5星*1 + 4星*4')
+                    weapon_list_rank4.append(weapon_base_rank5_idx)
+                    ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
+                    weapon_list_rank4[:] = []
+                    # pprint.pprint(ret)
+                    idx = ret['body'][1]['data'][0]['idx']
+                    item_id = ret['body'][1]['data'][0]['id']
+                    weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+                    # print idx, item_id
+                    if int(item_id) in [85200, 26011]:
+                        self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                        weapon_base_rank5_idx = None
+                    else:
+                        weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+                        self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                        weapon_base_rank5_idx = idx
+                else:
+                    # print u'四星卡不足', len(weapon_list_rank4)
+                    pass
+            else:
+                if len(weapon_list_rank4) == 5:
+                    self.logger.info(u'開始鍊金 -  4星*5')
+                    weapon_list_rank4.append(weapon_base_rank5_idx)
+                    ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
+                    weapon_list_rank4[:] = []
+                    # pprint.pprint(ret)
+                    idx = ret['body'][1]['data'][0]['idx']
+                    item_id = ret['body'][1]['data'][0]['id']
+                    weapon_base_rank5_idx = idx
+
+
+    def do_compose_ex(self, section, *args, **kwargs):
+        """
+        以五張五星卡來鍊金
+        """
+        import pprint
+        item_type = 'itm_weapon'
+        weapon_list_rank3 = list()
+        weapon_list_rank4 = list()
+        weapon_list_rank5 = list()
+        # 10次，一次買五張三星卡，
+        for i in range(0, 1000):
+            # 50戒
+            for i in range(0, 5):
+                ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+                weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
+
+            print u'開始鍊金 -  五張三星武器'
+            ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
+            weapon_list_rank3[:] = []
+            # pprint.pprint(ret)
+            idx = ret['body'][1]['data'][0]['idx']
+            item_id = ret['body'][1]['data'][0]['id']
+            # print idx, item_id
+
+            weapon_list_rank4.append(idx)
+            if len(weapon_list_rank4) == 5:
+                print u'開始鍊金 -  五張四星武器'
+                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
+                weapon_list_rank4[:] = []
+                # pprint.pprint(ret)
+                idx = ret['body'][1]['data'][0]['idx']
+                item_id = ret['body'][1]['data'][0]['id']
+                # print idx, item_id
+
+                weapon_list_rank5.append(idx)
+            else:
+                # print u'四星卡不足', len(weapon_list_rank4)
+                pass
+
+            if len(weapon_list_rank5) == 5:
+                print u'開始鍊金 -  五張五星武器'
+                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank5)
+                weapon_list_rank5[:] = []
+                # pprint.pprint(ret)
+                idx = ret['body'][1]['data'][0]['idx']
+                item_id = ret['body'][1]['data'][0]['id']
+                # print idx, item_id
+                print item_id
+                if int(item_id) == 26011:
+                    print "=== 天晴乃皇劍Get ==="
+                else:
+                    self.do_sell_item(idx)
+            else:
+                # print u'五星卡不足', len(weapon_list_rank5)
+                pass
 
 
 
@@ -541,29 +662,32 @@ class ChainChronicle(object):
         counter = 0
 
         while True:
-            if counter % monitor_period == 0:
-                r = alldata_client.get_alldata(self.account_info['sid'])
-                data = r['body'][8]['data']
-                for d in data:
-                    if d['item_id'] == 10:
-                        if d['cnt'] <= money_threshold:
-                            sys.exit(0)
-                        print "剩餘金幣 = {0}".format(d['cnt'])
-                        money_current = d['cnt']
-                        break
+            try:
+                if counter % monitor_period == 0:
+                    r = alldata_client.get_alldata(self.account_info['sid'])
+                    data = r['body'][8]['data']
+                    for d in data:
+                        if d['item_id'] == 10:
+                            if d['cnt'] <= money_threshold:
+                                sys.exit(0)
+                            print "剩餘金幣 = {0}".format(d['cnt'])
+                            money_current = d['cnt']
+                            break
 
-            r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+                r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
 
-            parameter['pickup'] = 0
-            r = explorer_client.start_explorer(parameter, self.account_info['sid'])
-            if r['res'] == 2311:
-                parameter['pickup'] = 1
-                explorer_client.start_explorer(parameter, self.account_info['sid'])
-            elif r['res'] == 0:
-                counter += 1
-            else:
-                print r
-                break
+                parameter['pickup'] = 0
+                r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+                if r['res'] == 2311:
+                    parameter['pickup'] = 1
+                    explorer_client.start_explorer(parameter, self.account_info['sid'])
+                elif r['res'] == 0:
+                    counter += 1
+                else:
+                    print r
+                    break
+            except Exception as e:
+                print e
 
 
     def do_explorer_section(self, section, *args, **kwargs):

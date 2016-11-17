@@ -11,15 +11,25 @@ db = client.cc
 
 data_mapping = {
     'charainfo': db.charainfo,
-    'questdigest': db.questdigest
+    'questdigest': db.questdigest,
+    'weaponlist': db.weaponlist
 }
+
+'''
+motionlist
+episodeinfo
+weaponlist
+skilllist
+itemlist
+worldinfo
+'''
 
 # Get latest charainfo data
 for data in data_mapping.keys():
     url = 'http://v267b.cc.mobimon.com.tw/data/' + data
     r = utils.poster.Poster.post_data(url)
     print r[data]
-    
+
     # Remove old data
     if r[data] is not None:
         data_mapping[data].remove({})

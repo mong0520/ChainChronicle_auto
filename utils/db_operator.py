@@ -9,16 +9,24 @@ if not os.path.isdir(DB_PATH):
     os.makedirs(DB_PATH)
 DB_SOURCE_BASE = 'http://v267b.cc.mobimon.com.tw/data/'
 data_mapping = {
-    'charainfo': {
-        'db_source': DB_SOURCE_BASE + 'charainfo',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'charainfo')),
-        'raw_list': list()
-    },
-    'questdigest': {
-        'db_source': DB_SOURCE_BASE + 'questdigest',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'questdigest')),
+    'evolve':{
+        'db_source': DB_SOURCE_BASE + 'weaponlist',
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
         'raw_list': list()
     }
+    # ,
+    # 'charainfo': {
+    #     'db_source': DB_SOURCE_BASE + 'charainfo',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'charainfo')),
+    #     'raw_list': list()
+    # },
+    # 'questdigest': {
+    #     'db_source': DB_SOURCE_BASE + 'questdigest',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'questdigest')),
+    #     'raw_list': list()
+    # }
+
+    # note, weaponlist有兩個資料可以拿，一個叫weaponlist，是一般武器，另一個叫evolve，是鍊金武器
 }
 
 
@@ -59,6 +67,15 @@ class DBOperator(object):
             return None
 
     @staticmethod
+    def get_weapons(field, value):
+        weapon_list = DBOperator.__query(
+            data_mapping['evolve']['db_obj'], field, value)
+        if weapon_list:
+            return weapon_list
+        else:
+            return None
+
+    @staticmethod
     def dump_cards(field, value):
         results = DBOperator.get_cards(field, value)
         for r in results:
@@ -90,6 +107,14 @@ class DBOperator(object):
                 print 'Name: {0}'.format(quest['name'].encode('utf-8'))
                 print 'Difficult: {0}'.format(quest['difficulty'])
 
+
+    @staticmethod
+    def dump_weapon(field, value):
+        weapons = DBOperator.get_weapons(field, value)
+        for weapon in weapons:
+            print '==========================='
+            for k, v in weapon.iteritems():
+                print u'{0}: {1}'.format(k, v)
 
 
 class DBUpdater(object):
@@ -126,6 +151,8 @@ class DBUpdater(object):
                 elif type(element) is dict:
                     data_mapping[category]['raw_list'].append(element)
 
+            # for data in data_mapping[category]['raw_list']:
+            #     print data['id']
             data_mapping[category]['db_obj'].insert_multiple(data_mapping[category]['raw_list'])
 
 if __name__ == '__main__':
