@@ -387,6 +387,7 @@ class ChainChronicle(object):
                 if int(item_id) in [85200, 26011]:
                     self.logger.info('鍊金完成，得到神器!!! {0}'.format(weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
+                    break
                 else:
                     weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                     self.logger.info('鍊金完成，得到武器 - {0}'.format(weapon_list[0]['name'].encode('utf-8')))
