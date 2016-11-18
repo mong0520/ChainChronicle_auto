@@ -22,7 +22,7 @@ def start_explorer(parameter, sid):
         'location_id': parameter['location_id'],
         'card_idx': parameter['card_idx'],
         'pickup': parameter['pickup'],
-        'interval': 1,
+        'interval': 2,
         'helper1': '588707',
         'helper2': '1913206'
     }
