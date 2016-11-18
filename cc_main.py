@@ -350,15 +350,16 @@ class ChainChronicle(object):
         weapon_base_rank5_idx = None # 基底武器
 
         for i in range(0, count):
-            # 50戒
+            # 沒有5星武器時，先鍊出一把五星武器
             buy_count = 5
             if weapon_base_rank5_idx:
                 buy_count = 4
-            # 買四個或五個武器
+            # 買三星武器
             for i in range(0, buy_count):
                 ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
                 weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
 
+            # 五把三星器武器，鍊成四星武器
             if len(weapon_list_rank3) == 5:
                 # self.logger.info(u'開始鍊金 -  3星*5')
                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
@@ -372,6 +373,7 @@ class ChainChronicle(object):
                 # self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
                 weapon_list_rank4.append(idx)
 
+            # 有一張基底五星武器，且有四張三星武器
             if weapon_base_rank5_idx and len(weapon_list_rank3) == 4:
                 # self.logger.info(u'開始鍊金 -  5星*1 + 3星*4')
                 weapon_list_rank3.append(weapon_base_rank5_idx)
@@ -383,12 +385,14 @@ class ChainChronicle(object):
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                 # print idx, item_id
                 if int(item_id) in [85200, 26011]:
-                    self.logger.info('!!! 得到神器 !!! {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                    self.logger.info('鍊金完成，得到神器!!! {0}'.format(weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
                 else:
                     weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-                    self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                    self.logger.info('鍊金完成，得到武器 - {0}'.format(weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = idx
+
+            # 鍊出做為基底的五星武器
             elif len(weapon_list_rank4) == 5:
                     # self.logger.info(u'開始鍊金 -  4星*5')
                     ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
@@ -456,60 +460,6 @@ class ChainChronicle(object):
     #                 idx = ret['body'][1]['data'][0]['idx']
     #                 item_id = ret['body'][1]['data'][0]['id']
     #                 weapon_base_rank5_idx = idx
-
-    # def do_compose_ex(self, section, *args, **kwargs):
-    #     """
-    #     以五張五星卡來鍊金
-    #     """
-    #     item_type = 'itm_weapon'
-    #     weapon_list_rank3 = list()
-    #     weapon_list_rank4 = list()
-    #     weapon_list_rank5 = list()
-    #     # 10次，一次買五張三星卡，
-    #     for i in range(0, 1000):
-    #         # 50戒
-    #         for i in range(0, 5):
-    #             ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
-    #             weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
-
-    #         print u'開始鍊金 -  五張三星武器'
-    #         ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
-    #         weapon_list_rank3[:] = []
-    #         idx = ret['body'][1]['data'][0]['idx']
-    #         # item_id = ret['body'][1]['data'][0]['id']
-    #         # print idx, item_id
-
-    #         weapon_list_rank4.append(idx)
-    #         if len(weapon_list_rank4) == 5:
-    #             print u'開始鍊金 -  五張四星武器'
-    #             ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
-    #             weapon_list_rank4[:] = []
-    #             idx = ret['body'][1]['data'][0]['idx']
-    #             # item_id = ret['body'][1]['data'][0]['id']
-    #             # print idx, item_id
-
-    #             weapon_list_rank5.append(idx)
-    #         else:
-    #             # print u'四星卡不足', len(weapon_list_rank4)
-    #             pass
-
-    #         if len(weapon_list_rank5) == 5:
-    #             print u'開始鍊金 -  五張五星武器'
-    #             ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank5)
-    #             weapon_list_rank5[:] = []
-    #             # pprint.pprint(ret)
-    #             idx = ret['body'][1]['data'][0]['idx']
-    #             item_id = ret['body'][1]['data'][0]['id']
-    #             # print idx, item_id
-    #             print item_id
-    #             if int(item_id) == 26011:
-    #                 print "=== 天晴乃皇劍Get ==="
-    #             else:
-    #                 self.do_sell_item(idx)
-    #         else:
-    #             # print u'五星卡不足', len(weapon_list_rank5)
-    #             pass
-
 
     def do_subjugation_section(self, section, *args, **kwargs):
         try:
