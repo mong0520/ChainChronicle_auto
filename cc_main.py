@@ -355,7 +355,7 @@ class ChainChronicle(object):
             if weapon_base_rank5_idx:
                 buy_count = 4
             # 買三星武器
-            for i in range(0, buy_count):
+            for j in range(0, buy_count):
                 ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
                 weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
 
@@ -380,17 +380,22 @@ class ChainChronicle(object):
                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
                 weapon_list_rank3[:] = []
                 # pprint.pprint(ret)
-                idx = ret['body'][1]['data'][0]['idx']
-                item_id = ret['body'][1]['data'][0]['id']
+                try:
+                    idx = ret['body'][1]['data'][0]['idx']
+                    item_id = ret['body'][1]['data'][0]['id']
+                except:
+                    import pprint
+                    pprint.pprint(ret)
+                    raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                 # print idx, item_id
                 if int(item_id) in [85200, 26011]:
-                    self.logger.info('鍊金完成，得到神器!!! {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                    self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
-                    break
+                    #break
                 else:
                     weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-                    self.logger.info('鍊金完成，得到武器 - {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                    self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = idx
 
             # 鍊出做為基底的五星武器
