@@ -1,0 +1,25 @@
+5 1,4,7,10,13,16,19,22 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/mong.conf -a EXPLORER
+5 */3 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/senas.conf -a EXPLORER
+5 */3 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/weison.conf -a EXPLORER
+
+# Record the data
+30 0 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/mong.conf -a STATUS
+
+# 消耗金錢
+#10 1 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/mong.conf -a WASTE_MONEY
+
+# 友情抽換戒
+#10 4 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/mong.conf -a GACHA
+
+# 更新資料庫，每週四下午7點
+#0 19 * * 4 cd /home/cc/git/ChainChronicle_auto/scripts; python ./update_db.py
+
+
+# 魔神, 每30分鐘一場
+#0 */3 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/mong.conf -a QUEST
+#0,30 * * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/senas.conf -a QUEST_50WAVES
+#0,30 * * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/weison.conf -a QUEST_50WAVES
+
+# 抽轉蛋卷
+35 0 * * * cd /home/cc/git/ChainChronicle_auto; python cc_main.py -c config/mong.conf -a DAILY_TICKET
+
