@@ -31,6 +31,7 @@ from lib import totalwar_client
 from lib import user_client
 from lib import friend_client
 from lib import weapon_client
+from lib import tutorial_client
 
 
 class ChainChronicle(object):
@@ -63,7 +64,8 @@ class ChainChronicle(object):
             'PASSWORD': self.do_set_password,  # no need section in config
             'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
             'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
-            'COMPOSE': self.do_compose
+            'COMPOSE': self.do_compose,
+            'TUTORIAL': self.do_pass_tutorial
         }
 
 
@@ -131,6 +133,61 @@ class ChainChronicle(object):
             msg = u"無法登入, Message = {0}".format(ret['msg'])
             self.logger.error(msg)
             raise KeyError(msg)
+
+    def do_pass_tutorial(self, section, *args, **kwargs):
+        import uuid
+        tutorial_count = self.config.getint(section, 'Count')
+        tid_list = range(0, 21)
+        tutorail_package = [
+            {'tid': 0, 'qid': None},
+            {'tid': 1, 'qid': None},
+            {'tid': 2, 'qid': None},
+            {'tid': 3, 'qid': 210001},
+            {'tid': 4, 'qid': 210001},
+            {'tid': 5, 'qid': None},
+            {'tid': 6, 'qid': 210002},
+            {'tid': 7, 'qid': None},
+            {'tid': 8, 'qid': 210101},
+            {'tid': 9, 'qid': None},
+            {'tid': 10, 'qid': 210101},
+            {'tid': 11, 'qid': None},
+            {'tid': 12, 'qid': None},
+            {'tid': 13, 'qid': 210102},
+            {'tid': 14, 'qid': None},
+            {'tid': 15, 'qid': 210102},
+            {'tid': 16, 'qid': None},
+            {'tid': 17, 'qid': 215000},
+            {'tid': 18, 'qid': 215000},
+            {'tid': 19, 'qid': None},
+            {'tid': 20, 'qid': None}
+        ]
+        for i in range(0, tutorial_count):
+            # self.account_info['uid'] = '{0}{1}'.format('test', str(uuid.uuid4()))
+            account_uuid = str(uuid.uuid4())
+            self.config.set('GENERAL', 'Uid', account_uuid)
+            self.account_info['uid'] = account_uuid
+            self.do_login()
+
+            self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
+            for tutorial in tutorail_package:
+                if tutorial['qid']:
+                    r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
+                    quest_info = dict()
+                    quest_info['qid'] = tutorial['qid']
+                    quest_info['fid'] = 1965350
+                    r = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                    # print r
+                else:
+                    if tutorial['tid'] == 1:
+                        r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'],
+                            name='Allen', hero='Allen')
+                        # print r
+                    else:
+                        r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
+                        # print r
+            self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
+            self.do_gacha_section('GACHA')
+
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
@@ -608,6 +665,15 @@ class ChainChronicle(object):
 
         gacha_info['count'] = self.config.getint(section, 'Count')
         gacha_info['gacha_type'] = self.config.getint(section, 'Type')
+        try:
+            gacha_info['area'] = self.config.getint(section, 'Area')
+        except:
+            gacha_info['area'] = None
+
+        try:
+            gacha_info['place'] = self.config.getint(section, 'Place')
+        except:
+            gacha_info['place'] = None
 
         try:
             gacha_info['auto_sell'] = self.config.getint(section, 'AutoSell')
@@ -615,7 +681,7 @@ class ChainChronicle(object):
             gacha_info['auto_sell'] = 0
 
         try:
-            gacha_info['verbose'] = self.config.get('Verbose')
+            gacha_info['verbose'] = self.config.getint(section, 'Verbose')
         except:
             gacha_info['verbose'] = 0
 
@@ -623,7 +689,6 @@ class ChainChronicle(object):
             gacha_info['keep_cards'] = self.config.getlist(section, 'KeepCards')
         except:
             gacha_info['keep_cards'] = list()
-
         self.do_gacha_process(gacha_info)
 
     def do_totalwar_section(self, section, *args, **kwargs):
@@ -783,7 +848,7 @@ class ChainChronicle(object):
             if gacha_info['gacha_type'] in [3, 8]:
                 time.sleep(3)
             self.logger.info(u"#{0}: 轉蛋開始！".format(i + 1))
-            gacha_result = self.do_gacha(gacha_info['gacha_type'])
+            gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
             #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             if gacha_info['verbose']:
@@ -854,36 +919,28 @@ class ChainChronicle(object):
             ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
         return ret
 
-    def do_gacha(self, g_type):
+    def do_gacha(self, g_type, **kwargs):
         gacha_result = dict()
         parameter = dict()
         parameter['type'] = g_type
+        for k, v in kwargs.iteritems():
+            parameter[k] = v
         r = gacha_client.gacha(parameter, self.account_info['sid'])
         # self.logger.debug(r)
 
         if r['res'] == 0:
-            try:
-                for record in r['body'][1]['data']:
+            for record in r['body']:
+                # 新卡和舊卡位置不同，且新卡的位置也不固定
+                try:
                     tmp = dict()
-                    idx = record['idx']
-                    cid = record['id']
+                    idx = record['data'][0]['idx']
+                    cid = record['data'][0]['id']
                     tmp[idx] = cid
                     gacha_result[idx] = cid
-            except KeyError:
-                # self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
-                # print simplejson.dumps(r, indent=4, sort_keys=True)
-                # error handling for 新卡片
-                for record in r['body'][3]['data']:
-                    tmp = dict()
-                    idx = record['idx']
-                    cid = record['id']
-                    tmp[idx] = cid
-                    gacha_result[idx] = cid
-            except Exception:
-                self.logger.error(u"轉蛋完成，但有未知的錯誤，可能是包包滿了，無法賣出: {0}".format(r['res']))
-                self.logger.debug(simplejson.dumps(r))
-                # raise
-                return gacha_result
+                except Exception as e:
+                    continue
+            # print gacha_result
+
 
         elif r['res'] == 703:
             self.logger.error(u"轉蛋失敗，聖靈幣不足")
