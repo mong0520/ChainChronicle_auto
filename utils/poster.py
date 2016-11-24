@@ -24,6 +24,7 @@ class Poster(object):
         # use TOR
         # socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
         # socket.socket = socks.socksocket
+        # print post_url
         r = requests.post(post_url, data=payload, headers=headers, cookies=cookies)
         return r
 
