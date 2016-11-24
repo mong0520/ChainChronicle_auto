@@ -65,7 +65,8 @@ class ChainChronicle(object):
             'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
             'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
             'COMPOSE': self.do_compose,
-            'TUTORIAL': self.do_pass_tutorial
+            'TUTORIAL': self.do_pass_tutorial,
+            'DRAMA': self.do_play_drama_auto
         }
 
 
@@ -102,7 +103,8 @@ class ChainChronicle(object):
 
     def do_action(self, action_name):
         for action, action_function in self.action_mapping.iteritems():
-            if action == action_name:
+            # if action == action_name:
+            if action_name.startswith(action):
                 self.logger.info("### Current Flow = {0} ###".format(action_name))
                 action_function(action_name)
 
@@ -133,6 +135,34 @@ class ChainChronicle(object):
             msg = u"無法登入, Message = {0}".format(ret['msg'])
             self.logger.error(msg)
             raise KeyError(msg)
+
+    def do_play_drama_auto(self, section, *args, **kwargs):
+        quest_info = dict()
+        results = list()
+        while True:
+            qtype, qid = self.__get_latest_quest()
+            self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
+            results[:] = []
+            quest_info['qtype'] = qtype
+            quest_info['qid'] = qid
+            quest_info['fid'] = 1965350
+
+            # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
+            result = quest_client.get_treasure(quest_info, self.account_info['sid'])
+            results.append(int(result['res']))
+            self.logger.debug(result['res'])
+
+            result = quest_client.start_quest(quest_info, self.account_info['sid'])
+            results.append(int(result['res']))
+            self.logger.debug(result['res'])
+
+            result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+            results.append(int(result['res']))
+            self.logger.debug(result['res'])
+
+            if 0 not in results:
+                break
+
 
     def do_pass_tutorial(self, section, *args, **kwargs):
         import uuid
@@ -186,7 +216,11 @@ class ChainChronicle(object):
                         r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
                         # print r
             self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
-            self.do_gacha_section('GACHA')
+            self.do_get_present('PRESENT')
+            self.do_gacha_section('GACHA_STONE')
+            self.do_gacha_section('GACHA_SP')
+            self.do_gacha_section('GACHA_TICKET')
+            self.do_gacha_section('GACHA_TICKET')
 
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
@@ -963,6 +997,7 @@ class ChainChronicle(object):
 
     def do_get_present(self, section, *args, **kwargs):
         self.do_present_process(1, 0, 'item')
+        self.do_present_process(1, 0, 'stone')
 
     def do_present_process(self, i_flag, b_sell, item_type=None):
         if i_flag == 0:
@@ -1053,6 +1088,17 @@ class ChainChronicle(object):
                 continue
         self.logger.warning(u"找不到適合的探索角色，使用[{0}]".format(card_doc['name']))
         return temp_idx, card['id']
+
+    def __get_latest_quest(self):
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        try:
+            data = r['body'][1]['data'][-1]
+            qtype = data['type']
+            qid = data['id']
+            return qtype, qid
+        except Exception as e:
+            self.logger.error(e)
+            return None
 
     def __is_meet_event_point(self, result, max_event_point):
         # 踏破活動
