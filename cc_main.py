@@ -217,10 +217,12 @@ class ChainChronicle(object):
                         # print r
             self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
             self.do_get_present('PRESENT')
-            self.do_gacha_section('GACHA_STONE')
-            self.do_gacha_section('GACHA_SP')
-            self.do_gacha_section('GACHA_TICKET')
-            self.do_gacha_section('GACHA_TICKET')
+
+            # go gacha
+            for sec in self.config.sections():
+                if sec.startswith('GACHA'):
+                    self.logger.debug('Go Gacha section {0}'.format(sec))
+                    self.do_gacha_section(sec)
 
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
@@ -783,10 +785,10 @@ class ChainChronicle(object):
 
                 r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
 
-                parameter['pickup'] = 1
+                parameter['pickup'] = 0
                 r = explorer_client.start_explorer(parameter, self.account_info['sid'])
                 if r['res'] == 2311:
-                    parameter['pickup'] = 0
+                    parameter['pickup'] = 1
                     explorer_client.start_explorer(parameter, self.account_info['sid'])
                 elif r['res'] == 0:
                     counter += 1
