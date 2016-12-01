@@ -2,6 +2,18 @@ import utils.poster
 import time
 import requests
 
+def get_treasure(quest_info, sid):
+    poster = utils.poster.Poster
+    url = 'http://v267b.cc.mobimon.com.tw/quest/treasure'
+    cookies = {'sid': sid}
+    headers = {'Cookie': 'sid={0}'.format(sid)}
+    data = {
+        'type': quest_info['qtype'],
+        'qid': quest_info['qid']
+    }
+    r = poster.post_data(url, headers, cookies, payload=None,  **data)
+    return r
+
 def start_quest(quest_info, sid):
     # Get Quest
     poster = utils.poster.Poster

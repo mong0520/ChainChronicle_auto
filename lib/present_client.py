@@ -9,7 +9,7 @@ def get_present_list(sid, card_type=None):
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {}
     ret = poster.post_data(url, headers, cookies, **data)
-    if card_type:        
+    if card_type:
         present_ids = [data['idx'] for data in ret['body'][0]['data'] if data['data']['type'] == card_type]
     else:
         present_ids = [data['idx'] for data in ret['body'][0]['data']]
