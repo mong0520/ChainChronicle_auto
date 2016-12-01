@@ -1,6 +1,6 @@
 #!/bin/bash
 
-count="$(ps -ef | grep python | wc -l)"
+count="$(ps -ef | grep cc_account_emulator_simple2 | wc -l)"
 echo $count
 if [ $count != 5 ]; then
   echo "something wrong, kill all, then re-run"
