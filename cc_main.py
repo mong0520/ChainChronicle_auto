@@ -18,6 +18,7 @@ import utils.cc_logger
 import utils.db_operator
 import utils.enhanced_config_parser
 import utils.poster
+import requests
 from lib import alldata_client
 from lib import explorer_client
 from lib import gacha_client
@@ -32,7 +33,11 @@ from lib import user_client
 from lib import friend_client
 from lib import weapon_client
 from lib import tutorial_client
+from lib import debug_client
 
+'''
+在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
+'''
 
 class ChainChronicle(object):
 
@@ -66,7 +71,8 @@ class ChainChronicle(object):
             'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
             'COMPOSE': self.do_compose,
             'TUTORIAL': self.do_pass_tutorial,
-            'DRAMA': self.do_play_drama_auto
+            'DRAMA': self.do_play_drama_auto,
+            'POC': self.do_poc
         }
 
 
@@ -83,6 +89,10 @@ class ChainChronicle(object):
                     self.action_list = self.config.getlist(section, 'Flow')
                     self.account_info['uid'] = self.config.get(section, 'Uid')
                     self.account_info['token'] = self.config.get(section, 'Token')
+                    try:
+                        self.account_info['reuse_sid'] = self.config.get(section, 'ReuseSid')
+                    except:
+                        self.account_info['reuse_sid'] = 0
 
     def set_proxy(self):
         try:
@@ -97,9 +107,44 @@ class ChainChronicle(object):
             self.logger.debug('Not use socks5 proxy')
 
     def start(self):
-        self.do_login()
-        for action in self.action_list:
-            self.do_action(action)
+        if self.account_info['reuse_sid']:
+            reuse_sid = self.get_local_sid()
+            self.account_info['sid'] = reuse_sid
+            try:
+                self.do_show_status(None)
+                self.logger.debug('Reuse sid {0}'.format(reuse_sid))
+            except Exception as e:
+                self.logger.warning('SID is invalid, re-login: {0}'.format(e))
+                self.do_login()
+        else:
+            self.do_login()
+
+        # for action in self.action_list:
+        action_idx = 0
+        while True:
+            if action_idx >= len(self.action_list):
+                break
+            try:
+                self.do_action(self.action_list[action_idx])
+                action_idx += 1
+            except requests.exceptions.ConnectionError as e:
+                self.logger.warning(e)
+                time.sleep(3)
+                self.logger.debug('Retry section {0}'.format(self.action_list[action_idx]))
+                continue
+
+
+    def get_local_sid(self):
+        sid_file = '.' + os.path.basename(os.path.splitext(self.config_file)[0])
+        try:
+            with open(sid_file, 'r') as f:
+                sid = f.read().strip()
+            self.logger.debug(u'Found sid {0}, try to reuse it'.format(sid))
+            return sid
+        except Exception as e:
+            self.logger.warning(e)
+            return None
+
 
     def do_action(self, action_name):
         for action, action_function in self.action_mapping.iteritems():
@@ -131,10 +176,22 @@ class ChainChronicle(object):
         # self.logger.debug(ret['login']['sid'])
         try:
             self.account_info['sid'] = ret['login']['sid']
+            self.logger.debug('sid = {0}'.format(ret['login']['sid']))
+            sid_file = '.' + os.path.basename(os.path.splitext(self.config_file)[0])
+            with open(sid_file, 'w') as f:
+                f.write(self.account_info['sid'])
+
         except KeyError:
             msg = u"無法登入, Message = {0}".format(ret['msg'])
             self.logger.error(msg)
             raise KeyError(msg)
+
+    def do_poc(self, section, *args, **kwargs):
+        r = debug_client.debug_poc(self.account_info['sid'],
+            path='/mission/get_reward', mission_id=212312259)
+        # print r
+        print simplejson.dumps(r.json(), ensure_ascii=False).encode('utf-8')
+
 
     def do_play_drama_auto(self, section, *args, **kwargs):
         quest_info = dict()
@@ -278,9 +335,9 @@ class ChainChronicle(object):
             try:
                 cid = int(card['id'])
                 card_dict = utils.db_operator.DBOperator.get_cards('cid', cid)[0]
-                if card_dict and card_dict['rarity'] >= 4:
-                    self.logger.debug(u"{0}, 界限突破：{1}, 等級: {2}, 稀有度: {3}".format(
-                        card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
+                if card_dict and card_dict['rarity'] >= 5:
+                    self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}, 稀有度: {4}".format(
+                        card_dict['title'], card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
             except KeyError:
                 raise
             except TypeError:
@@ -341,6 +398,7 @@ class ChainChronicle(object):
                     # not event time
                     pass
                 # sell treasure
+                # print simplejson.dumps(result, ensure_ascii=True)
                 if quest_info['auto_sell'] == 1:
                     try:
                         for earn in result['body'][1]['data']:
@@ -373,9 +431,9 @@ class ChainChronicle(object):
                 self.logger.error(u"    -> 關卡失敗".format(current))
                 self.logger.debug(result)
                 return
-            time.sleep(0.5)
             # 魔神戰
             if quest_info['raid'] == 1:
+                time.sleep(0.1)
                 self.do_raid_quest(fid=quest_info['fid'])
 
     def do_raid_quest(self, **kwargs):
@@ -482,10 +540,10 @@ class ChainChronicle(object):
                     raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                 # print idx, item_id
-                if int(item_id) in [85200, 26011]:
+                if int(item_id) in [85200, 26011, 26068]:
                     self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
-                    #break
+                    break
                 else:
                     weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                     self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
@@ -766,7 +824,7 @@ class ChainChronicle(object):
         parameter['explorer_idx'] = 1
         parameter['location_id'] = 0
         parameter['card_idx'] = 358771956
-        monitor_period = 1000
+        monitor_period = 10
         money_threshold = 1500000000
         counter = 0
 
@@ -948,7 +1006,7 @@ class ChainChronicle(object):
         parameter = dict()
         parameter['type'] = 1
         parameter['item_id'] = 16
-        parameter['use_cnt'] = 10
+        parameter['use_cnt'] = 5
         ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
         if ret['res'] != 0:
             parameter['item_id'] = 1
@@ -962,7 +1020,7 @@ class ChainChronicle(object):
         for k, v in kwargs.iteritems():
             parameter[k] = v
         r = gacha_client.gacha(parameter, self.account_info['sid'])
-        # self.logger.debug(r)
+        print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
         if r['res'] == 0:
             for record in r['body']:
