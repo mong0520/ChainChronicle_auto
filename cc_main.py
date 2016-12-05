@@ -1007,7 +1007,7 @@ class ChainChronicle(object):
         parameter['type'] = 1
         parameter['item_id'] = 16
         parameter['use_cnt'] = 1
-        for i in range(1: 10):
+        for i in range(1, 10):
             ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
             if ret['res'] != 0:
                 break
