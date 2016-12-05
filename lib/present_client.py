@@ -12,7 +12,9 @@ def get_present_list(sid, card_type=None):
     if card_type:
         present_ids = [data['idx'] for data in ret['body'][0]['data'] if data['data']['type'] == card_type]
     else:
-        present_ids = [data['idx'] for data in ret['body'][0]['data']]
+        # present_ids = [data['idx'] for data in ret['body'][0]['data']]
+        # work around to get gacha coin
+        present_ids = [data['idx'] for data in ret['body'][0]['data'] if data['data']['id'] == 20]
     # logger.debug("Present ids = {0}".format(present_ids))
     return present_ids
 
