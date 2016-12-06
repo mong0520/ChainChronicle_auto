@@ -20,7 +20,7 @@ from utils import poster
 class ChainChronicleAutomation():
     def __init__(self, configFile):
         #self.config['General']['uid'] = "ANDO4779bf78-f0f7-4a16-8d41-3c0d9ab46e0c"
-        #self.config['General']['token'] = "APA91bEAKkkmD_eJ07r_NjRMRKJ2keH1A1Ju8mC2MDd9Iu9Bogxoy-HBl8SlCJJmMEM-aCMxnMEDNr-AC5TIiKmUHGRkk-lO1ypSdZhE8PhlQLjvBub3t81kwwwxIDQPw6CsarSI_BJ8"        
+        #self.config['General']['token'] = "APA91bEAKkkmD_eJ07r_NjRMRKJ2keH1A1Ju8mC2MDd9Iu9Bogxoy-HBl8SlCJJmMEM-aCMxnMEDNr-AC5TIiKmUHGRkk-lO1ypSdZhE8PhlQLjvBub3t81kwwwxIDQPw6CsarSI_BJ8"
         log_tailname = os.path.basename(os.path.splitext(configFile)[0])
         self.__initLogger(log_tailname)
         self.poster = poster.Poster()
@@ -33,7 +33,7 @@ class ChainChronicleAutomation():
                 'user-agent': 'Chronicle/2.2.2 Rev/20320 (Android OS 4.4.4 / API-19 (KTU84P/V6.5.3.0.KXDMICD))',
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Platform': '2',
-                'Host': 'v267b.cc.mobimon.com.tw',
+                'Host': 'v267.cc.mobimon.com.tw',
                 'Connection': 'Keep-Alive',
                 'Content-Length': '1506'
                 }
@@ -116,7 +116,7 @@ class ChainChronicleAutomation():
         return self.logger
 
     def CC_GetAllData(self):
-        url = "http://v267b.cc.mobimon.com.tw/user/all_data"
+        url = "http://v267.cc.mobimon.com.tw/user/all_data"
         data = {}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
         cookies = {'sid': self.sid}
@@ -134,7 +134,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid=INVALID',
                 'nat': "cnt={0}&nature=cnt%3d{0}%26param%3d%257b%2522APP%2522%253a%257b%2522Version%2522%253a%25222.22%2522%252c%2522time%2522%253a%25221436052183%2522%252c%2522Lang%2522%253a%2522Chinese%2522%257d%252c%2522DEV%2522%253a%257b%2522Model%2522%253a%2522Xiaomi%2bMI%2b3W%2522%252c%2522CPU%2522%253a%2522ARMv7%2bVFPv3%2bNEON%2522%252c%2522GPU%2522%253a%2522Adreno%2b(TM)%2b330%2522%252c%2522OSVersion%2522%253a%2522Android%2bOS%2b4.4.4%2b%252f%2bAPI-19%2b(KTU84P%252fV6.5.3.0.KXDMICD)%2522%252c%2522UserUniqueID%2522%253a%2522{2}%2522%252c%2522SysRAM%2522%253a1850%252c%2522VideoRAM%2522%253a198%252c%2522OS%2522%253a%25222%2522%252c%2522Token%2522%253a%2522{3}%2522%257d%257d&param=%7b%22APP%22%3a%7b%22Version%22%3a%222.22%22%2c%22time%22%3a%221436052183%22%2c%22Lang%22%3a%22Chinese%22%7d%2c%22DEV%22%3a%7b%22Model%22%3a%22Xiaomi+MI+3W%22%2c%22CPU%22%3a%22ARMv7+VFPv3+NEON%22%2c%22GPU%22%3a%22Adreno+(TM)+330%22%2c%22OSVersion%22%3a%22Android+OS+4.4.4+%2f+API-19+(KTU84P%2fV6.5.3.0.KXDMICD)%22%2c%22UserUniqueID%22%3a%22{2}%22%2c%22SysRAM%22%3a1850%2c%22VideoRAM%22%3a198%2c%22OS%22%3a%222%22%2c%22Token%22%3a%22{3}%22%7d%7d&timestamp={1}".format(hexNow, now, self.config['General']['uid'], self.config['General']['token'])
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/session/login?cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/session/login?cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "param=%7b%22APP%22%3a%7b%22Version%22%3a%222.22%22%2c%22time%22%3a%22{1}%22%2c%22Lang%22%3a%22Chinese%22%7d%2c%22DEV%22%3a%7b%22Model%22%3a%22Xiaomi+MI+3W%22%2c%22CPU%22%3a%22ARMv7+VFPv3+NEON%22%2c%22GPU%22%3a%22Adreno+(TM)+330%22%2c%22OSVersion%22%3a%22Android+OS+4.4.4+%2f+API-19+(KTU84P%2fV6.5.3.0.KXDMICD)%22%2c%22UserUniqueID%22%3a%22{2}%22%2c%22SysRAM%22%3a1850%2c%22VideoRAM%22%3a198%2c%22OS%22%3a%222%22%2c%22Token%22%3a%22{3}%22%7d%7d&nature=cnt%3d{0}%26param%3d%257b%2522APP%2522%253a%257b%2522Version%2522%253a%25222.22%2522%252c%2522time%2522%253a%25221436052183%2522%252c%2522Lang%2522%253a%2522Chinese%2522%257d%252c%2522DEV%2522%253a%257b%2522Model%2522%253a%2522Xiaomi%2bMI%2b3W%2522%252c%2522CPU%2522%253a%2522ARMv7%2bVFPv3%2bNEON%2522%252c%2522GPU%2522%253a%2522Adreno%2b(TM)%2b330%2522%252c%2522OSVersion%2522%253a%2522Android%2bOS%2b4.4.4%2b%252f%2bAPI-19%2b(KTU84P%252fV6.5.3.0.KXDMICD)%2522%252c%2522UserUniqueID%2522%253a%2522{2}%2522%252c%2522SysRAM%2522%253a1850%252c%2522VideoRAM%2522%253a198%252c%2522OS%2522%253a%25222%2522%252c%2522Token%2522%253a%2522{3}%2522%257d%257d".format(hexNow, int(time.time()), self.config['General']['uid'], self.config['General']['token'])
         r = requests.post(post_url, data=payload, headers=self.headers)
         # self.logger.debug(r)
@@ -249,7 +249,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "cnt={0}&nature=cnt%3d{0}&timestamp={1}".format(hexNow, now)
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/user/get_account?cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/user/get_account?cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "nature=cnt%3d{0}".format(hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         self.logger.debug(r)
@@ -258,7 +258,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "cnt={0}&nature=cnt%3d{0}%26pass%3d{2}&pass={2}&timestamp={1}".format(hexNow, now, password)
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/user/set_password?cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/user/set_password?cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "pass={0}&nature=cnt%3d{1}%26pass%3d{0}".format(password, hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
 
@@ -282,7 +282,7 @@ class ChainChronicleAutomation():
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "c={2}&cnt=14e5c7f82a4&nature=c%3d1%26cnt%3d{0}%26t%3d6&t=6&timestamp={1}".format(hexNow, now, batchCount)
                     }
-            post_url = "http://v267b.cc.mobimon.com.tw/gacha?t={2}&c={3}&cnt={0}&timestamp={1}".format(hexNow, now, gType, batchCount)
+            post_url = "http://v267.cc.mobimon.com.tw/gacha?t={2}&c={3}&cnt={0}&timestamp={1}".format(hexNow, now, gType, batchCount)
             payload = "nature=c%3d{0}%26cnt%3d{1}%26t%3d6".format(batchCount, hexNow)
 
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
@@ -374,7 +374,7 @@ class ChainChronicleAutomation():
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "cnt={0}&id={2}&kind=item&nature=cnt%3d{0}%26id%3d{2}%26kind%3ditem%26price%3d30%26type%3d{3}%26val%3d1&price=30&timestamp={1}&type={3}&val=1".format(hexNow, now, item_mapping[item_type]['id'], item_mapping[item_type]['type'])
                     }
-            post_url = "http://v267b.cc.mobimon.com.tw/token?kind=item&type={2}&id={3}&val={4}&price={5}&cnt={0}&timestamp={1}".format(hexNow, now, item_mapping[item_type]['type'], item_mapping[item_type]['id'], item_mapping[item_type]['val'], item_mapping[item_type]['price'])
+            post_url = "http://v267.cc.mobimon.com.tw/token?kind=item&type={2}&id={3}&val={4}&price={5}&cnt={0}&timestamp={1}".format(hexNow, now, item_mapping[item_type]['type'], item_mapping[item_type]['id'], item_mapping[item_type]['val'], item_mapping[item_type]['price'])
             payload = "nature=cnt%3d{0}%26id%3d{1}%26kind%3ditem%26price%3d{2}%26type%3d{3}%26val%3d{4}".format(hexNow, item_mapping[item_type]['id'], item_mapping[item_type]['price'], item_mapping[item_type]['type'], item_mapping[item_type]['val'])
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
             #self.logger.debug(post_url)
@@ -397,7 +397,7 @@ class ChainChronicleAutomation():
             self.headers = {
                     'Cookie': 'sid={0}'.format(self.sid)
                     }
-            post_url = "http://v267b.cc.mobimon.com.tw/token?kind=item&type=item&id=1&val=1&price=10&cnt={0}&timestamp={1}".format(hexNow, now)
+            post_url = "http://v267.cc.mobimon.com.tw/token?kind=item&type=item&id=1&val=1&price=10&cnt={0}&timestamp={1}".format(hexNow, now)
             payload = "nature=cnt%3d{0}%26id%3d1%26kind%3ditem%26price%3d10%26type%3ditem%26val%3d1".format(hexNow)
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
             if(r['res']!=0):
@@ -422,7 +422,7 @@ class ChainChronicleAutomation():
                 "location_id={5}&nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d1%26helper1%3d{3}%26helper2%3d{4}%26"\
                 "interval%3d1%26location_id%3d{5}%26pickup%3d{7}&pickup={7}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/explorer/entry?explorer_idx={6}&location_id={5}&card_idx={2}&pickup" \
+        post_url = "http://v267.cc.mobimon.com.tw/explorer/entry?explorer_idx={6}&location_id={5}&card_idx={2}&pickup" \
         "={7}&interval=1&helper1={3}&helper2={4}&cnt={0}&timestamp={1}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
 
         payload = "nature=card_idx%3d{2}%26cnt%3d{0}%26explorer_idx%3d{6}%26helper1%3d{3}%26helper2%3d{4}%26interval%3d1%26location_id%3d{5}%26pickup%3d{7}".format(hexNow, now, idx, helper1, helper2, area, explorer_idx, pickup)
@@ -448,7 +448,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "cnt={0}&explorer_idx={2}&nature=cnt%3d{0}%26explorer_idx%3d{2}&timestamp={1}".format(hexNow, now, explorer_idx)
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/explorer/result?explorer_idx={2}&cnt={0}&timestamp={1}".format(hexNow, now, explorer_idx)
+        post_url = "http://v267.cc.mobimon.com.tw/explorer/result?explorer_idx={2}&cnt={0}&timestamp={1}".format(hexNow, now, explorer_idx)
 
         payload = "nature=cnt%3d{0}%26explorer_idx%3d{2}".format(hexNow, now, explorer_idx)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
@@ -465,7 +465,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "cnt={0}&nature=cnt%3d{0}&timestamp={1}".format(hexNow, now)
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/explorer/list?cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/explorer/list?cnt={0}&timestamp={1}".format(hexNow, now)
 
         payload = "nature=cnt%3d{0}".format(hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
@@ -481,7 +481,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "cnt={0}&explorer_idx={2}&nature=cnt%3d{0}%26explorer_idx%3d{2}&timestamp={1}".format(hexNow, now, explorer_idx)
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/explorer/cancel?explorer_idx={2}&cnt={0}&timestamp={1}".format(hexNow, now, explorer_idx)
+        post_url = "http://v267.cc.mobimon.com.tw/explorer/cancel?explorer_idx={2}&cnt={0}&timestamp={1}".format(hexNow, now, explorer_idx)
 
         payload = "nature=cnt%3d{0}%26explorer_idx%3d{2}".format(hexNow, now, explorer_idx)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
@@ -500,7 +500,7 @@ class ChainChronicleAutomation():
             #         'Cookie': 'sid={0}'.format(self.sid),
             #         'nat': "cnt={0}&jid={2}&nature=cnt%3d{0}%26jid%3d{2}&timestamp={1}".format(hexNow, now, jid)
             #         }
-            # post_url = "http://v267b.cc.mobimon.com.tw/subjugation/check_participant?jid={2}&cnt={0}&timestamp={1}".format(hexNow, now, jid)
+            # post_url = "http://v267.cc.mobimon.com.tw/subjugation/check_participant?jid={2}&cnt={0}&timestamp={1}".format(hexNow, now, jid)
             # payload = "nature=cnt%3d{0}%26jid%3d{1}".format(hexNow, jid)
             # r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
 
@@ -519,7 +519,7 @@ class ChainChronicleAutomation():
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "brave=0&cnt={0}&ecnt={3}&jid={2}&nature=brave%3d0%26cnt%3d{0}%26ecnt%3d{3}%26jid%3d{2}&timestamp={1}".format(hexNow, now, jid, ecnt)
                     }
-            post_url = "http://v267b.cc.mobimon.com.tw/subjugation/try?jid={2}&ecnt={3}&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid, ecnt)
+            post_url = "http://v267.cc.mobimon.com.tw/subjugation/try?jid={2}&ecnt={3}&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid, ecnt)
 
             payload = "nature=brave%3d0%26cnt%3d{0}%26ecnt%3d{2}%26jid%3d{1}".format(hexNow, jid, ecnt)
             r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
@@ -559,7 +559,7 @@ class ChainChronicleAutomation():
                 self.headers = {
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "bid={3}&brave=0&cnt={0}&fid=383974&full=0&jid={2}&nature=bid%3d{3}%26brave%3d0%26cnt%3d{0}%26fid%3d383974%26full%3d0%26jid%3d{2}%26pt%3d0&pt={4}&timestamp={1}".format(hexNow, now, jid, bid, idx)}
-                post_url = "http://v267b.cc.mobimon.com.tw/subjugation/entry?jid={2}&bid={3}&pt={4}&fid=383974&full=0&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid, bid, idx)
+                post_url = "http://v267.cc.mobimon.com.tw/subjugation/entry?jid={2}&bid={3}&pt={4}&fid=383974&full=0&brave=0&cnt={0}&timestamp={1}".format(hexNow, now, jid, bid, idx)
                 payload = "nature=bid%3d{3}%26brave%3d0%26cnt%{0}%26fid%3d383974%26full%3d0%26jid%3d{2}%26pt%3d{4}".format(hexNow, now, jid, bid, idx)
 
                 self.logger.debug(u'討伐關卡: {0}'.format(bid))
@@ -574,7 +574,7 @@ class ChainChronicleAutomation():
                     'nat': "bid={bid}&bt=7056&cc=1&cnt={cnt}&d=1&jid={jid}&mission=%7b%22cid%22%3a%5b{cid0}%2c{cid1}%2c{cid2}%5d%2c%22sid%22%3a%5b0%2c0%2c0%5d%2c%22fid%22%3a6043%2c%22ms%22%3a1%2c%22md%22%3a2476%2c%22sc%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a0%2c%22he%22%3a0%2c%22da%22%3a0%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a3%2c%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a1%7d%2c%22weapon%22%3a%7b%220%22%3a3%2c%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%2c%225%22%3a0%2c%228%22%3a0%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a2%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%7d%2c%22fj%22%3a0%2c%22fw%22%3a0%2c%22fo%22%3a0%2c%22cc%22%3a1%2c%22bf_atk%22%3a0%2c%22bf_hp%22%3a0%2c%22bf_spd%22%3a0%7d&nature=bid%3d{bid}%26bt%3d7056%26cc%3d1%26cnt%3d{cnt}%26d%3d1%26jid%3d{jid}%26mission%3d%257b%2522cid%2522%253a%255b{cid0}%252c{cid1}%252c{cid2}%255d%252c%2522sid%2522%253a%255b0%252c0%252c0%255d%252c%2522fid%2522%253a6043%252c%2522ms%2522%253a1%252c%2522md%2522%253a2476%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a1%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%252c%25225%2522%253a0%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a2%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a0%252c%2522fw%2522%253a0%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%252c%2522bf_atk%2522%253a0%252c%2522bf_hp%2522%253a0%252c%2522bf_spd%2522%253a0%257d%26res%3d1%26s%3d0%26time%3d1.80%26wc%3d{wc}&res=1&s=0&time=1.80&timestamp={now}&wc={wc}".format(cnt=hexNow, now=now, jid=jid, bid=bid, cid0=pt_cids[idx][0], cid1=pt_cids[idx][1], cid2=pt_cids[idx][1], wc=wave_list[idx])
                     }
 
-                post_url = "http://v267b.cc.mobimon.com.tw/subjugation/result?res=1&jid={2}&bid={3}&wc={4}&bt=6176&cc=1&time=1.68&d=1&s=1&cnt={0}&timestamp={1}".format(hexNow, now, jid, bid, wave_list[idx])
+                post_url = "http://v267.cc.mobimon.com.tw/subjugation/result?res=1&jid={2}&bid={3}&wc={4}&bt=6176&cc=1&time=1.68&d=1&s=1&cnt={0}&timestamp={1}".format(hexNow, now, jid, bid, wave_list[idx])
 
                 payload = "mission=%7b%22cid%22%3a%5b{cid0}%2c{cid1}%2c{cid2}%5d%2c%22sid%22%3a%5b0%2c0%2c0%5d%2c%22fid%22%3a6043%2c%22ms%22%3a1%2c%22md%22%3a2476%2c%22sc%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a0%2c%22he%22%3a0%2c%22da%22%3a0%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a3%2c%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a1%7d%2c%22weapon%22%3a%7b%220%22%3a3%2c%221%22%3a1%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%2c%225%22%3a0%2c%228%22%3a0%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a2%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%7d%2c%22fj%22%3a0%2c%22fw%22%3a0%2c%22fo%22%3a0%2c%22cc%22%3a1%2c%22bf_atk%22%3a0%2c%22bf_hp%22%3a0%2c%22bf_spd%22%3a0%7d&nature=bid%3d{bid}%26bt%3d7056%26cc%3d1%26cnt%3d{cnt}%26d%3d1%26jid%3d{jid}%26mission%3d%257b%2522cid%2522%253a%255b{cid0}%252c{cid1}%252c{cid2}%255d%252c%2522sid%2522%253a%255b0%252c0%252c0%255d%252c%2522fid%2522%253a6043%252c%2522ms%2522%253a1%252c%2522md%2522%253a2476%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a1%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%252c%25225%2522%253a0%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a2%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a0%252c%2522fw%2522%253a0%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%252c%2522bf_atk%2522%253a0%252c%2522bf_hp%2522%253a0%252c%2522bf_spd%2522%253a0%257d%26res%3d1%26s%3d0%26time%3d1.80%26wc%3d{wc}".format(cnt=hexNow, now=now, jid=jid, bid=bid, cid0=pt_cids[idx][0], cid1=pt_cids[idx][1], cid2=pt_cids[idx][1], wc=wave_list[idx])
                 r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
@@ -583,7 +583,7 @@ class ChainChronicleAutomation():
 
 
     def __sellItem(self, idx):
-        url = 'http://v267b.cc.mobimon.com.tw/card/sell'
+        url = 'http://v267.cc.mobimon.com.tw/card/sell'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
         data = {
@@ -595,7 +595,7 @@ class ChainChronicleAutomation():
 
     def __getQuest(self, qtype, qid):
         # Get Quest
-        url = 'http://v267b.cc.mobimon.com.tw/quest/entry'
+        url = 'http://v267.cc.mobimon.com.tw/quest/entry'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
         data = {
@@ -610,7 +610,7 @@ class ChainChronicleAutomation():
 
     def __getBattleResult(self, qid):
         # Battle Result
-        # url = 'http://v267b.cc.mobimon.com.tw/quest/entry'
+        # url = 'http://v267.cc.mobimon.com.tw/quest/entry'
         # cookies = {'sid': self.sid}
         # headers = {'Cookie': 'sid={0}'.format(self.sid)}
         # data = {
@@ -633,7 +633,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "cnt={0}&nature=cnt%3d{0}%26param%3d%257b%2522APP%2522%253a%257b%2522Version%2522%253a%25222.22%2522%252c%2522time%2522%253a%2522143198601943%2522%252c%2522Lang%2522%253a%2522Chinese%2522%257d%252c%2522DEV%2522%253a%257b%2522Model%2522%253a%2522Xiaomi%2bMI%2b3W%2522%252c%2522CPU%2522%253a%2522ARMv7%2bVFPv3%2bNEON%2522%252c%2522GPU%2522%253a%2522Adreno%2b(TM)%2b330%2522%252c%2522OSVersion%2522%253a%2522Android%2bOS%2b4.4.4%2b%252f%2bAPI-19%2b(KTU84P%252fV6.5.3.0.KXDMICD)%2522%252c%2522UserUniqueID%2522%253a%2522{2}%2522%252c%2522SysRAM%2522%253a1850%252c%2522VideoRAM%2522%253a198%252c%2522OS%2522%253a%25222%2522%252c%2522Token%2522%253a%2522{3}%2522%257d%257d&param=%7b%22APP%22%3a%7b%22Version%22%3a%222.22%22%2c%22time%22%3a%22143198601943%22%2c%22Lang%22%3a%22Chinese%22%7d%2c%22DEV%22%3a%7b%22Model%22%3a%22Xiaomi+MI+3W%22%2c%22CPU%22%3a%22ARMv7+VFPv3+NEON%22%2c%22GPU%22%3a%22Adreno+(TM)+330%22%2c%22OSVersion%22%3a%22Android+OS+4.4.4+%2f+API-19+(KTU84P%2fV6.5.3.0.KXDMICD)%22%2c%22UserUniqueID%22%3a%22{2}%22%2c%22SysRAM%22%3a1851%2c%22VideoRAM%22%3a198%2c%22OS%22%3a%222%22%2c%22Token%22%3a%22{3}%22%7d%7d&timestamp={1}".format(hexNow, now, self.config['General']['uid'], self.config['General']['token'])
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/quest/result?qid={0}&res=1&bt=1200&time=0.00&d=1&s=1&cc=1&wc=5&wn=5&cnt={1}&timestamp={2}".format(qid, hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/quest/result?qid={0}&res=1&bt=1200&time=0.00&d=1&s=1&cc=1&wc=5&wn=5&cnt={1}&timestamp={2}".format(qid, hexNow, now)
         payload = "ch=&eh=&ec=&mission=%7b%22cid%22%3a%5b7505%2c5033%2c52%2c38%2c7502%2c45%5d%2c%22fid%22%3a1965350%2c%22ms%22%3a1%2c%22md%22%3a200001%2c%22sc%22%3a%7b%221%22%3a1%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a0%7d%2c%22es%22%3a1%2c%22at%22%3a1%2c%22he%22%3a1%2c%22da%22%3a1%2c%22ba%22%3a1%2c%22bu%22%3a1%2c%22job%22%3a%7b%220%22%3a1%2c%221%22%3a1%2c%222%22%3a2%2c%223%22%3a1%2c%224%22%3a2%7d%2c%22weapon%22%3a%7b%220%22%3a2%2c%221%22%3a1%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a2%2c%225%22%3a1%2c%228%22%3a1%2c%229%22%3a1%2c%2210%22%3a0%7d%2c%22box%22%3a1%2c%22um%22%3a%7b%221%22%3a1%2c%222%22%3a1%2c%223%22%3a0%7d%2c%22fj%22%3a-1%2c%22fw%22%3a-1%2c%22fo%22%3a1%2c%22cc%22%3a1%7d&nature=bt%3d1200%26cc%3d1%26ch%3d%26cnt%3d{0}%26d%3d1%26ec%3d%26eh%3d%26mission%3d%257b%2522cid%2522%253a%255b7505%252c5033%252c52%252c38%252c7502%252c45%255d%252c%2522fid%2522%253a1965350%252c%2522ms%2522%253a0%252c%2522md%2522%253a200000%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a1%252c%25221%2522%253a1%252c%25222%2522%253a2%252c%25223%2522%253a1%252c%25224%2522%253a2%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a2%252c%25221%2522%253a1%252c%25222%2522%253a0%252c%25223%2522%253a1%252c%25224%2522%253a2%252c%25225%2522%253a1%252c%25228%2522%253a0%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a1%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a-1%252c%2522fw%2522%253a-1%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%257d%26qid%3d220103%26res%3d1%26s%3d0%26time%3d0.00%26wc%3d5%26wn%3d5".format(hexNow)
 
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies)
@@ -657,7 +657,7 @@ class ChainChronicleAutomation():
             'Cookie': 'sid={0}'.format(self.sid),
             'nat': "cnt=14e64896ccb&nature=cnt%3d{0}&timestamp={1}".format(hexNow, now)
             }
-        post_url = "http://v267b.cc.mobimon.com.tw/raid/list?cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/raid/list?cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "nature=cnt%3d{0}".format(hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         #self.logger.debug("Raw data = {0}".format(r))
@@ -707,7 +707,7 @@ class ChainChronicleAutomation():
             'Cookie': 'sid={0}'.format(self.sid),
             'nat': "bid={0}&cnt={1}&fid=1913206&nature=bid%3d{0}%26cnt%3d{1}%26fid%3d1913206%26pt%3d0%26use%3d1&pt=0&timestamp={2}&use=1".format(bossId, hexNow, now)
             }
-        post_url = "http://v267b.cc.mobimon.com.tw/raid/entry?bid={0}&use=1&fid=1913206&pt=0&cnt={1}&timestamp={2}".format(bossId, hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/raid/entry?bid={0}&use=1&fid=1913206&pt=0&cnt={1}&timestamp={2}".format(bossId, hexNow, now)
         payload = "nature=bid%3d{0}%26cnt%3d{1}%26fid%3d1913206%26pt%3d0%26use%3d1".format(bossId, hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         # self.logger.debug("Get Raid Request result = {0}".format(r['res']))
@@ -721,7 +721,7 @@ class ChainChronicleAutomation():
             'Cookie': 'sid={0}'.format(self.sid),
             'nat': "bid={0}&cnt={1}&damage=994500&mission=%7b%22cid%22%3a%5b1032%2c57%2c7505%2c3022%2c1021%2c38%5d%2c%22fid%22%3a43%2c%22ms%22%3a0%2c%22md%22%3a149140%2c%22sc%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a0%2c%22he%22%3a0%2c%22da%22%3a0%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a3%2c%221%22%3a1%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a1%7d%2c%22weapon%22%3a%7b%220%22%3a2%2c%221%22%3a0%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a1%2c%225%22%3a1%2c%228%22%3a1%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a1%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%7d%2c%22fj%22%3a1%2c%22fw%22%3a3%2c%22fo%22%3a0%2c%22cc%22%3a1%7d&nature=bid%3d{0}%26cnt%3d{1}%26damage%3d994500%26mission%3d%257b%2522cid%2522%253a%255b1032%252c57%252c7505%252c3022%252c1021%252c38%255d%252c%2522fid%2522%253a43%252c%2522ms%2522%253a0%252c%2522md%2522%253a149140%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a1%252c%25222%2522%253a1%252c%25223%2522%253a1%252c%25224%2522%253a1%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a2%252c%25221%2522%253a0%252c%25222%2522%253a1%252c%25223%2522%253a1%252c%25224%2522%253a1%252c%25225%2522%253a1%252c%25228%2522%253a1%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a1%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a1%252c%2522fw%2522%253a3%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%257d%26res%3d1%26t%3d15&res=1&t=15&timestamp={2}".format(bossId, hexNow, now)
             }
-        post_url = "http://v267b.cc.mobimon.com.tw/raid/result?bid={0}&res=1&damage=9994500&t=15&cnt={1}&timestamp={2}".format(bossId, hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/raid/result?bid={0}&res=1&damage=9994500&t=15&cnt={1}&timestamp={2}".format(bossId, hexNow, now)
         payload = "mission=%7b%22cid%22%3a%5b1032%2c57%2c7505%2c3022%2c1021%2c38%5d%2c%22fid%22%3a43%2c%22ms%22%3a0%2c%22md%22%3a198601%2c%22sc%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%2c%224%22%3a0%7d%2c%22es%22%3a0%2c%22at%22%3a0%2c%22he%22%3a0%2c%22da%22%3a0%2c%22ba%22%3a0%2c%22bu%22%3a0%2c%22job%22%3a%7b%220%22%3a3%2c%221%22%3a1%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a1%7d%2c%22weapon%22%3a%7b%220%22%3a2%2c%221%22%3a0%2c%222%22%3a1%2c%223%22%3a1%2c%224%22%3a1%2c%225%22%3a1%2c%228%22%3a1%2c%229%22%3a0%2c%2210%22%3a0%7d%2c%22box%22%3a1%2c%22um%22%3a%7b%221%22%3a0%2c%222%22%3a0%2c%223%22%3a0%7d%2c%22fj%22%3a1%2c%22fw%22%3a3%2c%22fo%22%3a0%2c%22cc%22%3a1%7d&nature=bid%3d{0}%26cnt%3d{1}%26damage%3d994500%26mission%3d%257b%2522cid%2522%253a%255b1032%252c57%252c7505%252c3022%252c1021%252c38%255d%252c%2522fid%2522%253a43%252c%2522ms%2522%253a0%252c%2522md%2522%253a198601%252c%2522sc%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%252c%25224%2522%253a0%257d%252c%2522es%2522%253a0%252c%2522at%2522%253a0%252c%2522he%2522%253a0%252c%2522da%2522%253a0%252c%2522ba%2522%253a0%252c%2522bu%2522%253a0%252c%2522job%2522%253a%257b%25220%2522%253a3%252c%25221%2522%253a1%252c%25222%2522%253a1%252c%25223%2522%253a1%252c%25224%2522%253a1%257d%252c%2522weapon%2522%253a%257b%25220%2522%253a2%252c%25221%2522%253a0%252c%25222%2522%253a1%252c%25223%2522%253a1%252c%25224%2522%253a1%252c%25225%2522%253a1%252c%25228%2522%253a1%252c%25229%2522%253a0%252c%252210%2522%253a0%257d%252c%2522box%2522%253a1%252c%2522um%2522%253a%257b%25221%2522%253a0%252c%25222%2522%253a0%252c%25223%2522%253a0%257d%252c%2522fj%2522%253a1%252c%2522fw%2522%253a3%252c%2522fo%2522%253a0%252c%2522cc%2522%253a1%257d%26res%3d1%26t%3d15".format(bossId, hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         #self.logger.debug("Get Raid Play result = {0}".format(r['res']))
@@ -736,7 +736,7 @@ class ChainChronicleAutomation():
             'Cookie': 'sid={0}'.format(self.sid),
             'nat': "bid={0}&cnt={1}&nature=bid%3d{0}%26cnt%3d{1}&timestamp={2}".format(bossId, hexNow, now)
             }
-        post_url = "http://v267b.cc.mobimon.com.tw/raid/record?bid={0}&cnt={1}&timestamp={2}".format(bossId, hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/raid/record?bid={0}&cnt={1}&timestamp={2}".format(bossId, hexNow, now)
         payload = "nature=bid%3d{0}%26cnt%3d{1}".format(bossId, hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         self.logger.debug(u"{0}".format(r['title']))
@@ -750,7 +750,7 @@ class ChainChronicleAutomation():
                 'Cookie': 'sid={0}'.format(self.sid),
                 'nat': "cnt=14e5b4ed1b3&item_id=1&nature=cnt%3d{0}%26item_id%3d1%26type%3d1&timestamp={1}&type=1".format(hexNow, now)
                 }
-        post_url = "http://v267b.cc.mobimon.com.tw/user/recover_ap?type=1&item_id=1&cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/user/recover_ap?type=1&item_id=1&cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "nature=cnt%3d{0}%26item_id%3d1%26type%3d1".format(hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         if r['res'] == 0:
@@ -774,7 +774,7 @@ class ChainChronicleAutomation():
 
         self.logger = logging.getLogger("Chain Chronicle")
         self.logger.setLevel(logging.DEBUG)
-        
+
         log_name = "cc_{0}.log".format(tail_name)
         rh = RotatingFileHandler(log_name, maxBytes=1024*10000, backupCount=5)
         rh.setLevel(logging.DEBUG)
@@ -796,7 +796,7 @@ class ChainChronicleAutomation():
                     'Cookie': 'sid={0}'.format(self.sid),
                     'nat': "cnt={0}&nature=cnt%3d{0}%26p%3d{2}&p={2}&timestamp={1}".format(hexNow, now, idx)
                     }
-        post_url = "http://v267b.cc.mobimon.com.tw/present/recv?p={0}&cnt={1}&timestamp={2}".format(idx, hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/present/recv?p={0}&cnt={1}&timestamp={2}".format(idx, hexNow, now)
         payload = "nature=cnt%3d{0}%26p%3d{1}".format(hexNow, idx)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         self.logger.debug(r)
@@ -821,7 +821,7 @@ class ChainChronicleAutomation():
                 r = self.__sellItem(c['idx'])
                 count += 1
             elif 'type' in c and c['type'] == 0 and 'maxlv' in c and c['maxlv'] >= 70:
-                continue 
+                continue
             elif 'locked' in c and c['locked']:
                 self.logger.debug(u"聖靈幣鎖住，無法販賣")
                 continue
@@ -849,7 +849,7 @@ class ChainChronicleAutomation():
             'Cookie': 'sid={0}'.format(self.sid),
             'nat': "cnt={0}&nature=cnt%3d{0}&timestamp={1}".format(hexNow, now)
             }
-        post_url = "http://v267b.cc.mobimon.com.tw/data/charainfo?cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/data/charainfo?cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "nature=cnt%3d{0}".format(hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         # self.logger.debug(r)
@@ -908,7 +908,7 @@ class ChainChronicleAutomation():
             'Cookie': 'sid={0}'.format(self.sid),
             'nat': "cnt={0}&id=7&kind=limit_item&limit_id=9000&nature=cnt%3d{0}%26id%3d7%26kind%3dlimit_item%26limit_id%3d9000%26price%3d25%26type%3ditem%26val%3d1&price=25&timestamp={1}&type=item&val=1".format(hexNow, now)
             }
-        post_url = "http://v267b.cc.mobimon.com.tw/token?kind=limit_item&limit_id=9000&type=item&id=7&val=1&price=25&cnt={0}&timestamp={1}".format(hexNow, now)
+        post_url = "http://v267.cc.mobimon.com.tw/token?kind=limit_item&limit_id=9000&type=item&id=7&val=1&price=25&cnt={0}&timestamp={1}".format(hexNow, now)
         payload = "nature=cnt%3d{0}%26id%3d7%26kind%3dlimit_item%26limit_id%3d9000%26price%3d25%26type%3ditem%26val%3d1".format(hexNow)
         r = requests.post(post_url, data=payload, headers=self.headers, cookies=cookies).json()
         self.logger.debug(r)
@@ -917,7 +917,7 @@ class ChainChronicleAutomation():
     def CC_TotalWar(self, tid, ring=0, sell=1):
         # accept total war
         self.logger.debug(u"Accept TotalWar")
-        url = 'http://v267b.cc.mobimon.com.tw/totalwar/accept'
+        url = 'http://v267.cc.mobimon.com.tw/totalwar/accept'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
         data = {
@@ -937,7 +937,7 @@ class ChainChronicleAutomation():
 
     def __start_total_war(self, tid):
         fid = 1683830
-        url = 'http://v267b.cc.mobimon.com.tw/totalwar/entry'
+        url = 'http://v267.cc.mobimon.com.tw/totalwar/entry'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
         data = {
@@ -949,7 +949,7 @@ class ChainChronicleAutomation():
         return r
 
     def __finish_total_war(self, tid, sell):
-        url = 'http://v267b.cc.mobimon.com.tw/totalwar/result'
+        url = 'http://v267.cc.mobimon.com.tw/totalwar/result'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
         data = {
@@ -978,7 +978,7 @@ class ChainChronicleAutomation():
     def CC_GetPresents(self, sell=False):
         # Get present list
         # self.logger.debug(u"Get present id")
-        url = 'http://v267b.cc.mobimon.com.tw/present/list'
+        url = 'http://v267.cc.mobimon.com.tw/present/list'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
         data = {}
@@ -988,7 +988,7 @@ class ChainChronicleAutomation():
         # self.logger.debug("Present ids = {0}".format(present_ids))
 
         # Get present
-        url = 'http://v267b.cc.mobimon.com.tw/present/recv'
+        url = 'http://v267.cc.mobimon.com.tw/present/recv'
         cookies = {'sid': self.sid}
         headers = {'Cookie': 'sid={0}'.format(self.sid)}
 
@@ -1000,7 +1000,7 @@ class ChainChronicleAutomation():
             if sell is True:
                 self.__sellItem(pid)
         return ret
-    
+
 
 if __name__ == "__main__":
 
@@ -1162,7 +1162,7 @@ if __name__ == "__main__":
             15: '賭場幣',
             20: '轉蛋幣',
         }
-            
+
         data_list = r['body'][8]['data']
         #logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for data in data_list:

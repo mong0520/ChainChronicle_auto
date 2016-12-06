@@ -5,7 +5,7 @@ import time
 
 def get_raid_info(sid, key):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/list'
+    url = 'http://v267.cc.mobimon.com.tw/raid/list'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -18,7 +18,7 @@ def get_raid_info(sid, key):
             if r['own']:
                 if key == 'id':
                     return r['boss_id']
-                if key == 'lv': 
+                if key == 'lv':
                     return r['boss_param']['lv']
         return None
     except Exception as e:
@@ -27,7 +27,7 @@ def get_raid_info(sid, key):
 
 def start_raid_quest(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/entry'
+    url = 'http://v267.cc.mobimon.com.tw/raid/entry'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -44,7 +44,7 @@ def finish_raid_quest(parameter, sid):
     now = int(time.time() * 1000)
     hex_now = format(now + 5000, 'x')
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/result'
+    url = 'http://v267.cc.mobimon.com.tw/raid/result'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -62,7 +62,7 @@ def finish_raid_quest(parameter, sid):
 
 def get_raid_bonus(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/record'
+    url = 'http://v267.cc.mobimon.com.tw/raid/record'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

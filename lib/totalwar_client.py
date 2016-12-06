@@ -3,7 +3,7 @@ import utils.poster
 
 def accept_totalwar(ring, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/totalwar/accept'
+    url = 'http://v267.cc.mobimon.com.tw/totalwar/accept'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -16,7 +16,7 @@ def accept_totalwar(ring, sid):
 def start_totalwar(parameter, sid):
     fid = 1683830
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/totalwar/entry'
+    url = 'http://v267.cc.mobimon.com.tw/totalwar/entry'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -30,7 +30,7 @@ def start_totalwar(parameter, sid):
 
 def finish_totalwar(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/totalwar/result'
+    url = 'http://v267.cc.mobimon.com.tw/totalwar/result'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

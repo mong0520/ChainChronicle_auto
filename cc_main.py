@@ -90,7 +90,7 @@ class ChainChronicle(object):
                     self.account_info['uid'] = self.config.get(section, 'Uid')
                     self.account_info['token'] = self.config.get(section, 'Token')
                     try:
-                        self.account_info['reuse_sid'] = self.config.get(section, 'ReuseSid')
+                        self.account_info['reuse_sid'] = self.config.getint(section, 'ReuseSid')
                     except:
                         self.account_info['reuse_sid'] = 0
 
@@ -114,6 +114,7 @@ class ChainChronicle(object):
                 self.do_show_status(None)
                 self.logger.debug('Reuse sid {0}'.format(reuse_sid))
             except Exception as e:
+                raise
                 self.logger.warning('SID is invalid, re-login: {0}'.format(e))
                 self.do_login()
         else:
@@ -154,13 +155,25 @@ class ChainChronicle(object):
                 action_function(action_name)
 
     def do_login(self):
-        #url = 'http://v267b.cc.mobimon.com.tw/session/login'
-        url = 'http://v267b.cc.mobimon.com.tw/session/login'
-        headers = {'Cookie': 'sid=INVALID'}
+        #url = 'http://v267.cc.mobimon.com.tw/session/login'
+        url = 'http://v267.cc.mobimon.com.tw/session/login'
+        headers = {
+            'Cookie': 'sid=INVALID',
+            'X-Unity-Version': '5.4.0f3',
+            'Device': '0',
+            'Platform': '2',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'AppVersion': '2.67',
+            # user-agent is the MUST-HAVE header to pass through mobimon's checking
+            'user-agent': 'Chronicle/2.6.7 Rev/45834 (Android OS 6.0.1 / API-23 (MMB29M/V8.0.5.0.MHRMIDG))',
+            'Accept-Encoding': 'identity',
+            'Host': 'v267.cc.mobimon.com.tw',
+            'Connection': 'Keep-Alive'
+        }
         data = {
             'UserUniqueID': self.account_info['uid'],
             'Token': self.account_info['token'],
-            'OS':1
+            'OS': 2
         }
         payload_dict = {
           "APP": {
@@ -186,9 +199,10 @@ class ChainChronicle(object):
             self.logger.error(msg)
             raise KeyError(msg)
 
+
     def do_poc(self, section, *args, **kwargs):
         r = debug_client.debug_poc(self.account_info['sid'],
-            path='/mission/get_reward', mission_id=212312259)
+            path='/tmp')
         # print r
         print simplejson.dumps(r.json(), ensure_ascii=False).encode('utf-8')
 
@@ -1007,12 +1021,13 @@ class ChainChronicle(object):
         parameter['type'] = 1
         parameter['item_id'] = 16
         parameter['use_cnt'] = 1
-        for i in range(1, 10):
+        ret = None
+        for i in range(0, 10):
             ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
             if ret['res'] != 0:
-                break
-        parameter['item_id'] = 1
-        ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                parameter['item_id'] = 1
+                ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                return ret
         return ret
 
     def do_gacha(self, g_type, **kwargs):
@@ -1081,7 +1096,7 @@ class ChainChronicle(object):
                 self.logger.debug("sell present result: {0}".format(ret['res']))
 
     def do_sell_item(self, cidx):
-        url = 'http://v267b.cc.mobimon.com.tw/card/sell'
+        url = 'http://v267.cc.mobimon.com.tw/card/sell'
         cookies = {'sid': self.account_info['sid']}
         headers = {'Cookie': 'sid={0}'.format(self.account_info['sid'])}
         data = {

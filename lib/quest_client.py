@@ -4,7 +4,7 @@ import requests
 
 def get_treasure(quest_info, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/quest/treasure'
+    url = 'http://v267.cc.mobimon.com.tw/quest/treasure'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -17,7 +17,7 @@ def get_treasure(quest_info, sid):
 def start_quest(quest_info, sid):
     # Get Quest
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/quest/entry'
+    url = 'http://v267.cc.mobimon.com.tw/quest/entry'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -35,7 +35,7 @@ def finish_quest(quest_info, sid):
     now = int(time.time())
     hex_now = format(now + 5000, 'x')
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/quest/result'
+    url = 'http://v267.cc.mobimon.com.tw/quest/result'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

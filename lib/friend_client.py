@@ -3,7 +3,7 @@ import utils.poster
 
 def query_fid(sid, oid):
     poster = utils.poster.Poster
-    url = "http://v267b.cc.mobimon.com.tw/friend/search"
+    url = "http://v267.cc.mobimon.com.tw/friend/search"
     data = {'oid': oid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}
