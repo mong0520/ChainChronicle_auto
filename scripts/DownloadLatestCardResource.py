@@ -54,6 +54,9 @@ for card_id in card_id_list:
     m = re.search(pattern, card_id)
     try:
         tmp_idx = m.group(1).zfill(5)
+        # skip non-character cards
+        if int(tmp_idx) >= 85001:
+            continue
         result.append(tmp_idx)
     except:
         pass
