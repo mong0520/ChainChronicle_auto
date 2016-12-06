@@ -4,7 +4,7 @@ import time
 
 def gacha(parammeter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/gacha'
+    url = 'http://v267.cc.mobimon.com.tw/gacha'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     if parammeter['type'] in [3, 8]:  # Raid Gacha and Sugjugation Gacha
@@ -18,6 +18,10 @@ def gacha(parammeter, sid):
         't': parammeter['type'],
         'c': parammeter['batch_count']
     }
+    if parammeter['area']:
+        data['area'] = parammeter['area']
+    if parammeter['place']:
+        data['place'] = parammeter['place']
     r = poster.post_data(url, headers, cookies, payload=None, **data)
     time.sleep(sleep_time)
     return r

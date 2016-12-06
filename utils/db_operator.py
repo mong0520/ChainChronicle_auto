@@ -7,24 +7,24 @@ import poster
 DB_PATH = expanduser('~/ChainChronicle/db/')
 if not os.path.isdir(DB_PATH):
     os.makedirs(DB_PATH)
-DB_SOURCE_BASE = 'http://v267b.cc.mobimon.com.tw/data/'
+DB_SOURCE_BASE = 'http://v267.cc.mobimon.com.tw/data/'
 data_mapping = {
     'evolve':{
         'db_source': DB_SOURCE_BASE + 'weaponlist',
         'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
         'raw_list': list()
     }
-    # ,
-    # 'charainfo': {
-    #     'db_source': DB_SOURCE_BASE + 'charainfo',
-    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'charainfo')),
-    #     'raw_list': list()
-    # },
-    # 'questdigest': {
-    #     'db_source': DB_SOURCE_BASE + 'questdigest',
-    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'questdigest')),
-    #     'raw_list': list()
-    # }
+    ,
+    'charainfo': {
+        'db_source': DB_SOURCE_BASE + 'charainfo',
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'charainfo')),
+        'raw_list': list()
+    },
+    'questdigest': {
+        'db_source': DB_SOURCE_BASE + 'questdigest',
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'questdigest')),
+        'raw_list': list()
+    }
 
     # note, weaponlist有兩個資料可以拿，一個叫weaponlist，是一般武器，另一個叫evolve，是鍊金武器
 }

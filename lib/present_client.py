@@ -4,15 +4,17 @@ import utils.poster
 def get_present_list(sid, card_type=None):
     # Get present list
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/present/list'
+    url = 'http://v267.cc.mobimon.com.tw/present/list'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {}
     ret = poster.post_data(url, headers, cookies, **data)
-    if card_type:        
+    if card_type:
         present_ids = [data['idx'] for data in ret['body'][0]['data'] if data['data']['type'] == card_type]
     else:
-        present_ids = [data['idx'] for data in ret['body'][0]['data']]
+        # present_ids = [data['idx'] for data in ret['body'][0]['data']]
+        # work around to get gacha coin
+        present_ids = [data['idx'] for data in ret['body'][0]['data'] if data['data']['id'] == 20]
     # logger.debug("Present ids = {0}".format(present_ids))
     return present_ids
 
@@ -20,7 +22,7 @@ def get_present_list(sid, card_type=None):
 def receieve_present(pid, sid):
     # Get present
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/present/recv'
+    url = 'http://v267.cc.mobimon.com.tw/present/recv'
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
 

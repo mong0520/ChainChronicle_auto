@@ -18,6 +18,7 @@ import utils.cc_logger
 import utils.db_operator
 import utils.enhanced_config_parser
 import utils.poster
+import requests
 from lib import alldata_client
 from lib import explorer_client
 from lib import gacha_client
@@ -31,7 +32,12 @@ from lib import totalwar_client
 from lib import user_client
 from lib import friend_client
 from lib import weapon_client
+from lib import tutorial_client
+from lib import debug_client
 
+'''
+在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
+'''
 
 class ChainChronicle(object):
 
@@ -63,7 +69,10 @@ class ChainChronicle(object):
             'PASSWORD': self.do_set_password,  # no need section in config
             'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
             'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
-            'COMPOSE': self.do_compose
+            'COMPOSE': self.do_compose,
+            'TUTORIAL': self.do_pass_tutorial,
+            'DRAMA': self.do_play_drama_auto,
+            'POC': self.do_poc
         }
 
 
@@ -80,6 +89,10 @@ class ChainChronicle(object):
                     self.action_list = self.config.getlist(section, 'Flow')
                     self.account_info['uid'] = self.config.get(section, 'Uid')
                     self.account_info['token'] = self.config.get(section, 'Token')
+                    try:
+                        self.account_info['reuse_sid'] = self.config.getint(section, 'ReuseSid')
+                    except:
+                        self.account_info['reuse_sid'] = 0
 
     def set_proxy(self):
         try:
@@ -94,24 +107,72 @@ class ChainChronicle(object):
             self.logger.debug('Not use socks5 proxy')
 
     def start(self):
-        self.do_login()
-        for action in self.action_list:
-            self.do_action(action)
+        if self.account_info['reuse_sid']:
+            reuse_sid = self.get_local_sid()
+            self.account_info['sid'] = reuse_sid
+            try:
+                self.do_show_status(None)
+                self.logger.debug('Reuse sid {0}'.format(reuse_sid))
+            except Exception as e:
+                self.logger.warning('SID is invalid, re-login: {0}'.format(e))
+                self.do_login()
+        else:
+            self.do_login()
+
+        # for action in self.action_list:
+        action_idx = 0
+        while True:
+            if action_idx >= len(self.action_list):
+                break
+            try:
+                self.do_action(self.action_list[action_idx])
+                action_idx += 1
+            except requests.exceptions.ConnectionError as e:
+                self.logger.warning(e)
+                time.sleep(3)
+                self.logger.debug('Retry section {0}'.format(self.action_list[action_idx]))
+                continue
+
+
+    def get_local_sid(self):
+        sid_file = '.' + os.path.basename(os.path.splitext(self.config_file)[0])
+        try:
+            with open(sid_file, 'r') as f:
+                sid = f.read().strip()
+            self.logger.debug(u'Found sid {0}, try to reuse it'.format(sid))
+            return sid
+        except Exception as e:
+            self.logger.warning(e)
+            return None
+
 
     def do_action(self, action_name):
         for action, action_function in self.action_mapping.iteritems():
-            if action == action_name:
+            # if action == action_name:
+            if action_name.startswith(action):
                 self.logger.info("### Current Flow = {0} ###".format(action_name))
                 action_function(action_name)
 
     def do_login(self):
-        #url = 'http://v267b.cc.mobimon.com.tw/session/login'
-        url = 'http://v267b.cc.mobimon.com.tw/session/login'
-        headers = {'Cookie': 'sid=INVALID'}
+        #url = 'http://v267.cc.mobimon.com.tw/session/login'
+        url = 'http://v267.cc.mobimon.com.tw/session/login'
+        headers = {
+            'Cookie': 'sid=INVALID',
+            'X-Unity-Version': '5.4.0f3',
+            'Device': '0',
+            'Platform': '2',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'AppVersion': '2.67',
+            # user-agent is the MUST-HAVE header to pass through mobimon's checking
+            'user-agent': 'Chronicle/2.6.7 Rev/45834 (Android OS 6.0.1 / API-23 (MMB29M/V8.0.5.0.MHRMIDG))',
+            'Accept-Encoding': 'identity',
+            'Host': 'v267.cc.mobimon.com.tw',
+            'Connection': 'Keep-Alive'
+        }
         data = {
             'UserUniqueID': self.account_info['uid'],
             'Token': self.account_info['token'],
-            'OS':1
+            'OS': 2
         }
         payload_dict = {
           "APP": {
@@ -127,10 +188,112 @@ class ChainChronicle(object):
         # self.logger.debug(ret['login']['sid'])
         try:
             self.account_info['sid'] = ret['login']['sid']
+            self.logger.debug('sid = {0}'.format(ret['login']['sid']))
+            sid_file = '.' + os.path.basename(os.path.splitext(self.config_file)[0])
+            with open(sid_file, 'w') as f:
+                f.write(self.account_info['sid'])
+
         except KeyError:
             msg = u"無法登入, Message = {0}".format(ret['msg'])
             self.logger.error(msg)
             raise KeyError(msg)
+
+
+    def do_poc(self, section, *args, **kwargs):
+        r = debug_client.debug_poc(self.account_info['sid'],
+            path='/tmp')
+        # print r
+        print simplejson.dumps(r.json(), ensure_ascii=False).encode('utf-8')
+
+
+    def do_play_drama_auto(self, section, *args, **kwargs):
+        quest_info = dict()
+        results = list()
+        while True:
+            qtype, qid = self.__get_latest_quest()
+            self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
+            results[:] = []
+            quest_info['qtype'] = qtype
+            quest_info['qid'] = qid
+            quest_info['fid'] = 1965350
+
+            # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
+            result = quest_client.get_treasure(quest_info, self.account_info['sid'])
+            results.append(int(result['res']))
+            self.logger.debug(result['res'])
+
+            result = quest_client.start_quest(quest_info, self.account_info['sid'])
+            results.append(int(result['res']))
+            self.logger.debug(result['res'])
+
+            result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+            results.append(int(result['res']))
+            self.logger.debug(result['res'])
+
+            if 0 not in results:
+                break
+
+
+    def do_pass_tutorial(self, section, *args, **kwargs):
+        import uuid
+        tutorial_count = self.config.getint(section, 'Count')
+        tid_list = range(0, 21)
+        tutorail_package = [
+            {'tid': 0, 'qid': None},
+            {'tid': 1, 'qid': None},
+            {'tid': 2, 'qid': None},
+            {'tid': 3, 'qid': 210001},
+            {'tid': 4, 'qid': 210001},
+            {'tid': 5, 'qid': None},
+            {'tid': 6, 'qid': 210002},
+            {'tid': 7, 'qid': None},
+            {'tid': 8, 'qid': 210101},
+            {'tid': 9, 'qid': None},
+            {'tid': 10, 'qid': 210101},
+            {'tid': 11, 'qid': None},
+            {'tid': 12, 'qid': None},
+            {'tid': 13, 'qid': 210102},
+            {'tid': 14, 'qid': None},
+            {'tid': 15, 'qid': 210102},
+            {'tid': 16, 'qid': None},
+            {'tid': 17, 'qid': 215000},
+            {'tid': 18, 'qid': 215000},
+            {'tid': 19, 'qid': None},
+            {'tid': 20, 'qid': None}
+        ]
+        for i in range(0, tutorial_count):
+            # self.account_info['uid'] = '{0}{1}'.format('test', str(uuid.uuid4()))
+            account_uuid = str(uuid.uuid4())
+            self.config.set('GENERAL', 'Uid', account_uuid)
+            self.account_info['uid'] = account_uuid
+            self.do_login()
+
+            self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
+            for tutorial in tutorail_package:
+                if tutorial['qid']:
+                    r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
+                    quest_info = dict()
+                    quest_info['qid'] = tutorial['qid']
+                    quest_info['fid'] = 1965350
+                    r = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                    # print r
+                else:
+                    if tutorial['tid'] == 1:
+                        r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'],
+                            name='Allen', hero='Allen')
+                        # print r
+                    else:
+                        r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
+                        # print r
+            self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
+            self.do_get_present('PRESENT')
+
+            # go gacha
+            for sec in self.config.sections():
+                if sec.startswith('GACHA'):
+                    self.logger.debug('Go Gacha section {0}'.format(sec))
+                    self.do_gacha_section(sec)
+
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
@@ -185,9 +348,9 @@ class ChainChronicle(object):
             try:
                 cid = int(card['id'])
                 card_dict = utils.db_operator.DBOperator.get_cards('cid', cid)[0]
-                if card_dict and card_dict['rarity'] >= 4:
-                    self.logger.debug(u"{0}, 界限突破：{1}, 等級: {2}, 稀有度: {3}".format(
-                        card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
+                if card_dict and card_dict['rarity'] >= 5:
+                    self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}, 稀有度: {4}".format(
+                        card_dict['title'], card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
             except KeyError:
                 raise
             except TypeError:
@@ -248,6 +411,7 @@ class ChainChronicle(object):
                     # not event time
                     pass
                 # sell treasure
+                # print simplejson.dumps(result, ensure_ascii=True)
                 if quest_info['auto_sell'] == 1:
                     try:
                         for earn in result['body'][1]['data']:
@@ -280,9 +444,9 @@ class ChainChronicle(object):
                 self.logger.error(u"    -> 關卡失敗".format(current))
                 self.logger.debug(result)
                 return
-            time.sleep(0.5)
             # 魔神戰
             if quest_info['raid'] == 1:
+                time.sleep(0.1)
                 self.do_raid_quest(fid=quest_info['fid'])
 
     def do_raid_quest(self, **kwargs):
@@ -355,7 +519,7 @@ class ChainChronicle(object):
             if weapon_base_rank5_idx:
                 buy_count = 4
             # 買三星武器
-            for i in range(0, buy_count):
+            for j in range(0, buy_count):
                 ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
                 weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
 
@@ -380,17 +544,22 @@ class ChainChronicle(object):
                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
                 weapon_list_rank3[:] = []
                 # pprint.pprint(ret)
-                idx = ret['body'][1]['data'][0]['idx']
-                item_id = ret['body'][1]['data'][0]['id']
+                try:
+                    idx = ret['body'][1]['data'][0]['idx']
+                    item_id = ret['body'][1]['data'][0]['id']
+                except:
+                    import pprint
+                    pprint.pprint(ret)
+                    raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                 # print idx, item_id
-                if int(item_id) in [85200, 26011]:
-                    self.logger.info('鍊金完成，得到神器!!! {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                if int(item_id) in [85200, 26011, 26068]:
+                    self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
                     break
                 else:
                     weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-                    self.logger.info('鍊金完成，得到武器 - {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                    self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = idx
 
             # 鍊出做為基底的五星武器
@@ -603,6 +772,15 @@ class ChainChronicle(object):
 
         gacha_info['count'] = self.config.getint(section, 'Count')
         gacha_info['gacha_type'] = self.config.getint(section, 'Type')
+        try:
+            gacha_info['area'] = self.config.getint(section, 'Area')
+        except:
+            gacha_info['area'] = None
+
+        try:
+            gacha_info['place'] = self.config.getint(section, 'Place')
+        except:
+            gacha_info['place'] = None
 
         try:
             gacha_info['auto_sell'] = self.config.getint(section, 'AutoSell')
@@ -610,7 +788,7 @@ class ChainChronicle(object):
             gacha_info['auto_sell'] = 0
 
         try:
-            gacha_info['verbose'] = self.config.get('Verbose')
+            gacha_info['verbose'] = self.config.getint(section, 'Verbose')
         except:
             gacha_info['verbose'] = 0
 
@@ -618,7 +796,6 @@ class ChainChronicle(object):
             gacha_info['keep_cards'] = self.config.getlist(section, 'KeepCards')
         except:
             gacha_info['keep_cards'] = list()
-
         self.do_gacha_process(gacha_info)
 
     def do_totalwar_section(self, section, *args, **kwargs):
@@ -660,7 +837,7 @@ class ChainChronicle(object):
         parameter['explorer_idx'] = 1
         parameter['location_id'] = 0
         parameter['card_idx'] = 358771956
-        monitor_period = 1000
+        monitor_period = 10
         money_threshold = 1500000000
         counter = 0
 
@@ -679,10 +856,10 @@ class ChainChronicle(object):
 
                 r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
 
-                parameter['pickup'] = 0
+                parameter['pickup'] = 1
                 r = explorer_client.start_explorer(parameter, self.account_info['sid'])
                 if r['res'] == 2311:
-                    parameter['pickup'] = 1
+                    parameter['pickup'] = 0
                     explorer_client.start_explorer(parameter, self.account_info['sid'])
                 elif r['res'] == 0:
                     counter += 1
@@ -778,7 +955,7 @@ class ChainChronicle(object):
             if gacha_info['gacha_type'] in [3, 8]:
                 time.sleep(3)
             self.logger.info(u"#{0}: 轉蛋開始！".format(i + 1))
-            gacha_result = self.do_gacha(gacha_info['gacha_type'])
+            gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
             #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
             if gacha_info['verbose']:
@@ -842,43 +1019,38 @@ class ChainChronicle(object):
         parameter = dict()
         parameter['type'] = 1
         parameter['item_id'] = 16
-        parameter['use_cnt'] = 10
-        ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
-        if ret['res'] != 0:
-            parameter['item_id'] = 1
+        parameter['use_cnt'] = 1
+        ret = None
+        for i in range(0, 10):
             ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+            if ret['res'] != 0:
+                parameter['item_id'] = 1
+                ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                return ret
         return ret
 
-    def do_gacha(self, g_type):
+    def do_gacha(self, g_type, **kwargs):
         gacha_result = dict()
         parameter = dict()
         parameter['type'] = g_type
+        for k, v in kwargs.iteritems():
+            parameter[k] = v
         r = gacha_client.gacha(parameter, self.account_info['sid'])
-        # self.logger.debug(r)
+        print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
         if r['res'] == 0:
-            try:
-                for record in r['body'][1]['data']:
+            for record in r['body']:
+                # 新卡和舊卡位置不同，且新卡的位置也不固定
+                try:
                     tmp = dict()
-                    idx = record['idx']
-                    cid = record['id']
+                    idx = record['data'][0]['idx']
+                    cid = record['data'][0]['id']
                     tmp[idx] = cid
                     gacha_result[idx] = cid
-            except KeyError:
-                # self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
-                # print simplejson.dumps(r, indent=4, sort_keys=True)
-                # error handling for 新卡片
-                for record in r['body'][3]['data']:
-                    tmp = dict()
-                    idx = record['idx']
-                    cid = record['id']
-                    tmp[idx] = cid
-                    gacha_result[idx] = cid
-            except Exception:
-                self.logger.error(u"轉蛋完成，但有未知的錯誤，可能是包包滿了，無法賣出: {0}".format(r['res']))
-                self.logger.debug(simplejson.dumps(r))
-                # raise
-                return gacha_result
+                except Exception as e:
+                    continue
+            # print gacha_result
+
 
         elif r['res'] == 703:
             self.logger.error(u"轉蛋失敗，聖靈幣不足")
@@ -901,6 +1073,7 @@ class ChainChronicle(object):
 
     def do_get_present(self, section, *args, **kwargs):
         self.do_present_process(1, 0, 'item')
+        self.do_present_process(1, 0, 'stone')
 
     def do_present_process(self, i_flag, b_sell, item_type=None):
         if i_flag == 0:
@@ -922,7 +1095,7 @@ class ChainChronicle(object):
                 self.logger.debug("sell present result: {0}".format(ret['res']))
 
     def do_sell_item(self, cidx):
-        url = 'http://v267b.cc.mobimon.com.tw/card/sell'
+        url = 'http://v267.cc.mobimon.com.tw/card/sell'
         cookies = {'sid': self.account_info['sid']}
         headers = {'Cookie': 'sid={0}'.format(self.account_info['sid'])}
         data = {
@@ -991,6 +1164,17 @@ class ChainChronicle(object):
                 continue
         self.logger.warning(u"找不到適合的探索角色，使用[{0}]".format(card_doc['name']))
         return temp_idx, card['id']
+
+    def __get_latest_quest(self):
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        try:
+            data = r['body'][1]['data'][-1]
+            qtype = data['type']
+            qid = data['id']
+            return qtype, qid
+        except Exception as e:
+            self.logger.error(e)
+            return None
 
     def __is_meet_event_point(self, result, max_event_point):
         # 踏破活動

@@ -6,7 +6,7 @@ import requests
 
 def compose(sid, weapon_list):
     """ Due to this api use same key 'mt' 5 times, so it can not use commom poster lib"""
-    url = "http://v267b.cc.mobimon.com.tw/weapon/compose"
+    url = "http://v267.cc.mobimon.com.tw/weapon/compose"
     data = {}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}
