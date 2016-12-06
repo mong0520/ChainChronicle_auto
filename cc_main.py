@@ -114,7 +114,6 @@ class ChainChronicle(object):
                 self.do_show_status(None)
                 self.logger.debug('Reuse sid {0}'.format(reuse_sid))
             except Exception as e:
-                raise
                 self.logger.warning('SID is invalid, re-login: {0}'.format(e))
                 self.do_login()
         else:
