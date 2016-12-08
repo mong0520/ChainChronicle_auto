@@ -34,8 +34,9 @@ class CCLogger(object):
         console.setLevel(level)
         console.setFormatter(console_formatter)
 
-        CCLogger.__logger.addHandler(rh)
-        CCLogger.__logger.addHandler(console)
+        if not CCLogger.__logger.handlers:
+            CCLogger.__logger.addHandler(rh)
+            CCLogger.__logger.addHandler(console)
 
     @staticmethod
     def get_logger(log_id, level):

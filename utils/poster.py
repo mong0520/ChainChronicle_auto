@@ -49,4 +49,4 @@ class Poster(object):
 
     @staticmethod
     def get_data(url):
-        return requests.get(url).json()
+        return requests.get(url, headers=Poster.DEFAULT_HEADERS).json()
