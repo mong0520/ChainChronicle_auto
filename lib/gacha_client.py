@@ -18,9 +18,9 @@ def gacha(parammeter, sid):
         't': parammeter['type'],
         'c': parammeter['batch_count']
     }
-    if parammeter['area']:
+    if 'area' in parammeter and parammeter['area']:
         data['area'] = parammeter['area']
-    if parammeter['place']:
+    if 'place' in parammeter and parammeter['place']:
         data['place'] = parammeter['place']
     r = poster.post_data(url, headers, cookies, payload=None, **data)
     time.sleep(sleep_time)
