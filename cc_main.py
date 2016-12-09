@@ -839,7 +839,7 @@ class ChainChronicle(object):
                         if d['item_id'] == 10:
                             if d['cnt'] <= money_threshold:
                                 sys.exit(0)
-                            print "剩餘金幣 = {0}".format(d['cnt'])
+                            self.logger.Slack("剩餘金幣 = {0}".format(d['cnt']))
                             money_current = d['cnt']
                             break
 
