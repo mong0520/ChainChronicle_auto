@@ -10,7 +10,7 @@ class Poster(object):
         'Platform': '1',
         'Content-Type': 'application/x-www-form-urlencoded',
         'AppVersion': '2.67',
-        'user-agent': 'Chronicle/2.6.7 Rev/45834 (Android OS 6.0.1 / API-23',
+        'user-agent': 'Chronicle/2.6.7 Rev/45834 (Android OS 6.0.1 / API-23)',
         'Accept-Encoding': 'identity',
         'Host': 'v267.cc.mobimon.com.tw',
         'Connection': 'Keep-Alive'
