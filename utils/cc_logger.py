@@ -8,10 +8,10 @@ requests.packages.urllib3.disable_warnings() # disable slack warning
 # Slack integration for logger
 LOG_LEVEL_SLACK = 60
 logging.addLevelName(LOG_LEVEL_SLACK, "SLACK") # display name
-def Slack(self, message, *args, **kws):
+def slack(self, message, *args, **kws):
     # Yes, logger takes its '*args' as 'args'.
     self._log(LOG_LEVEL_SLACK, message, args, **kws)
-logging.Logger.Slack = Slack
+logging.Logger.slack = slack
 
 class CCLogger(object):
 
@@ -27,7 +27,7 @@ class CCLogger(object):
         console_formatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
                                               '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
 
-        slack_formatter = logging.Formatter('%(asctime)s: %(message)s', datefmt='%B %d %H:%M:%S')
+        slack_formatter = logging.Formatter('[%(asctime)s]: %(message)s', datefmt='%B %d %H:%M:%S')
 
         slack_api_key = 'xoxp-114030384193-115394422855-114791597460-f52b50029238196e449fb999feca4523'
 

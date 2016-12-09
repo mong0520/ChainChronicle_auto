@@ -286,7 +286,7 @@ class ChainChronicle(object):
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
-        self.logger.debug(r)
+        self.logger.slack(r)
 
     def do_set_password(self, section, *args, **kwargs):
         r = user_client.get_account(self.account_info['sid'])
@@ -826,7 +826,7 @@ class ChainChronicle(object):
         parameter['explorer_idx'] = 1
         parameter['location_id'] = 0
         parameter['card_idx'] = 358771956
-        monitor_period = 10
+        monitor_period = 100
         money_threshold = 1500000000
         counter = 0
 
@@ -839,7 +839,7 @@ class ChainChronicle(object):
                         if d['item_id'] == 10:
                             if d['cnt'] <= money_threshold:
                                 sys.exit(0)
-                            self.logger.Slack("剩餘金幣 = {0}".format(d['cnt']))
+                            self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
                             money_current = d['cnt']
                             break
 
@@ -958,7 +958,10 @@ class ChainChronicle(object):
                     else:
                         card = cards[0]  # cid is key index
                         msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
+                        if card['rarity'] == 5:
+                            self.logger.slack(msg)
                         self.logger.debug(msg)
+
             #if gacha_result is None or len(gacha_result) == 0:
             if not gacha_result:
                 self.logger.debug("Gacha Error")
@@ -1025,7 +1028,7 @@ class ChainChronicle(object):
         for k, v in kwargs.iteritems():
             parameter[k] = v
         r = gacha_client.gacha(parameter, self.account_info['sid'])
-        print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+        # print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
         if r['res'] == 0:
             for record in r['body']:
