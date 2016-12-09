@@ -7,10 +7,10 @@ class Poster(object):
     DEFAULT_HEADERS = {
         'X-Unity-Version': '5.4.0f3',
         'Device': '0',
-        'Platform': '2',
+        'Platform': '1',
         'Content-Type': 'application/x-www-form-urlencoded',
         'AppVersion': '2.67',
-        'user-agent': 'Chronicle/2.6.7 Rev/45834 (Android OS 6.0.1 / API-23 (MMB29M/V8.0.5.0.MHRMIDG))',
+        'user-agent': 'Chronicle/2.6.7 Rev/45834 (Android OS 6.0.1 / API-23',
         'Accept-Encoding': 'identity',
         'Host': 'v267.cc.mobimon.com.tw',
         'Connection': 'Keep-Alive'
