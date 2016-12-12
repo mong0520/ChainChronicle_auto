@@ -845,12 +845,9 @@ class ChainChronicle(object):
 
                 r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
 
-                parameter['pickup'] = 0
+                parameter['pickup'] = 1
                 r = explorer_client.start_explorer(parameter, self.account_info['sid'])
-                if r['res'] == 2311:
-                    parameter['pickup'] = 1
-                    explorer_client.start_explorer(parameter, self.account_info['sid'])
-                elif r['res'] == 0:
+                if r['res'] == 0:
                     counter += 1
                 else:
                     print r
