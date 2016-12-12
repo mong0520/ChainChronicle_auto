@@ -825,6 +825,9 @@ class ChainChronicle(object):
 
     def do_waste_money(self, section, *args, **kwargs):
         import  threading
+
+        monitor_period = 30 # display money in every 30 seconds
+        money_threshold = 1500000000
         def run(i):
             # print i
             card_idx_pool = [358771956, 330984563, 364031956]
@@ -832,24 +835,11 @@ class ChainChronicle(object):
             parameter['explorer_idx'] = i + 1
             parameter['location_id'] = i
             parameter['card_idx'] = card_idx_pool[i]
-            monitor_period = 100
-            money_threshold = 1500000000
             counter = 0
             parameter['pickup'] = 0
 
             while True:
                 try:
-                    if counter % monitor_period == 0:
-                        r = alldata_client.get_alldata(self.account_info['sid'])
-                        data = r['body'][8]['data']
-                        for d in data:
-                            if d['item_id'] == 10:
-                                if d['cnt'] <= money_threshold:
-                                    sys.exit(0)
-                                self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
-                                money_current = d['cnt']
-                                break
-
                     r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
                     r = explorer_client.start_explorer(parameter, self.account_info['sid'])
                     if r['res'] == 0:
@@ -876,12 +866,20 @@ class ChainChronicle(object):
 
         self.logger.debug('Threads start!')
         for t in threads:
+            t.setDaemon(True)
             t.start()
 
-        self.logger.debug('Waiting for all threads')
-        for t in threads:
-            t.join()
-
+        while True:
+            r = alldata_client.get_alldata(self.account_info['sid'])
+            data = r['body'][8]['data']
+            for d in data:
+                if d['item_id'] == 10:
+                    if d['cnt'] <= money_threshold:
+                        # BAD practice
+                        sys.exit(0)
+                    self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
+                    money_current = d['cnt']
+            time.sleep(monitor_period)
 
 
 
