@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*
+#-*- coding: utf-8 -*-
+#!/usr/bin/python
 import argparse
 import logging
 import os
@@ -340,6 +341,7 @@ class ChainChronicle(object):
                 if card_dict and card_dict['rarity'] >= 5:
                     self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}, 稀有度: {4}".format(
                         card_dict['title'], card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
+                    self.logger.debug(int(card['idx']))
             except KeyError:
                 raise
             except TypeError:
@@ -822,38 +824,65 @@ class ChainChronicle(object):
 
 
     def do_waste_money(self, section, *args, **kwargs):
-        parameter = dict()
-        parameter['explorer_idx'] = 1
-        parameter['location_id'] = 0
-        parameter['card_idx'] = 358771956
-        monitor_period = 100
-        money_threshold = 1500000000
-        counter = 0
+        import  threading
+        def run(i):
+            # print i
+            card_idx_pool = [358771956, 330984563, 364031956]
+            parameter = dict()
+            parameter['explorer_idx'] = i + 1
+            parameter['location_id'] = i
+            parameter['card_idx'] = card_idx_pool[i]
+            monitor_period = 100
+            money_threshold = 1500000000
+            counter = 0
+            parameter['pickup'] = 0
 
-        while True:
-            try:
-                if counter % monitor_period == 0:
-                    r = alldata_client.get_alldata(self.account_info['sid'])
-                    data = r['body'][8]['data']
-                    for d in data:
-                        if d['item_id'] == 10:
-                            if d['cnt'] <= money_threshold:
-                                sys.exit(0)
-                            self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
-                            money_current = d['cnt']
-                            break
+            while True:
+                try:
+                    if counter % monitor_period == 0:
+                        r = alldata_client.get_alldata(self.account_info['sid'])
+                        data = r['body'][8]['data']
+                        for d in data:
+                            if d['item_id'] == 10:
+                                if d['cnt'] <= money_threshold:
+                                    sys.exit(0)
+                                self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
+                                money_current = d['cnt']
+                                break
 
-                r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
-
-                parameter['pickup'] = 1
-                r = explorer_client.start_explorer(parameter, self.account_info['sid'])
-                if r['res'] == 0:
-                    counter += 1
-                else:
-                    print r
+                    r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+                    r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+                    if r['res'] == 0:
+                        counter += 1
+                    elif r['res'] == 2311:
+                        parameter['pickup'] = 1
+                    elif r['res'] == -2001:
+                        # now processing
+                        pass
+                    elif r['res'] == 2304:
+                        # is used explorer_idx, maybe too fask
+                        pass
+                    else:
+                        self.logger.debug('Thread-{0} is breaking on unknown result: {1}'.format(i, r))
+                        break
+                except Exception as e:
+                    self.logger.debug('Thread-{0} is breaking on exception: {1}'.format(i, e))
+                    print e
                     break
-            except Exception as e:
-                print e
+
+        threads = []
+        for i in range(0, 3):
+            threads.append(threading.Thread(target=run, args=[i]))
+
+        self.logger.debug('Threads start!')
+        for t in threads:
+            t.start()
+
+        self.logger.debug('Waiting for all threads')
+        for t in threads:
+            t.join()
+
+
 
 
     def do_explorer_section(self, section, *args, **kwargs):
