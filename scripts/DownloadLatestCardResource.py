@@ -14,11 +14,12 @@ timestamp = int(time.time() * 1000)
 cnt = format(timestamp + 5000, 'x')
 pattern = "cha_2d_card_(\d+)\.bdl"
 output_path = 'resource'
-
+content_url_host = 'http://content.cc.mobimon.com.tw/CC/game12/'
 
 def do_stuff(q):
     while True:
         url = q.get()
+        print url
         if url:
             filename = wget.download(url, out=output_path)
             file_size = os.stat(filename).st_size
@@ -38,7 +39,7 @@ for i in range(num_threads):
     worker.start()
 
 #request_url = 'http://content.cc.mobimon.com.tw/CC/game09/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp)
-request_url = 'http://content.cc.mobimon.com.tw/CC/267/{0}/Bdl52_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp)
+request_url = '{0}{1}/Bdl52_iOS/files.json?cnt={2}&timestamp={3}'.format(content_url_host, date, cnt, timestamp)
 print request_url
 r = requests.get(request_url)
 
@@ -63,7 +64,7 @@ for card_id in card_id_list:
 result.sort()
 
 for r in result:
-    url = 'http://content.cc.mobimon.com.tw/CC/267/{0}/Resource/Card/cha_2d_card_{1}.scr'.format(date, r)
+    url = '{0}{1}/Resource/Card/cha_2d_card_{2}.scr'.format(content_url_host, date, r)
     q.put(url)
 
 q.join()

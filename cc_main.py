@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*
+#-*- coding: utf-8 -*-
+#!/usr/bin/python
 import argparse
 import logging
 import os
@@ -154,20 +155,9 @@ class ChainChronicle(object):
                 action_function(action_name)
 
     def do_login(self):
-        #url = 'http://v267.cc.mobimon.com.tw/session/login'
-        url = 'http://v267.cc.mobimon.com.tw/session/login'
+        url = 'http://v267b.cc.mobimon.com.tw/session/login'
         headers = {
-            'Cookie': 'sid=INVALID',
-            'X-Unity-Version': '5.4.0f3',
-            'Device': '0',
-            'Platform': '2',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'AppVersion': '2.67',
-            # user-agent is the MUST-HAVE header to pass through mobimon's checking
-            'user-agent': 'Chronicle/2.6.7 Rev/45834 (Android OS 6.0.1 / API-23 (MMB29M/V8.0.5.0.MHRMIDG))',
-            'Accept-Encoding': 'identity',
-            'Host': 'v267.cc.mobimon.com.tw',
-            'Connection': 'Keep-Alive'
+            'Cookie': 'sid=INVALID'
         }
         data = {
             'UserUniqueID': self.account_info['uid'],
@@ -297,7 +287,7 @@ class ChainChronicle(object):
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
-        self.logger.debug(r)
+        self.logger.slack(r)
 
     def do_set_password(self, section, *args, **kwargs):
         r = user_client.get_account(self.account_info['sid'])
@@ -351,6 +341,7 @@ class ChainChronicle(object):
                 if card_dict and card_dict['rarity'] >= 5:
                     self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}, 稀有度: {4}".format(
                         card_dict['title'], card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
+                    self.logger.debug(int(card['idx']))
             except KeyError:
                 raise
             except TypeError:
@@ -833,41 +824,63 @@ class ChainChronicle(object):
 
 
     def do_waste_money(self, section, *args, **kwargs):
-        parameter = dict()
-        parameter['explorer_idx'] = 1
-        parameter['location_id'] = 0
-        parameter['card_idx'] = 358771956
-        monitor_period = 10
+        import  threading
+
+        monitor_period = 30 # display money in every 30 seconds
         money_threshold = 1500000000
-        counter = 0
+        def run(i):
+            # print i
+            card_idx_pool = [358771956, 330984563, 364031956]
+            parameter = dict()
+            parameter['explorer_idx'] = i + 1
+            parameter['location_id'] = i
+            parameter['card_idx'] = card_idx_pool[i]
+            counter = 0
+            parameter['pickup'] = 0
+
+            while True:
+                try:
+                    r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+                    r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+                    if r['res'] == 0:
+                        counter += 1
+                    elif r['res'] == 2311:
+                        parameter['pickup'] = 1
+                    elif r['res'] == -2001:
+                        # now processing
+                        pass
+                    elif r['res'] == 2304:
+                        # is used explorer_idx, maybe too fask
+                        pass
+                    else:
+                        self.logger.debug('Thread-{0} is breaking on unknown result: {1}'.format(i, r))
+                        break
+                except Exception as e:
+                    self.logger.debug('Thread-{0} is breaking on exception: {1}'.format(i, e))
+                    print e
+                    break
+
+        threads = []
+        for i in range(0, 3):
+            threads.append(threading.Thread(target=run, args=[i]))
+
+        self.logger.debug('Threads start!')
+        for t in threads:
+            t.setDaemon(True)
+            t.start()
 
         while True:
-            try:
-                if counter % monitor_period == 0:
-                    r = alldata_client.get_alldata(self.account_info['sid'])
-                    data = r['body'][8]['data']
-                    for d in data:
-                        if d['item_id'] == 10:
-                            if d['cnt'] <= money_threshold:
-                                sys.exit(0)
-                            print "剩餘金幣 = {0}".format(d['cnt'])
-                            money_current = d['cnt']
-                            break
+            r = alldata_client.get_alldata(self.account_info['sid'])
+            data = r['body'][8]['data']
+            for d in data:
+                if d['item_id'] == 10:
+                    if d['cnt'] <= money_threshold:
+                        # BAD practice
+                        sys.exit(0)
+                    self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
+                    money_current = d['cnt']
+            time.sleep(monitor_period)
 
-                r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
-
-                parameter['pickup'] = 1
-                r = explorer_client.start_explorer(parameter, self.account_info['sid'])
-                if r['res'] == 2311:
-                    parameter['pickup'] = 0
-                    explorer_client.start_explorer(parameter, self.account_info['sid'])
-                elif r['res'] == 0:
-                    counter += 1
-                else:
-                    print r
-                    break
-            except Exception as e:
-                print e
 
 
     def do_explorer_section(self, section, *args, **kwargs):
@@ -969,7 +982,10 @@ class ChainChronicle(object):
                     else:
                         card = cards[0]  # cid is key index
                         msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
+                        if card['rarity'] == 5:
+                            self.logger.slack(msg)
                         self.logger.debug(msg)
+
             #if gacha_result is None or len(gacha_result) == 0:
             if not gacha_result:
                 self.logger.debug("Gacha Error")
@@ -1036,7 +1052,7 @@ class ChainChronicle(object):
         for k, v in kwargs.iteritems():
             parameter[k] = v
         r = gacha_client.gacha(parameter, self.account_info['sid'])
-        print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+        # print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
         if r['res'] == 0:
             for record in r['body']:
