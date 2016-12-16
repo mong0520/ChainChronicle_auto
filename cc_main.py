@@ -498,7 +498,7 @@ class ChainChronicle(object):
         以1張5星 +  3張4星鍊金
         """
         count = self.config.getint(section, 'Count')
-        item_type = 'itm_weapon'
+        item_type = 'itm_weapon_bow'
         weapon_list_rank3 = list()
         weapon_list_rank4 = list()
         # weapon_list_rank5 = list()
@@ -517,6 +517,7 @@ class ChainChronicle(object):
             # 五把三星器武器，鍊成四星武器
             if len(weapon_list_rank3) == 5:
                 # self.logger.info(u'開始鍊金 -  3星*5')
+                # self.logger.debug(weapon_list_rank3)
                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
                 weapon_list_rank3[:] = []
                 # pprint.pprint(ret)
@@ -544,7 +545,7 @@ class ChainChronicle(object):
                     raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                 # print idx, item_id
-                if int(item_id) in [85200, 26011, 26068]:
+                if int(item_id) in [85200, 26011, 26068, 85200]:
                     self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
                     break
