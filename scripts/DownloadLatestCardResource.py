@@ -14,7 +14,7 @@ timestamp = int(time.time() * 1000)
 cnt = format(timestamp + 5000, 'x')
 pattern = "cha_2d_card_(\d+)\.bdl"
 output_path = 'resource'
-content_url_host = 'http://content.cc.mobimon.com.tw/CC/game12/'
+content_url_host = 'http://content.cc.mobimon.com.tw/CC/267/'
 
 def do_stuff(q):
     while True:
@@ -57,6 +57,9 @@ for card_id in card_id_list:
         tmp_idx = m.group(1).zfill(5)
         # skip non-character cards
         if int(tmp_idx) >= 85001:
+            continue
+        # weapons
+        if int(tmp_idx) >= 26000 and int(tmp_idx) <=26127:
             continue
         result.append(tmp_idx)
     except:

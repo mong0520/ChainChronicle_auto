@@ -174,6 +174,8 @@ class ChainChronicle(object):
             "DEV": data
         }
         payload = 'param=' + urllib.quote_plus(simplejson.dumps(payload_dict))
+        # print url
+        # print payload
         ret = self.poster.post_data(url, headers, None, payload, **data)
         # self.logger.debug(ret['login']['sid'])
         try:
