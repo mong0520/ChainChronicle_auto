@@ -7,6 +7,6 @@ del *.scr
 del *.exe
 copy *.jpg ..\..\img\
 
-cd ..\
-python resize_image.py ..\img
-pause
+REM cd ..\
+REM python resize_image.py ..\img
+REM pause
