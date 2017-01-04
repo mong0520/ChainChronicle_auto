@@ -14,7 +14,7 @@ VALID_KEYS = ['uid', 'lv', 'name']
 
 
 def get_sid():
-    url = 'http://v267.cc.mobimon.com.tw/session/login'
+    url = 'http://v272.cc.mobimon.com.tw/session/login'
     headers = {'Cookie': 'sid=INVALID'}
     data = {
         'UserUniqueID': 'ANDO9c3e5899-4e22-49a5-bf99-82d6b72aec8d',

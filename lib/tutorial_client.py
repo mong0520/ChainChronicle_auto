@@ -5,7 +5,7 @@ import time
 def tutorial(sid, entry=False, **kwargs):
     poster = utils.poster.Poster
     #url = "http://ios5.cc.mobimon.com.tw/user/all_data"
-    url = "http://v267.cc.mobimon.com.tw/tutorial"
+    url = "http://v272.cc.mobimon.com.tw/tutorial"
     if entry:
         url += '/entry'
     data = dict()
