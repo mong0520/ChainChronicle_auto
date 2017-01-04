@@ -155,7 +155,7 @@ class ChainChronicle(object):
                 action_function(action_name)
 
     def do_login(self):
-        url = 'http://v267b.cc.mobimon.com.tw/session/login'
+        url = 'http://v272.cc.mobimon.com.tw/session/login'
         headers = {
             'Cookie': 'sid=INVALID'
         }
@@ -166,7 +166,7 @@ class ChainChronicle(object):
         }
         payload_dict = {
           "APP": {
-            "Version": "2.67",
+            "Version": "2.72",
             "Revision": "2014",
             "time": time.time(),
             "Lang": "Chinese"
@@ -177,7 +177,8 @@ class ChainChronicle(object):
         # print url
         # print payload
         ret = self.poster.post_data(url, headers, None, payload, **data)
-        # self.logger.debug(ret['login']['sid'])
+        # self.logger.debug(ret)
+        # sys.exit(0)
         try:
             self.account_info['sid'] = ret['login']['sid']
             self.logger.debug('sid = {0}'.format(ret['login']['sid']))
@@ -1114,7 +1115,7 @@ class ChainChronicle(object):
                 self.logger.debug("sell present result: {0}".format(ret['res']))
 
     def do_sell_item(self, cidx):
-        url = 'http://v267.cc.mobimon.com.tw/card/sell'
+        url = 'http://v272.cc.mobimon.com.tw/card/sell'
         cookies = {'sid': self.account_info['sid']}
         headers = {'Cookie': 'sid={0}'.format(self.account_info['sid'])}
         data = {

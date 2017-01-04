@@ -3,7 +3,7 @@ import utils.poster
 
 def debug_poc(sid, path, **kwargs):
     poster = utils.poster.Poster
-    url = "http://v267.cc.mobimon.com.tw{0}".format(path)
+    url = "http://v272.cc.mobimon.com.tw{0}".format(path)
 
     data = dict()
     for k, v in kwargs.iteritems():

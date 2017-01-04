@@ -26,7 +26,7 @@ worldinfo
 
 # Get latest charainfo data
 for data in data_mapping.keys():
-    url = 'http://v267.cc.mobimon.com.tw/data/' + data
+    url = 'http://v272.cc.mobimon.com.tw/data/' + data
     r = utils.poster.Poster.post_data(url)
     print r[data]
 
