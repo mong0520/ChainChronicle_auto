@@ -22,7 +22,7 @@ class Poster(object):
         pass
 
     @staticmethod
-    def __post_data(url, headers=None, cookies=None, payload=None, **kwargs):
+    def __post_data(url, headers=dict(), cookies=None, payload=None, **kwargs):
         # kwargs['timestamp'] = int(time.time())
         kwargs['timestamp'] = int(time.time() * 1000)
         kwargs['cnt'] = format(kwargs['timestamp'] + 5000, 'x')
@@ -57,14 +57,16 @@ class Poster(object):
         # return r
 
     @staticmethod
-    def post_data(url, headers=None, cookies=None, payload=None, **kwargs):
+    def post_data(url, headers=dict(), cookies=None, payload=None, **kwargs):
         return json.loads(Poster.__post_data(url, headers, cookies, payload, **kwargs))
 
     @staticmethod
-    def post_data_v2(url, headers=None, cookies=None, payload=None, **kwargs):
+    def post_data_v2(url, headers=dict(), cookies=None, payload=None, **kwargs):
         return Poster.__post_data(url, headers, cookies, payload, **kwargs)
 
     @staticmethod
     def get_data(url):
         # return requests.get(url, headers=Poster.DEFAULT_HEADERS).json()
-        return json.loads(requests.get(url, headers=Poster.DEFAULT_HEADERS))
+        r = requests.get(url, headers=Poster.DEFAULT_HEADERS)
+        decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
+        return json.loads(decompressed_data)
