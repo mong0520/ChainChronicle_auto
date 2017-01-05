@@ -43,7 +43,7 @@ class Poster(object):
         # r.headers['content-encoding'] = 'gzip'
         # r.headers['Content-Type'] = 'application/x-gzip'
         # print "encoding = {0}".format(r.headers)
-        # print r.text
+        # print r
 
         # gzip decompress in-the-fly
         decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)

@@ -12,5 +12,5 @@ def debug_poc(sid, path, **kwargs):
     cookies = {'sid': sid}
     # self.poster.set_header(headers)
     # self.poster.set_cookies(cookies)
-    ret = poster.post_data_v2(url, headers, cookies, **data)
+    ret = poster.post_data(url, headers, cookies, **data)
     return ret

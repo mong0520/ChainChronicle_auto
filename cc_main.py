@@ -73,7 +73,8 @@ class ChainChronicle(object):
             'COMPOSE': self.do_compose,
             'TUTORIAL': self.do_pass_tutorial,
             'DRAMA': self.do_play_drama_auto,
-            'POC': self.do_poc
+            'POC': self.do_poc,
+            'TEACHER': self.do_teacher
         }
 
 
@@ -191,18 +192,89 @@ class ChainChronicle(object):
             self.logger.error(msg)
             raise KeyError(msg)
 
+    def do_teacher(self, section, *args, **kwargs):
+        # POC
+        for i in [5,10,15,20,25,30,35,40,45,50]:
+            r = debug_client.debug_poc(self.account_info['sid'],
+                path='/teacher/thanks_achievement', lv=i)
+            print r
+
+        r = debug_client.debug_poc(self.account_info['sid'],
+            path='/teacher/reset_from_disciple')
+        print r
+
+        r = debug_client.debug_poc(self.account_info['sid'],
+            path='/teacher/thanks_graduate', firend=0)
+        print r
+
+
 
     def do_poc(self, section, *args, **kwargs):
+        # r = debug_client.debug_poc(self.account_info['sid'],
+            # path='/friend/list')
+        # 師：開放徒弟
+        # r = debug_client.debug_poc(self.account_info['sid'],
+        #     path='/teacher/toggle_acceptance', accept=1, only_friend=0)
+
+        # 師：送禮物
+        # r = debug_client.debug_poc(self.account_info['sid'],
+            # path='/teacher/rewards_daily_achievement', present='f')
+
         r = debug_client.debug_poc(self.account_info['sid'],
-            path='/tmp')
-        # print r
-        print simplejson.dumps(r.json(), ensure_ascii=False).encode('utf-8')
+            path='/teacher/reset_from_teacher', did=19609399)
+
+        # 19073918, 19609396, 19609399
+
+        # r = debug_client.debug_poc(self.account_info['sid'],
+        #     path='/teacher/reset_from_disciple')
+
+        # 徒：申請師父
+        # r = debug_client.debug_poc(self.account_info['sid'],
+            # path='/teacher/apply', tid=1965350)
+
+        # 徒：等級到了，回禮
+        # r = debug_client.debug_poc(self.account_info['sid'],
+            # path='/teacher/thanks_achievement', lv=15)
+
+        # 徒：一般回禮
+        # r = debug_client.debug_poc(self.account_info['sid'],
+        #     path='/teacher/cheer_by_disciple')
+
+        # 查看開放師父清單
+        # r = debug_client.debug_poc(self.account_info['sid'],
+            # path='/teacher/candidate_list', limit=0)
+
+
+        # 徒：畢業了，感謝師父
+        # r = debug_client.debug_poc(self.account_info['sid'],
+             # path='/teacher/thanks_graduate', firend=1)
+
+        import pprint
+        class MyPrettyPrinter(pprint.PrettyPrinter):
+            def format(self, object, context, maxlevels, level):
+                if isinstance(object, unicode):
+                    return (object.encode('utf8'), True, False)
+                return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
+
+        MyPrettyPrinter().pprint(r)
+        # print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
 
     def do_play_drama_auto(self, section, *args, **kwargs):
         quest_info = dict()
         results = list()
+        parameter = dict()
+        parameter['type'] = 1 # 體果
+        parameter['item_id'] = 1
+        parameter['use_cnt'] = 1
         while True:
+            r = alldata_client.get_alldata(self.account_info['sid'])
+            lv = r['body'][4]['data']['lv']
+            if lv > 50:
+                self.logger.debug('LV > 50, break')
+                break
+            else:
+                self.logger.debug('LV = {0}'.format(lv))
             qtype, qid = self.__get_latest_quest()
             self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
             results[:] = []
@@ -213,15 +285,33 @@ class ChainChronicle(object):
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
             result = quest_client.get_treasure(quest_info, self.account_info['sid'])
             results.append(int(result['res']))
-            self.logger.debug(result['res'])
+            # self.logger.debug(result)
 
             result = quest_client.start_quest(quest_info, self.account_info['sid'])
             results.append(int(result['res']))
-            self.logger.debug(result['res'])
+            # self.logger.debug(result)
 
             result = quest_client.finish_quest(quest_info, self.account_info['sid'])
             results.append(int(result['res']))
-            self.logger.debug(result['res'])
+            # self.logger.debug(result)
+
+            # 拿禮物，可能會有精靈石或體果
+            self.do_get_present('PRESENT')
+
+            # 體力不足
+            if 103 in results:
+                # 體果
+                ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                if ret['res'] == 0:
+                    continue
+                else:
+                    # 精靈石
+                    parameter['type'] = 0
+                    ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                    if ret['res'] == 0:
+                        continue
+                    else:
+                        break
 
             if 0 not in results:
                 break
@@ -281,11 +371,9 @@ class ChainChronicle(object):
             self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
             self.do_get_present('PRESENT')
 
-            # go gacha
-            for sec in self.config.sections():
-                if sec.startswith('GACHA'):
-                    self.logger.debug('Go Gacha section {0}'.format(sec))
-                    self.do_gacha_section(sec)
+            # 徒：申請師父
+            r = debug_client.debug_poc(self.account_info['sid'],
+                path='/teacher/apply', tid=1965350)
 
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
