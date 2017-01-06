@@ -209,32 +209,34 @@ class ChainChronicle(object):
         if teacher_disciple_client.IS_DISCIPLE_GRADUATED:
             for i in [5,10,15,20,25,30,35,40,45]:
                 r = teacher_disciple_client.thanks_achievement(self.account_info['sid'], lv=i)
-                self.logger.debug('UID {0} sends gift for LV {1}, res= {2}'.format(self.account_info['uid'], i, r['res']))
+                self.logger.debug('UID {0} 給與 Rank {1} 獎勵, res= {2}'.format(self.account_info['uid'], i, r['res']))
                 if r['res'] != 0:
-                    self.logger.warning('UID {0} is failed to send gift teacher {1}, msg = {2}'.format(self.account_info['uid'], tid, r))
-                    
+                    self.logger.warning('UID {0} 無法給與 Rank {1} 獎勵, msg = {2}'.format(
+                        self.account_info['uid'], tid, r))
 
-            #r = teacher_disciple_client.reset_from_disciple(self.account_info['sid'])
+
+            r = teacher_disciple_client.reset_from_disciple(self.account_info['sid'])
+            print r
             #self.logger.debug('UID {0} reset from disciple {1}'.format(self.account_info['uid'], r['res']))
 
 
             r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
-            self.logger.debug('UID {0} is graduated!, res = {1}'.format(self.account_info['uid'], r['res']))
+            self.logger.debug('徒弟 UID {0} 畢業!, res = {1}'.format(self.account_info['uid'], r['res']))
             if r['res'] != 0:
-                self.logger.warning('UID {0} is failed to graduate, msg = {1}'.format(self.account_info['uid'], r))
+                self.logger.warning('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
         else:
             # 徒：申請師父
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
-            self.logger.debug('UID {0} applies teacher {1}, res = {2}'.format(self.account_info['uid'], tid, r['res']))
+            self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
-                self.logger.warning('Apply teacher failed: {0}'.format(r))
+                self.logger.warning('選擇師父失敗: {0}'.format(r))
                 raise Exception('Applay teacher failed!')
 
 
     def do_poc(self, section, *args, **kwargs):
         import json
-        # r = debug_client.debug_poc(self.account_info['sid'],
-            # path='/friend/list')
+        r = debug_client.debug_poc(self.account_info['sid'],
+            path='/friend/list')
         # 師：開放徒弟
         # r = debug_client.debug_poc(self.account_info['sid'],
         #     path='/teacher/toggle_acceptance', accept=1, only_friend=0)
@@ -242,15 +244,13 @@ class ChainChronicle(object):
         # 師：送禮物
         # r = debug_client.debug_poc(self.account_info['sid'],
             # path='/teacher/rewards_daily_achievement', present='f')
-
-        r = debug_client.debug_poc(self.account_info['sid'],
-            path='/friend/list')
-        print json.dumps(r, encoding="UTF-8", ensure_ascii=False)
+        # teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
+        # self.do_disciple_section('DISCIPLE')
 
         # 19073918, 19609396, 19609399
 
         # r = debug_client.debug_poc(self.account_info['sid'],
-        #     path='/teacher/reset_from_disciple')
+            # path='/teacher/reset_from_disciple')
 
         # 徒：申請師父
         # r = debug_client.debug_poc(self.account_info['sid'],
@@ -268,7 +268,6 @@ class ChainChronicle(object):
         # r = debug_client.debug_poc(self.account_info['sid'],
             # path='/teacher/candidate_list', limit=0)
 
-
         # 徒：畢業了，感謝師父
         # r = debug_client.debug_poc(self.account_info['sid'],
              # path='/teacher/thanks_graduate', firend=1)
@@ -282,7 +281,7 @@ class ChainChronicle(object):
 
         MyPrettyPrinter().pprint(r)
         '''
-        # print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+        print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
 
     def do_play_drama_auto(self, section, *args, **kwargs):
@@ -294,15 +293,16 @@ class ChainChronicle(object):
         parameter['use_cnt'] = 1
         lv_threshold = 50
         current_lv = 1
+        self.logger.debug(u'開始通過主線任務')
         while True:
             qtype, qid, lv = self.__get_latest_quest()
             if lv >= lv_threshold:
-                self.logger.debug('Lv exceeds threshold, break'.format(lv_threshold))
-                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True 
+                self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
                 break
             else:
                 if lv != current_lv:
-                    self.logger.debug('LV = {0}'.format(lv)) 
+                    self.logger.debug(u'等級 = {0}'.format(lv))
                 current_lv = lv
             # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
             results[:] = []
@@ -344,10 +344,9 @@ class ChainChronicle(object):
             if 0 not in results:
                 break
 
-
     def do_pass_tutorial(self, section, *args, **kwargs):
         import uuid
-        tutorial_count = self.config.getint(section, 'Count')
+        # tutorial_count = self.config.getint(section, 'Count')
         tid_list = range(0, 21)
         tutorail_package = [
             {'tid': 0, 'qid': None},
@@ -372,35 +371,33 @@ class ChainChronicle(object):
             {'tid': 19, 'qid': None},
             {'tid': 20, 'qid': None}
         ]
-        for i in range(0, tutorial_count):
-            # self.account_info['uid'] = '{0}{1}'.format('test', str(uuid.uuid4()))
-            account_uuid = str(uuid.uuid4())
-            self.config.set('GENERAL', 'Uid', account_uuid)
-            self.account_info['uid'] = account_uuid
-            self.do_login()
+        # for i in range(0, tutorial_count):
+        # self.account_info['uid'] = '{0}{1}'.format('test', str(uuid.uuid4()))
+        account_uuid =  ''.join(['ANDO', str(uuid.uuid4())])
+        self.config.set('GENERAL', 'Uid', account_uuid)
+        self.account_info['uid'] = account_uuid
+        self.do_login()
 
-            self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
-            for tutorial in tutorail_package:
-                if tutorial['qid']:
-                    r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
-                    quest_info = dict()
-                    quest_info['qid'] = tutorial['qid']
-                    quest_info['fid'] = 1965350
-                    r = quest_client.finish_quest(quest_info, self.account_info['sid'])
+        # self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
+        self.logger.debug(u'新帳號創立成功，準備完成新手教學…')
+        for tutorial in tutorail_package:
+            if tutorial['qid']:
+                r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
+                quest_info = dict()
+                quest_info['qid'] = tutorial['qid']
+                quest_info['fid'] = 1965350
+                r = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                # print r
+            else:
+                if tutorial['tid'] == 1:
+                    r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'],
+                        name='Allen', hero='Allen')
                     # print r
                 else:
-                    if tutorial['tid'] == 1:
-                        r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'],
-                            name='Allen', hero='Allen')
-                        # print r
-                    else:
-                        r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
-                        # print r
-            self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
-            self.do_get_present('PRESENT')
-
-
-
+                    r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
+                    # print r
+        self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
+        self.do_get_present('PRESENT')
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
