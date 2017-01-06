@@ -205,28 +205,34 @@ class ChainChronicle(object):
 
     def do_disciple_section(self, section, *args, **kwargs):
         tid = self.config.get(section, 'Teacher_Id')
+        # teacher_disciple_client.IS_DISCIPLE_GRADUATED = 1
         if teacher_disciple_client.IS_DISCIPLE_GRADUATED:
-            for i in [5,10,15,20,25,30,35,40,45,50]:
-                r = teacher_disciple_client.debug_poc(self.account_info['sid'],
-                    path='/teacher/thanks_achievement', lv=i)
-                print r
+            for i in [5,10,15,20,25,30,35,40,45]:
+                r = teacher_disciple_client.thanks_achievement(self.account_info['sid'], lv=i)
+                self.logger.debug('UID {0} sends gift for LV {1}, res= {2}'.format(self.account_info['uid'], i, r['res']))
+                if r['res'] != 0:
+                    self.logger.warning('UID {0} is failed to send gift teacher {1}, msg = {2}'.format(self.account_info['uid'], tid, r))
+                    
 
-            r = teacher_disciple_client.thanks_reset_from_disciple(self.account_info['sid'],
-                path='/teacher/reset_from_disciple')
-            print r
+            #r = teacher_disciple_client.reset_from_disciple(self.account_info['sid'])
+            #self.logger.debug('UID {0} reset from disciple {1}'.format(self.account_info['uid'], r['res']))
 
-            r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'],
-                path='/teacher/thanks_graduate')
-            print r
+
+            r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
+            self.logger.debug('UID {0} is graduated!, res = {1}'.format(self.account_info['uid'], r['res']))
+            if r['res'] != 0:
+                self.logger.warning('UID {0} is failed to graduate, msg = {1}'.format(self.account_info['uid'], r))
         else:
             # 徒：申請師父
-            self.logger.debug('Apply teacher {0}'.format(tid))
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
-            print r
-
+            self.logger.debug('UID {0} applies teacher {1}, res = {2}'.format(self.account_info['uid'], tid, r['res']))
+            if r['res'] != 0:
+                self.logger.warning('Apply teacher failed: {0}'.format(r))
+                raise Exception('Applay teacher failed!')
 
 
     def do_poc(self, section, *args, **kwargs):
+        import json
         # r = debug_client.debug_poc(self.account_info['sid'],
             # path='/friend/list')
         # 師：開放徒弟
@@ -238,7 +244,8 @@ class ChainChronicle(object):
             # path='/teacher/rewards_daily_achievement', present='f')
 
         r = debug_client.debug_poc(self.account_info['sid'],
-            path='/teacher/reset_from_teacher', did=19609399)
+            path='/friend/list')
+        print json.dumps(r, encoding="UTF-8", ensure_ascii=False)
 
         # 19073918, 19609396, 19609399
 
@@ -265,7 +272,7 @@ class ChainChronicle(object):
         # 徒：畢業了，感謝師父
         # r = debug_client.debug_poc(self.account_info['sid'],
              # path='/teacher/thanks_graduate', firend=1)
-
+        '''
         import pprint
         class MyPrettyPrinter(pprint.PrettyPrinter):
             def format(self, object, context, maxlevels, level):
@@ -274,6 +281,7 @@ class ChainChronicle(object):
                 return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
         MyPrettyPrinter().pprint(r)
+        '''
         # print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
 
@@ -284,17 +292,19 @@ class ChainChronicle(object):
         parameter['type'] = 1 # 體果
         parameter['item_id'] = 1
         parameter['use_cnt'] = 1
+        lv_threshold = 50
+        current_lv = 1
         while True:
-            r = alldata_client.get_alldata(self.account_info['sid'])
-            lv = r['body'][4]['data']['lv']
-            if lv > 50:
-                self.logger.debug('LV > 50, break')
-                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
+            qtype, qid, lv = self.__get_latest_quest()
+            if lv >= lv_threshold:
+                self.logger.debug('Lv exceeds threshold, break'.format(lv_threshold))
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True 
                 break
             else:
-                self.logger.debug('LV = {0}'.format(lv))
-            qtype, qid = self.__get_latest_quest()
-            self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
+                if lv != current_lv:
+                    self.logger.debug('LV = {0}'.format(lv)) 
+                current_lv = lv
+            # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
             results[:] = []
             quest_info['qtype'] = qtype
             quest_info['qid'] = qid
@@ -313,8 +323,7 @@ class ChainChronicle(object):
             results.append(int(result['res']))
             # self.logger.debug(result)
 
-            # 拿禮物，可能會有精靈石或體果
-            self.do_get_present('PRESENT')
+            # self.do_get_present('PRESENT')
 
             # 體力不足
             if 103 in results:
@@ -331,6 +340,7 @@ class ChainChronicle(object):
                     else:
                         break
 
+            # Unknown error, force break
             if 0 not in results:
                 break
 
@@ -1295,7 +1305,8 @@ class ChainChronicle(object):
             data = r['body'][1]['data'][-1]
             qtype = data['type']
             qid = data['id']
-            return qtype, qid
+            lv = r['body'][4]['data']['lv']
+            return qtype, qid, lv
         except Exception as e:
             self.logger.error(e)
             return None

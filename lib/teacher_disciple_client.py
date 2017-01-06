@@ -29,7 +29,7 @@ def thanks_achievement(sid, lv):
 
 
 # Disciple action
-def thanks_reset_from_disciple(sid, lv):
+def reset_from_disciple(sid):
     path = '/teacher/reset_from_disciple'
     poster = utils.poster.Poster
     r = poster.post_data_general(sid, path=path)
@@ -37,7 +37,7 @@ def thanks_reset_from_disciple(sid, lv):
 
 
 # Disciple action
-def thanks_thanks_graduate(sid, lv):
+def thanks_thanks_graduate(sid):
     path = '/teacher/thanks_graduate'
     poster = utils.poster.Poster
     r = poster.post_data_general(sid, path=path, friend=0)
