@@ -255,23 +255,22 @@ class ChainChronicle(object):
                     self.logger.warning('UID {0} 無法給與 Rank {1} 獎勵, msg = {2}'.format(
                         self.account_info['uid'], tid, r))
 
-
-            r = teacher_disciple_client.reset_from_disciple(self.account_info['sid'])
-            print r
+            # r = teacher_disciple_client.reset_from_disciple(self.account_info['sid'])
+            # print r
             #self.logger.debug('UID {0} reset from disciple {1}'.format(self.account_info['uid'], r['res']))
 
-
             r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
-            self.logger.debug('徒弟 UID {0} 畢業!, res = {1}'.format(self.account_info['uid'], r['res']))
-            if r['res'] != 0:
-                self.logger.warning('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
+            if r['res'] == 0:               
+                self.logger.slack('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
+            else:
+                self.logger.slack('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
         else:
             # 徒：申請師父
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
             self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
-                self.logger.warning('選擇師父失敗: {0}'.format(r))
-                # raise Exception('Applay teacher failed!')
+                self.logger.slack('選擇師父失敗: {0}'.format(r))
+                #raise Exception('Applay teacher failed!')
 
 
     def do_poc(self, section, *args, **kwargs):
@@ -334,7 +333,7 @@ class ChainChronicle(object):
         parameter['use_cnt'] = 1
         lv_threshold = 50
         current_lv = 1
-        self.logger.debug(u'開始通過主線任務')
+        self.logger.debug(u'開始通過主線任務...')
         while True:
             qtype, qid, lv = self.__get_latest_quest()
             if lv >= lv_threshold:
@@ -343,7 +342,8 @@ class ChainChronicle(object):
                 break
             else:
                 if lv != current_lv:
-                    self.logger.debug(u'等級 = {0}'.format(lv))
+                    # self.logger.debug(u'等級 = {0}'.format(lv))
+                    pass
                 current_lv = lv
             # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
             results[:] = []
@@ -379,11 +379,14 @@ class ChainChronicle(object):
                     if ret['res'] == 0:
                         continue
                     else:
+                        self.logger.error('Unable to recover stamina, break')
                         break
 
             # Unknown error, force break
             if 0 not in results:
+                self.logger.error('Unknown error in drama {0}'.format(results))
                 break
+        
 
     def do_pass_tutorial(self, section, *args, **kwargs):
         import uuid
