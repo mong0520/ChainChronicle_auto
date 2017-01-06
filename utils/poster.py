@@ -21,6 +21,21 @@ class Poster(object):
     def __init__(self):
         pass
 
+
+    @staticmethod
+    def post_data_general(sid, path, **kwargs):
+        url = "http://v272.cc.mobimon.com.tw{0}".format(path)
+
+        data = dict()
+        if kwargs:
+            for k, v in kwargs.iteritems():
+                data[k] = v
+        headers = {'Cookie': 'sid={0}'.format(sid)}
+        cookies = {'sid': sid}
+        ret = Poster.post_data(url, headers, cookies, **data)
+        return ret
+
+
     @staticmethod
     def __post_data(url, headers=dict(), cookies=None, payload=None, **kwargs):
         # kwargs['timestamp'] = int(time.time())

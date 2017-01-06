@@ -35,6 +35,7 @@ from lib import friend_client
 from lib import weapon_client
 from lib import tutorial_client
 from lib import debug_client
+from lib import teacher_disciple_client
 
 '''
 在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
@@ -74,7 +75,9 @@ class ChainChronicle(object):
             'TUTORIAL': self.do_pass_tutorial,
             'DRAMA': self.do_play_drama_auto,
             'POC': self.do_poc,
-            'TEACHER': self.do_teacher
+            'TEACHER': self.do_teacher_section,
+            'DISCIPLE': self.do_disciple_section
+            #'SECTION_NAME': sefl.function_name
         }
 
 
@@ -192,20 +195,34 @@ class ChainChronicle(object):
             self.logger.error(msg)
             raise KeyError(msg)
 
-    def do_teacher(self, section, *args, **kwargs):
-        # POC
-        for i in [5,10,15,20,25,30,35,40,45,50]:
-            r = debug_client.debug_poc(self.account_info['sid'],
-                path='/teacher/thanks_achievement', lv=i)
+
+    def do_teacher_section(self, section, *args, **kwargs):
+        accept = self.config.get(section, 'Accept')
+        r = teacher_disciple_client.toggle_acceptance(self.account_info['sid'], accept=accept)
+        self.logger.debug(r['body'][0]['data'])
+
+
+
+    def do_disciple_section(self, section, *args, **kwargs):
+        tid = self.config.get(section, 'Teacher_Id')
+        if teacher_disciple_client.IS_DISCIPLE_GRADUATED:
+            for i in [5,10,15,20,25,30,35,40,45,50]:
+                r = teacher_disciple_client.debug_poc(self.account_info['sid'],
+                    path='/teacher/thanks_achievement', lv=i)
+                print r
+
+            r = teacher_disciple_client.thanks_reset_from_disciple(self.account_info['sid'],
+                path='/teacher/reset_from_disciple')
             print r
 
-        r = debug_client.debug_poc(self.account_info['sid'],
-            path='/teacher/reset_from_disciple')
-        print r
-
-        r = debug_client.debug_poc(self.account_info['sid'],
-            path='/teacher/thanks_graduate', firend=0)
-        print r
+            r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'],
+                path='/teacher/thanks_graduate')
+            print r
+        else:
+            # 徒：申請師父
+            self.logger.debug('Apply teacher {0}'.format(tid))
+            r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
+            print r
 
 
 
@@ -272,6 +289,7 @@ class ChainChronicle(object):
             lv = r['body'][4]['data']['lv']
             if lv > 50:
                 self.logger.debug('LV > 50, break')
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
                 break
             else:
                 self.logger.debug('LV = {0}'.format(lv))
@@ -371,9 +389,7 @@ class ChainChronicle(object):
             self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
             self.do_get_present('PRESENT')
 
-            # 徒：申請師父
-            r = debug_client.debug_poc(self.account_info['sid'],
-                path='/teacher/apply', tid=1965350)
+
 
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
