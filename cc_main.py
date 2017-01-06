@@ -111,6 +111,42 @@ class ChainChronicle(object):
             self.logger.warning(e)
             self.logger.debug('Not use socks5 proxy')
 
+    # def start_temp(self):
+    #     with open('uid.txt', 'r') as f:
+    #         lines = f.readlines()
+
+    #     for line in lines:
+    #         uid = line.strip()
+    #         self.logger.debug(line)
+
+
+    #         if self.account_info['reuse_sid']:
+    #             reuse_sid = self.get_local_sid()
+    #             self.account_info['sid'] = reuse_sid
+    #             try:
+    #                 self.do_show_status(None)
+    #                 self.logger.debug('Reuse sid {0}'.format(reuse_sid))
+    #             except Exception as e:
+    #                 self.logger.warning('SID is invalid, re-login: {0}'.format(e))
+    #                 self.do_login(uid=uid)
+    #         else:
+    #             self.do_login(uid=uid)
+
+    #         # for action in self.action_list:
+    #         action_idx = 0
+    #         while True:
+    #             if action_idx >= len(self.action_list):
+    #                 break
+    #             try:
+    #                 self.do_action(self.action_list[action_idx])
+    #                 action_idx += 1
+    #             except requests.exceptions.ConnectionError as e:
+    #                 self.logger.warning(e)
+    #                 time.sleep(3)
+    #                 self.logger.debug('Retry section {0}'.format(self.action_list[action_idx]))
+    #                 continue
+
+
     def start(self):
         if self.account_info['reuse_sid']:
             reuse_sid = self.get_local_sid()
@@ -158,7 +194,10 @@ class ChainChronicle(object):
                 self.logger.info("### Current Flow = {0} ###".format(action_name))
                 action_function(action_name)
 
-    def do_login(self):
+    def do_login(self, uid=None):
+        if uid:
+            self.account_info['uid'] = uid
+        # print self.account_info['uid']
         url = 'http://v272.cc.mobimon.com.tw/session/login'
         headers = {
             'Cookie': 'sid=INVALID'
@@ -181,7 +220,9 @@ class ChainChronicle(object):
         # print url
         # print payload
         ret = self.poster.post_data(url, headers, None, payload, **data)
-        # self.logger.debug(ret)
+
+        # 可以查到徒弟，但位置不一定
+        print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
         try:
             self.account_info['sid'] = ret['login']['sid']
@@ -230,13 +271,13 @@ class ChainChronicle(object):
             self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
                 self.logger.warning('選擇師父失敗: {0}'.format(r))
-                raise Exception('Applay teacher failed!')
+                # raise Exception('Applay teacher failed!')
 
 
     def do_poc(self, section, *args, **kwargs):
         import json
-        r = debug_client.debug_poc(self.account_info['sid'],
-            path='/friend/list')
+        # r = debug_client.debug_poc(self.account_info['sid'],
+            # path='/user/help')
         # 師：開放徒弟
         # r = debug_client.debug_poc(self.account_info['sid'],
         #     path='/teacher/toggle_acceptance', accept=1, only_friend=0)
@@ -269,8 +310,8 @@ class ChainChronicle(object):
             # path='/teacher/candidate_list', limit=0)
 
         # 徒：畢業了，感謝師父
-        # r = debug_client.debug_poc(self.account_info['sid'],
-             # path='/teacher/thanks_graduate', firend=1)
+        r = debug_client.debug_poc(self.account_info['sid'],
+             path='/teacher/thanks_graduate', firend=1)
         '''
         import pprint
         class MyPrettyPrinter(pprint.PrettyPrinter):
@@ -396,7 +437,10 @@ class ChainChronicle(object):
                 else:
                     r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
                     # print r
-        self.logger.debug(u'新帳號完成新手教學，UID = {0}'.format(self.account_info['uid']))
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        open_id = r['body'][4]['data']['uid']
+        # 一定要留open id，這樣才容易反查徒弟的 uid，不然很難找到師徒對應關係，並且取消/繼續
+        self.logger.debug(u'新帳號完成新手教學，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
         self.do_get_present('PRESENT')
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):

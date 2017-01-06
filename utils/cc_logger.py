@@ -40,7 +40,8 @@ class CCLogger(object):
 
         log_name = "{0}.log".format(tail_name)
         log_path = os.path.join(log_basepath, log_name)
-        rh = RotatingFileHandler(log_path, maxBytes=1024 * 10000, backupCount=5)
+        # 50 MB
+        rh = RotatingFileHandler(log_path, maxBytes=1024 * 10000 * 5, backupCount=10)
         rh.setLevel(logging.DEBUG)
         rh.setFormatter(file_formatter)
 
