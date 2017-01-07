@@ -222,7 +222,7 @@ class ChainChronicle(object):
         ret = self.poster.post_data(url, headers, None, payload, **data)
 
         # 可以查到徒弟，但位置不一定
-        print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+        # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
         try:
             self.account_info['sid'] = ret['login']['sid']
@@ -478,6 +478,8 @@ class ChainChronicle(object):
         print(simplejson.dumps(r, sort_keys=True, indent=2))
 
     def do_show_status(self, section, *args, **kwargs):
+        accepted_keys = ['uid', 'heroName', 'open_id', 'lv', 'cardMax', 'accept_disciple', 'name', 'friendCnt'
+        'only_friend_disciple', 'staminaMax']
         r = alldata_client.get_alldata(self.account_info['sid'])
         item_mapping = {
             # 2: '魂力果實',
@@ -492,16 +494,19 @@ class ChainChronicle(object):
         }
 
         data_list = r['body'][8]['data']
+        stone_count = r['body'][11]['data']
         # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for data in data_list:
             try:
                 self.logger.debug("{0} = {1}".format(item_mapping[data['item_id']], data['cnt']))
             except KeyError:
                 pass
+        self.logger.debug(u'精靈石 = {0}'.format(stone_count))
 
         user_info = r['body'][4]['data']
         for key, data in user_info.iteritems():
-            self.logger.debug(u"{0} = {1}".format(key, data))
+            if key in accepted_keys:
+                self.logger.debug(u"{0} = {1}".format(key, data))
 
     def do_show_all_cards(self, section, *args, **kwargs):
         """ 只列出四星/五星角色卡 """
