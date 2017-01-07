@@ -260,7 +260,7 @@ class ChainChronicle(object):
             #self.logger.debug('UID {0} reset from disciple {1}'.format(self.account_info['uid'], r['res']))
 
             r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
-            if r['res'] == 0:               
+            if r['res'] == 0:
                 self.logger.slack('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
             else:
                 self.logger.slack('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
@@ -270,7 +270,7 @@ class ChainChronicle(object):
             self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
                 self.logger.slack('選擇師父失敗: {0}'.format(r))
-                #raise Exception('Applay teacher failed!')
+                raise Exception('Applay teacher failed!')
 
 
     def do_poc(self, section, *args, **kwargs):
@@ -333,6 +333,8 @@ class ChainChronicle(object):
         parameter['use_cnt'] = 1
         lv_threshold = 50
         current_lv = 1
+        max_retry_cnt = 10
+        current_retry_cnt = 0
         self.logger.debug(u'開始通過主線任務...')
         while True:
             qtype, qid, lv = self.__get_latest_quest()
@@ -384,9 +386,23 @@ class ChainChronicle(object):
 
             # Unknown error, force break
             if 0 not in results:
+                # 主線可能會失敗，原因不明，會造成產生無法畢業的幽靈徒弟，會讓師父佔一個位置
+                # Unknown error in drama [502, -501, 2]
+                # 501: ERR_QUEST_NOT_ARRIVAL
+                # -502: FATAL_QUEST_INVALID_MST_DATA
+                # 2: ERR_API_WRONG_FORMA
                 self.logger.error('Unknown error in drama {0}'.format(results))
-                break
-        
+                # break
+                # sometimes drama will fail, it can be solved by try again.
+                current_retry_cnt += 1
+                if current_retry_cnt > max_retry_cnt:
+                    self.logger.error(
+                        'UID:{0} reaches max retry count but cannot finish drama, force break drama,\
+                         please manually finish drama and make the disciple gradudate'.format(self.account_info['uid']))
+                    break
+                else:
+                    continue
+
 
     def do_pass_tutorial(self, section, *args, **kwargs):
         import uuid
@@ -1258,10 +1274,10 @@ class ChainChronicle(object):
             return
         sid = self.account_info['sid']
         present_ids = present_client.get_present_list(sid, item_type)
-        self.logger.debug('禮物清單: {0}'.format(present_ids))
+        # self.logger.debug('禮物清單: {0}'.format(present_ids))
         while len(present_ids) > 0:
             pid = present_ids.pop(0)
-            self.logger.debug("接收禮物 {0}".format(pid))
+            # self.logger.debug("接收禮物 {0}".format(pid))
             ret = present_client.receieve_present(pid, sid)
             if ret['res'] == 0:
                 # self.logger.debug(u"    -> 接收成功")
