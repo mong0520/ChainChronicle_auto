@@ -99,6 +99,16 @@ class ChainChronicle(object):
                     except:
                         self.account_info['reuse_sid'] = 0
 
+                    try:
+                        self.flow_loop = self.config.getint(section, 'FlowLoop')
+                    except:
+                        self.flow_loop = 1
+
+                    try:
+                        self.flow_loop_delay = self.config.getint(section, 'FlowLoopDelay')
+                    except:
+                        self.flow_loop_delay = 0
+
     def set_proxy(self):
         try:
             self.logger.debug('Use socks5 proxy')
@@ -222,7 +232,7 @@ class ChainChronicle(object):
         ret = self.poster.post_data(url, headers, None, payload, **data)
 
         # 可以查到徒弟，但位置不一定
-        # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+        print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
         try:
             self.account_info['sid'] = ret['login']['sid']
@@ -262,6 +272,7 @@ class ChainChronicle(object):
             r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
             if r['res'] == 0:
                 self.logger.slack('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = False
             else:
                 self.logger.slack('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
         else:
@@ -354,22 +365,17 @@ class ChainChronicle(object):
             quest_info['fid'] = 1965350
 
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
-            result = quest_client.get_treasure(quest_info, self.account_info['sid'])
-            results.append(int(result['res']))
-            # self.logger.debug(result)
-
             result = quest_client.start_quest(quest_info, self.account_info['sid'])
-            results.append(int(result['res']))
-            # self.logger.debug(result)
+            rc_quest_entry = int(result['res'])
+            results.append(rc_quest_entry)
+            # self.logger.debug(rc_quest_entry)
 
-            result = quest_client.finish_quest(quest_info, self.account_info['sid'])
-            results.append(int(result['res']))
-            # self.logger.debug(result)
-
-            # self.do_get_present('PRESENT')
-
-            # 體力不足
-            if 103 in results:
+            if rc_quest_entry == 0:
+                result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                rc_quest_finish = int(result['res'])
+                results.append(rc_quest_finish)
+                # self.logger.debug(rc_quest_finish)
+            elif rc_quest_entry == 103:
                 # 體果
                 ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
                 if ret['res'] == 0:
@@ -383,17 +389,18 @@ class ChainChronicle(object):
                     else:
                         self.logger.error('Unable to recover stamina, break')
                         break
+            else:
+                result = quest_client.get_treasure(quest_info, self.account_info['sid'])
+                rc = int(result['res'])
+                results.append(rc)
+                # self.logger.debug(rc)
 
-            # Unknown error, force break
+            # self.do_get_present('PRESENT')
+            # Unknown error, retry can solve it
             if 0 not in results:
-                # 主線可能會失敗，原因不明，會造成產生無法畢業的幽靈徒弟，會讓師父佔一個位置
+                # 主線可能會失敗，原因不明，會造成產生無法畢業的幽靈徒弟，會讓師父佔一個位置，重試一次可解決
                 # Unknown error in drama [502, -501, 2]
-                # 501: ERR_QUEST_NOT_ARRIVAL
-                # -502: FATAL_QUEST_INVALID_MST_DATA
-                # 2: ERR_API_WRONG_FORMA
                 self.logger.error('Unknown error in drama {0}'.format(results))
-                # break
-                # sometimes drama will fail, it can be solved by try again.
                 current_retry_cnt += 1
                 if current_retry_cnt > max_retry_cnt:
                     self.logger.error(
@@ -401,7 +408,10 @@ class ChainChronicle(object):
                          please manually finish drama and make the disciple gradudate'.format(self.account_info['uid']))
                     break
                 else:
+                    self.logger.debug('Something wrong, retry...')
                     continue
+            else:
+                current_retry_cnt = 0
 
 
     def do_pass_tutorial(self, section, *args, **kwargs):
@@ -1409,11 +1419,18 @@ def main():
         print cc.action_mapping.keys()
         sys.exit(0)
 
-    if args.action is not None:
-        # force overwrite config flow and just do the action from args
-        cc.action_list = [args.action]
-    cc.set_proxy()
-    cc.start()
+    for i in xrange(0, cc.flow_loop):
+        cc.logger.debug('Start #{0}/{1} Flow'.format(i+1, cc.flow_loop))
+        if args.action is not None:
+            # force overwrite config flow and just do the action from args
+            cc.action_list = [args.action]
+        cc.set_proxy()
+        cc.start()
+        cc.logger.debug('End of #{0} Flow'.format(i+1, cc.flow_loop))
+        if cc.flow_loop_delay > 0:
+            cc.logger.debug('Sleeping {0} seconds'.format(cc.flow_loop_delay))
+            time.sleep(cc.flow_loop_delay)
+
 
 if __name__ == '__main__':
     main()
