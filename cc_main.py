@@ -286,52 +286,7 @@ class ChainChronicle(object):
 
     def do_poc(self, section, *args, **kwargs):
         import json
-        # r = debug_client.debug_poc(self.account_info['sid'],
-            # path='/user/help')
-        # 師：開放徒弟
-        # r = debug_client.debug_poc(self.account_info['sid'],
-        #     path='/teacher/toggle_acceptance', accept=1, only_friend=0)
 
-        # 師：送禮物
-        # r = debug_client.debug_poc(self.account_info['sid'],
-            # path='/teacher/rewards_daily_achievement', present='f')
-        # teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
-        # self.do_disciple_section('DISCIPLE')
-
-        # 19073918, 19609396, 19609399
-
-        # r = debug_client.debug_poc(self.account_info['sid'],
-            # path='/teacher/reset_from_disciple')
-
-        # 徒：申請師父
-        # r = debug_client.debug_poc(self.account_info['sid'],
-            # path='/teacher/apply', tid=1965350)
-
-        # 徒：等級到了，回禮
-        # r = debug_client.debug_poc(self.account_info['sid'],
-            # path='/teacher/thanks_achievement', lv=15)
-
-        # 徒：一般回禮
-        # r = debug_client.debug_poc(self.account_info['sid'],
-        #     path='/teacher/cheer_by_disciple')
-
-        # 查看開放師父清單
-        # r = debug_client.debug_poc(self.account_info['sid'],
-            # path='/teacher/candidate_list', limit=0)
-
-        # 徒：畢業了，感謝師父
-        r = debug_client.debug_poc(self.account_info['sid'],
-             path='/teacher/thanks_graduate', firend=1)
-        '''
-        import pprint
-        class MyPrettyPrinter(pprint.PrettyPrinter):
-            def format(self, object, context, maxlevels, level):
-                if isinstance(object, unicode):
-                    return (object.encode('utf8'), True, False)
-                return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
-
-        MyPrettyPrinter().pprint(r)
-        '''
         print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
 
