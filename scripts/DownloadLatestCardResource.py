@@ -7,6 +7,9 @@ from Queue import Queue
 from threading import Thread
 import wget
 import os
+sys.path.append('../')
+from utils import poster
+import urllib
 
 q = Queue(maxsize=0)
 num_threads = 10
@@ -15,6 +18,7 @@ cnt = format(timestamp + 5000, 'x')
 pattern = "cha_2d_card_(\d+)\.bdl"
 output_path = 'resource'
 content_url_host = 'http://content.cc.mobimon.com.tw/CC/267/'
+downloaded_file_list = 'processedCardList.txt'
 
 def do_stuff(q):
     while True:
@@ -27,11 +31,39 @@ def do_stuff(q):
                 os.remove(filename)
             q.task_done()
 
-try:
-    date = sys.argv[1]
-except IndexError as e:
-    print "Please speicfy date argument, for example '20161013_522'"
-    sys.exit(0)
+def get_content_url():
+    url = 'http://v272.cc.mobimon.com.tw/session/login'
+    headers = {
+        'Cookie': 'sid=INVALID'
+    }
+    data = {
+        'UserUniqueID': 'asdfasdfasfsa',
+        'Token': None,
+        'OS': 2
+    }
+    payload_dict = {
+      "APP": {
+        "Version": "2.72",
+        "Revision": "2014",
+        "time": time.time(),
+        "Lang": "Chinese"
+    },
+        "DEV": data
+    }
+    payload = 'param=' + urllib.quote_plus(json.dumps(payload_dict))
+    # print url
+    # print payload
+    ret = poster.Poster.post_data(url, headers, None, payload, **data)
+    try:
+        return ret['ctroot']
+    except:
+        return None
+        print json.dumps(ret, ensure_ascii=False).encode('utf-8')
+
+
+ctroot = get_content_url()
+print ctroot
+
 
 for i in range(num_threads):
     worker = Thread(target=do_stuff, args=(q,))
@@ -39,7 +71,7 @@ for i in range(num_threads):
     worker.start()
 
 #request_url = 'http://content.cc.mobimon.com.tw/CC/game09/{0}/Bdl45_And/files.json?cnt={1}&timestamp={2}'.format(date, cnt, timestamp)
-request_url = '{0}{1}/Bdl52_iOS/files.json?cnt={2}&timestamp={3}'.format(content_url_host, date, cnt, timestamp)
+request_url = '{0}Bdl52_iOS/files.json?cnt={1}&timestamp={2}'.format(ctroot, cnt, timestamp)
 print request_url
 r = requests.get(request_url)
 
@@ -66,9 +98,22 @@ for card_id in card_id_list:
         pass
 result.sort()
 
-for r in result:
-    url = '{0}{1}/Resource/Card/cha_2d_card_{2}.scr'.format(content_url_host, date, r)
-    q.put(url)
+try:
+    with open (downloaded_file_list, 'r') as f_in:
+        processed_card_list = [line.rstrip() for line in f_in]
+except:
+    processed_card_list = list()
+
+
+# print processed_card_list
+with open (downloaded_file_list, 'a') as f:
+    f.writelines(["%s\n" % item  for item in result])
+    for r in result:
+        url = '{0}Resource/Card/cha_2d_card_{1}.scr'.format(ctroot, r)
+        if r not in processed_card_list:
+            print 'Put #{0} in downloading queue'.format(r)
+            q.put(url)
+            f.write('{0}\n'.format(r))
 
 q.join()
 
