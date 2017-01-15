@@ -74,9 +74,9 @@ class ChainChronicle(object):
             'COMPOSE': self.do_compose,
             'TUTORIAL': self.do_pass_tutorial,
             'DRAMA': self.do_play_drama_auto,
-            'POC': self.do_poc,
             'TEACHER': self.do_teacher_section,
-            'DISCIPLE': self.do_disciple_section
+            'DISCIPLE': self.do_disciple_section,
+            'DEBUG': self.do_debug_section
             #'SECTION_NAME': sefl.function_name
         }
 
@@ -284,11 +284,17 @@ class ChainChronicle(object):
                 raise Exception('Applay teacher failed!')
 
 
-    def do_poc(self, section, *args, **kwargs):
-        import json
+    def do_debug_section(self, section, *args, **kwargs):
+        options = dict(self.config.items(section))
+        options_global = dict(self.config.items("GLOBAL"))
+        for k in options.keys():
+            if k in options_global.keys():
+                options.pop(k)
 
-        print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
-
+        api_path = options.pop('API')
+        r = debug_client.debug_post(self.account_info['sid'], api_path, **options)
+        data = simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+        print data
 
     def do_play_drama_auto(self, section, *args, **kwargs):
         quest_info = dict()
