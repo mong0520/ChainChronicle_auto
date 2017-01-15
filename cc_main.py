@@ -1040,7 +1040,7 @@ class ChainChronicle(object):
             sys.exit(0)
         else:
             pickup_list = r['pickup']
-        # self.logger.debug(pickup_list)
+        self.logger.debug(simplejson.dumps(pickup_list, ensure_ascii=False))
 
         explorer_area = self.config.getlist(section, 'area')
 
@@ -1072,9 +1072,11 @@ class ChainChronicle(object):
                     break
 
             area = int(explorer_area[i])
-            print pickup_list[area], except_card_id
-            card_idx, card_id = self.find_best_idx_to_explorer(pickup_list[area], except_card_id)
-            except_card_id.append(card_id)
+            for pickup_item in pickup_list:
+                if pickup_item['location_id'] == area:
+                    card_idx, card_id = self.find_best_idx_to_explorer(pickup_item, except_card_id)
+                    except_card_id.append(card_id)
+                    break
 
             # go to explorer
             parameter = dict()
