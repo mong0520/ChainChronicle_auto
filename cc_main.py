@@ -5,7 +5,6 @@ import logging
 import os
 import sys
 import time
-import urllib
 from random import randint
 try:
     import socket
@@ -19,6 +18,7 @@ import utils.cc_logger
 import utils.db_operator
 import utils.enhanced_config_parser
 import utils.poster
+import utils.response_parser
 import requests
 from lib import alldata_client
 from lib import explorer_client
@@ -36,6 +36,7 @@ from lib import weapon_client
 from lib import tutorial_client
 from lib import debug_client
 from lib import teacher_disciple_client
+from lib import session_client
 
 '''
 在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
@@ -111,50 +112,15 @@ class ChainChronicle(object):
 
     def set_proxy(self):
         try:
-            self.logger.debug('Use socks5 proxy')
+            # self.logger.debug('Use socks5 proxy')
             socks_info = self.config.get('GLOBAL', 'Socks5')
             # print socks_info.split(':')
             [socks5_addr, socks5_port] = socks_info.split(':')
             socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
             socket.socket = socks.socksocket
         except Exception as e:
-            self.logger.warning(e)
-            self.logger.debug('Not use socks5 proxy')
-
-    # def start_temp(self):
-    #     with open('uid.txt', 'r') as f:
-    #         lines = f.readlines()
-
-    #     for line in lines:
-    #         uid = line.strip()
-    #         self.logger.debug(line)
-
-
-    #         if self.account_info['reuse_sid']:
-    #             reuse_sid = self.get_local_sid()
-    #             self.account_info['sid'] = reuse_sid
-    #             try:
-    #                 self.do_show_status(None)
-    #                 self.logger.debug('Reuse sid {0}'.format(reuse_sid))
-    #             except Exception as e:
-    #                 self.logger.warning('SID is invalid, re-login: {0}'.format(e))
-    #                 self.do_login(uid=uid)
-    #         else:
-    #             self.do_login(uid=uid)
-
-    #         # for action in self.action_list:
-    #         action_idx = 0
-    #         while True:
-    #             if action_idx >= len(self.action_list):
-    #                 break
-    #             try:
-    #                 self.do_action(self.action_list[action_idx])
-    #                 action_idx += 1
-    #             except requests.exceptions.ConnectionError as e:
-    #                 self.logger.warning(e)
-    #                 time.sleep(3)
-    #                 self.logger.debug('Retry section {0}'.format(self.action_list[action_idx]))
-    #                 continue
+            self.logger.warning('Not use proxy: {0}'.format(e))
+            # self.logger.debug('Not use socks5 proxy')
 
 
     def start(self):
@@ -207,36 +173,15 @@ class ChainChronicle(object):
     def do_login(self, uid=None):
         if uid:
             self.account_info['uid'] = uid
-        # print self.account_info['uid']
-        url = 'http://v272.cc.mobimon.com.tw/session/login'
-        headers = {
-            'Cookie': 'sid=INVALID'
-        }
-        data = {
-            'UserUniqueID': self.account_info['uid'],
-            'Token': self.account_info['token'],
-            'OS': 2
-        }
-        payload_dict = {
-          "APP": {
-            "Version": "2.72",
-            "Revision": "2014",
-            "time": time.time(),
-            "Lang": "Chinese"
-        },
-            "DEV": data
-        }
-        payload = 'param=' + urllib.quote_plus(simplejson.dumps(payload_dict))
-        # print url
-        # print payload
-        ret = self.poster.post_data(url, headers, None, payload, **data)
 
-        # 可以查到徒弟，但位置不一定
-        print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+        ret = session_client.login(self.account_info['uid'], self.account_info['token'])
+        utils.response_parser.dump_response(ret)
+
+        # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
         try:
             self.account_info['sid'] = ret['login']['sid']
-            self.logger.debug('sid = {0}'.format(ret['login']['sid']))
+            # self.logger.debug('sid = {0}'.format(ret['login']['sid']))
             sid_file = '.' + os.path.basename(os.path.splitext(self.config_file)[0])
             with open(sid_file, 'w') as f:
                 f.write(self.account_info['sid'])
@@ -511,6 +456,10 @@ class ChainChronicle(object):
         quest_info['max_event_point'] = self.config.getint(section, 'MaxEventPoint')
         quest_info['auto_sell'] = self.config.getint(section, 'AutoSell')
         try:
+            quest_info['show_treasure'] = self.config.getint(section, 'ShowTreasure')
+        except:
+            quest_info['show_treasure'] = 0
+        try:
             quest_info['get_present'] = self.config.getint(section, 'GetPresent')
         except:
             quest_info['get_present'] = 0
@@ -543,6 +492,16 @@ class ChainChronicle(object):
                 self.__sleep(self.config.getint('GLOBAL', 'Delay'), salt=True)
 
             result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+            # utils.response_parser.dump_response(result)
+            if quest_info['show_treasure']:
+                treasure_list = result['earns']['treasure']
+                for t in treasure_list:
+                    # print t['type'], t['id']
+                    try:
+                        self.__dump_treasure_info(t['type'], t['id'])
+                    except:
+                        self.logger.debug(u'{0}, {1}, {2}'.format(t['type'], t['id'], t['val']))
+
             # self.logger.debug("Quest finish result = {0}".format(result))
             if result['res'] == 0:
                 # self.logger.debug(u"    -> 關卡完成".format(current))
@@ -593,17 +552,16 @@ class ChainChronicle(object):
                 time.sleep(0.1)
                 self.do_raid_quest(fid=quest_info['fid'])
 
+    def __dump_treasure_info(self, t_type, t_id):
+        mapping = {
+            'chara_rf': 'chararein',
+            'weapon_rf': 'reinforce'
+        }
+        res = utils.db_operator.DBOperator.get_general(mapping[t_type], 'id', t_id)
+        for r in res:
+            self.logger.debug(r['name'])
+
     def do_raid_quest(self, **kwargs):
-        # r = raid_client.get_raid_boss_id(self.account_info['sid'])
-        # self.logger.debug(r)
-        # self.logger.debug(type(r))
-        # try:
-        #    boss_id = r['boss_id']
-        #    boss_lv = r['boss_param']['lv']
-        #except:
-        #    raise
-            # 非魔神戰期間
-        #    return
         boss_id = raid_client.get_raid_info(self.account_info['sid'], 'id')
         boss_lv = raid_client.get_raid_info(self.account_info['sid'], 'lv')
         if boss_id:
@@ -631,20 +589,6 @@ class ChainChronicle(object):
 
         else:
             pass
-
-    # def do_compose(self, section, *args, **kwargs):
-    #     '''
-    #     只合三星*5
-    #     '''
-    #     count = self.config.getint(section, 'Count')
-    #     item_type = 'itm_weapon'
-    #     for k in range(0, count):
-    #         weapon_list = list()
-    #         for i in range(0, 5):
-    #             ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
-    #             weapon_list.append(ret['body'][1]['data'][0]['idx'])
-    #         ret = weapon_client.compose(self.account_info['sid'], weapon_list)
-    #         print ret
 
     def do_compose(self, section, *args, **kwargs):
         """
@@ -716,65 +660,6 @@ class ChainChronicle(object):
                     idx = ret['body'][1]['data'][0]['idx']
                     item_id = ret['body'][1]['data'][0]['id']
                     weapon_base_rank5_idx = idx
-
-    # def do_compose(self, section, *args, **kwargs):
-    #     """
-    #     以1張5星 +  4張4星鍊金, 改成用bitmask會不會比較general?
-    #     """
-    #     count = self.config.getint(section, 'Count')
-    #     item_type = 'itm_weapon'
-    #     weapon_list_rank3 = list()
-    #     weapon_list_rank4 = list()
-    #     # weapon_list_rank5 = list()
-    #     weapon_base_rank5_idx = None # 基底武器
-    #     for i in range(0, count):
-    #         # 50戒
-    #         for i in range(0, 5):
-    #             ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
-    #             weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
-
-    #         self.logger.info(u'開始鍊金 -  3星*5')
-    #         ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
-    #         weapon_list_rank3[:] = []
-    #         # pprint.pprint(ret)
-    #         idx = ret['body'][1]['data'][0]['idx']
-    #         item_id = ret['body'][1]['data'][0]['id']
-    #         # print idx, item_id
-    #         # print item_id
-    #         # weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-    #         # self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
-
-    #         weapon_list_rank4.append(idx)
-    #         if weapon_base_rank5_idx:
-    #             if len(weapon_list_rank4) == 4:
-    #                 self.logger.info(u'開始鍊金 -  5星*1 + 4星*4')
-    #                 weapon_list_rank4.append(weapon_base_rank5_idx)
-    #                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
-    #                 weapon_list_rank4[:] = []
-    #                 # pprint.pprint(ret)
-    #                 idx = ret['body'][1]['data'][0]['idx']
-    #                 item_id = ret['body'][1]['data'][0]['id']
-    #                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-    #                 # print idx, item_id
-    #                 if int(item_id) in [85200, 26011]:
-    #                     self.logger.info('!!! 得到神器 !!! {0}'.format(weapon_list[0]['name'].encode('utf-8')))
-    #                     weapon_base_rank5_idx = None
-    #                 else:
-    #                     weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-    #                     self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
-    #                     weapon_base_rank5_idx = idx
-    #             else:
-    #                 # print u'四星卡不足', len(weapon_list_rank4)
-    #                 pass
-    #         else:
-    #             if len(weapon_list_rank4) == 5:
-    #                 self.logger.info(u'開始鍊金 -  4星*5')
-    #                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
-    #                 weapon_list_rank4[:] = []
-    #                 # pprint.pprint(ret)
-    #                 idx = ret['body'][1]['data'][0]['idx']
-    #                 item_id = ret['body'][1]['data'][0]['id']
-    #                 weapon_base_rank5_idx = idx
 
     def do_subjugation_section(self, section, *args, **kwargs):
         try:

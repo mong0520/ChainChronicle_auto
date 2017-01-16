@@ -13,11 +13,21 @@ data_mapping = {
         'db_source': DB_SOURCE_BASE + 'weaponlist',
         'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
         'raw_list': list()
+    },
+    'reinforce':{
+        'db_source': DB_SOURCE_BASE + 'weaponlist',
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
+        'raw_list': list()
     }
     ,
     'charainfo': {
         'db_source': DB_SOURCE_BASE + 'charainfo',
         'db_obj': TinyDB(os.path.join(DB_PATH, 'charainfo')),
+        'raw_list': list()
+    },
+    'chararein': {
+        'db_source': DB_SOURCE_BASE + 'charainfo',
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'chararein')),
         'raw_list': list()
     },
     'questdigest': {
@@ -27,6 +37,7 @@ data_mapping = {
     }
 
     # note, weaponlist有兩個資料可以拿，一個叫weaponlist，是一般武器，另一個叫evolve，是鍊金武器
+    # weaponlist, skilllist, charainfo, questdigest, supportersskill, bossinfo, weaponcomposeevent, explorerlocation
 }
 
 
@@ -116,6 +127,21 @@ class DBOperator(object):
             for k, v in weapon.iteritems():
                 print u'{0}: {1}'.format(k, v)
 
+    @staticmethod
+    def dump_general(source, field, value):
+        result_list = DBOperator.get_general(source, field, value)
+        for result in result_list:
+            for k, v in result.iteritems():
+                print u'{0}: {1}'.format(k, v)
+
+
+    @staticmethod
+    def get_general(source, field, value):
+        db_obj = TinyDB(os.path.join(DB_PATH, source))
+        result_list = DBOperator.__query(db_obj, field, value)
+        return result_list
+
+
 
 class DBUpdater(object):
 
@@ -144,7 +170,7 @@ class DBUpdater(object):
 
             # Insert latest data
             for element in r[category]:
-                print element
+                # print element
                 if type(element) is list:
                     for doc in element:
                         data_mapping[category]['raw_list'].append(doc)

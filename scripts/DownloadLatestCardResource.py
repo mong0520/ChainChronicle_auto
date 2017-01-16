@@ -8,6 +8,7 @@ from threading import Thread
 import wget
 import os
 sys.path.append('../')
+from lib import session_client
 from utils import poster
 import urllib
 
@@ -17,7 +18,6 @@ timestamp = int(time.time() * 1000)
 cnt = format(timestamp + 5000, 'x')
 pattern = "cha_2d_card_(\d+)\.bdl"
 output_path = 'resource'
-content_url_host = 'http://content.cc.mobimon.com.tw/CC/267/'
 downloaded_file_list = 'processedCardList.txt'
 
 def do_stuff(q):
@@ -32,28 +32,8 @@ def do_stuff(q):
             q.task_done()
 
 def get_content_url():
-    url = 'http://v272.cc.mobimon.com.tw/session/login'
-    headers = {
-        'Cookie': 'sid=INVALID'
-    }
-    data = {
-        'UserUniqueID': 'asdfasdfasfsa',
-        'Token': None,
-        'OS': 2
-    }
-    payload_dict = {
-      "APP": {
-        "Version": "2.72",
-        "Revision": "2014",
-        "time": time.time(),
-        "Lang": "Chinese"
-    },
-        "DEV": data
-    }
-    payload = 'param=' + urllib.quote_plus(json.dumps(payload_dict))
-    # print url
-    # print payload
-    ret = poster.Poster.post_data(url, headers, None, payload, **data)
+    ret = session_client.login('ANDO822adb47-dd36-41ce-8640-9f17604d0778')
+
     try:
         return ret['ctroot']
     except:
@@ -63,7 +43,6 @@ def get_content_url():
 
 ctroot = get_content_url()
 print ctroot
-
 
 for i in range(num_threads):
     worker = Thread(target=do_stuff, args=(q,))
