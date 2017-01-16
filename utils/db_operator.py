@@ -89,18 +89,16 @@ class DBOperator(object):
     @staticmethod
     def dump_cards(field, value):
         results = DBOperator.get_cards(field, value)
+        target_fields = ['cid', 'title', 'name', 'profile', 'rarity']
         for r in results:
-            # print r.keys()
-            try:
-                print '==========================='
-                print 'ID: {0}'.format(r['cid'])
-                print 'Title: {0}'.format(r['title'].encode('utf-8'))
-                print 'Name: {0}'.format(r['name'].encode('utf-8'))
-                # print 'Home: {0}'.format(r['home'])
-                print 'Profile: {0}'.format(r['profile'].encode('utf-8'))
-                print 'Rarity: {0}'.format(r['rarity'])
-            except KeyError:
-                pass
+            print '==========================='
+            for key in target_fields:
+                try:
+                    print '{0}: {1}'.format(key, r[key])
+                except UnicodeEncodeError:
+                    print '{0}: {1}'.format(key, r[key].encode('utf-8'))
+                except KeyError:
+                    pass
 
     @staticmethod
     def dump_quest(quest_name, verbose=False):
@@ -130,9 +128,14 @@ class DBOperator(object):
     @staticmethod
     def dump_general(source, field, value):
         result_list = DBOperator.get_general(source, field, value)
-        for result in result_list:
-            for k, v in result.iteritems():
-                print u'{0}: {1}'.format(k, v)
+
+        # ad-hoc logic to dump charainfo to avoid too many info
+        if source == 'charainfo':
+            DBOperator.dump_cards(field, value)
+        else:
+            for result in result_list:
+                for k, v in result.iteritems():
+                    print u'{0}: {1}'.format(k, v)
 
 
     @staticmethod
