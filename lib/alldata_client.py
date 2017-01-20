@@ -14,3 +14,7 @@ def get_alldata(sid):
     ret = poster.post_data(url, headers, cookies, **data)
     return ret
 
+
+def get_allcards(sid):
+    r = get_alldata(sid)
+    return r['body'][6]['data']

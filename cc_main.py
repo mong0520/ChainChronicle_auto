@@ -37,7 +37,7 @@ from lib import tutorial_client
 from lib import debug_client
 from lib import teacher_disciple_client
 from lib import session_client
-
+from lib import card_client
 '''
 在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
 '''
@@ -78,6 +78,7 @@ class ChainChronicle(object):
             'TEACHER': self.do_teacher_section,
             'DISCIPLE': self.do_disciple_section,
             'DEBUG': self.do_debug_section
+            # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
 
@@ -119,8 +120,8 @@ class ChainChronicle(object):
             socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
             socket.socket = socks.socksocket
         except Exception as e:
-            self.logger.warning('Not use proxy: {0}'.format(e))
-            # self.logger.debug('Not use socks5 proxy')
+            pass
+            # self.logger.warning('Not use proxy: {0}'.format(e))
 
 
     def start(self):
@@ -175,7 +176,7 @@ class ChainChronicle(object):
             self.account_info['uid'] = uid
 
         ret = session_client.login(self.account_info['uid'], self.account_info['token'])
-        utils.response_parser.dump_response(ret)
+        # utils.response_parser.dump_response(ret)
 
         # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
@@ -191,13 +192,38 @@ class ChainChronicle(object):
             self.logger.error(msg)
             raise KeyError(msg)
 
+    def __auto_compose(self, base_card_idx, max_lv):
+        # Get all 成長卡
+        card_list = alldata_client.get_allcards(self.account_info['sid'])
+        mt_list = list()
+        for c in card_list:
+            if c['type'] == 3:
+                mt_list.append(str(c['idx']))
+        # print mt_list
+        if not len(mt_list):
+            self.logger.warning('No material to compose')
+            return None
+
+        def chunker(seq, size):
+            return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+
+        for sub_mt in chunker(mt_list, 10):
+            # print 'submt = {0}'.format(sub_mt)
+            if not len(sub_mt):
+                self.logger.warning('No material to compose')
+                return None
+            ret = card_client.compose(self.account_info['sid'], base_card_idx, sub_mt)
+            lv = ret['body'][1]['data'][0]['lv']
+            # utils.response_parser.dump_response(ret)
+            if lv >= max_lv:
+                self.logger.debug('Upgrade is completed')
+                break
+            self.logger.debug('Current LV {0}'.format(ret['body'][1]['data'][0]['lv']))
 
     def do_teacher_section(self, section, *args, **kwargs):
         accept = self.config.get(section, 'Accept')
         r = teacher_disciple_client.toggle_acceptance(self.account_info['sid'], accept=accept)
         self.logger.debug(r['body'][0]['data'])
-
-
 
     def do_disciple_section(self, section, *args, **kwargs):
         tid = self.config.get(section, 'Teacher_Id')
@@ -428,18 +454,33 @@ class ChainChronicle(object):
         """ 只列出四星/五星角色卡 """
         r = alldata_client.get_alldata(self.account_info['sid'])
         card_list = r['body'][6]['data']
+        try:
+            auto_compose = self.config.getboolean(section, 'AutoCompose')
+        except:
+            auto_compose = False
 
+        try:
+            rank_threshold = self.config.getint(section, 'RankThreshold')
+        except:
+            rank_threshold = 4
         # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for card in card_list:
             if card['type'] != 0:  # not character card
                 continue
             try:
+                if auto_compose and card['lv'] == card['maxlv']:
+                    continue
                 cid = int(card['id'])
                 card_dict = utils.db_operator.DBOperator.get_cards('cid', cid)[0]
-                if card_dict and card_dict['rarity'] >= 5:
-                    self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}, 稀有度: {4}".format(
-                        card_dict['title'], card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
-                    self.logger.debug(int(card['idx']))
+                if card_dict and card_dict['rarity'] >= rank_threshold:
+                    self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}/{4}, 稀有度: {5}, ID: {6}, IDX: {7}".format(
+                        card_dict['title'], card_dict['name'], card['limit_break'], card['lv'],
+                        card['maxlv'], card_dict['rarity'], cid, card['idx']))
+                    if auto_compose:
+                        self.logger.debug(u'Start to upgrade Card {0}'.format(card_dict['name']))
+                        self.__auto_compose(card['idx'], card['maxlv'])
+
+                    # self.logger.debug(int(card['idx']))
             except KeyError:
                 raise
             except TypeError:
