@@ -202,16 +202,16 @@ class ChainChronicle(object):
         # print mt_list
         if not len(mt_list):
             self.logger.warning('No material to compose')
-            return None
+            raise Exception('No material to compose')
 
         def chunker(seq, size):
             return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
-        for sub_mt in chunker(mt_list, 10):
+        for sub_mt in chunker(mt_list, 5):
             # print 'submt = {0}'.format(sub_mt)
             if not len(sub_mt):
                 self.logger.warning('No material to compose')
-                return None
+                raise Exception('No material to compose')
             ret = card_client.compose(self.account_info['sid'], base_card_idx, sub_mt)
             lv = ret['body'][1]['data'][0]['lv']
             # utils.response_parser.dump_response(ret)
@@ -636,7 +636,7 @@ class ChainChronicle(object):
         以1張5星 +  3張4星鍊金
         """
         count = self.config.getint(section, 'Count')
-        item_type = 'itm_weapon_bow'
+        item_type = self.config.get(section, 'BaseWeapon')
         weapon_list_rank3 = list()
         weapon_list_rank4 = list()
         # weapon_list_rank5 = list()
@@ -683,7 +683,7 @@ class ChainChronicle(object):
                     raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                 # print idx, item_id
-                if int(item_id) in [85200, 26011, 26068, 85200]:
+                if int(item_id) in [85200, 26011, 26068, 85200, 26066]:
                     self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
                     break
