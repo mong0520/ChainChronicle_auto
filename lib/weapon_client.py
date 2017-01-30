@@ -5,6 +5,8 @@ import requests
 import sys
 sys.path.append('utils')
 from poster import Poster
+import zlib
+import json
 
 
 def compose(sid, weapon_list):
@@ -20,7 +22,7 @@ def compose(sid, weapon_list):
     # query_string = urllib.urlencode(data)
     query_string = "?mt={0}&mt={1}&mt={2}&mt={3}&mt={4}&timestamp={5}&cnt={6}".format(
         weapon_list[0], weapon_list[1], weapon_list[2], weapon_list[3], weapon_list[4], data['timestamp'], data['cnt'])
-    query_string += "&eid=3" #  special event
+    # query_string += "&eid=3" #  special event
     post_url = url + query_string
     # print post_url
     payload = urllib.quote_plus(query_string)
@@ -28,8 +30,9 @@ def compose(sid, weapon_list):
     # print payload
 
     r = requests.post(post_url, data=payload, headers=headers, cookies=cookies)
-    #print r.text
-    return r.json()
+    decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
+    # print decompressed_data
+    return json.loads(decompressed_data)
 
 
 

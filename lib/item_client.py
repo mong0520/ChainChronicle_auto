@@ -5,7 +5,8 @@ item_mapping = {
     "weapon": {"id": 93902, "type": "weapon_rf", "price": 30, "val": 1},
     "ap_fruit": {"id": 1, "type": "item", "price": 10, "val": 1},
     "itm_weapon": {"id": 96019, "type": "weapon_ev", "price": 10, "val": 1},
-    "itm_weapon_bow": {"id": 96064, "type": "weapon_ev", "price": 10, "val": 1}
+    "itm_weapon_bow": {"id": 96064, "type": "weapon_ev", "price": 10, "val": 1},
+    "itm_weapon_magic": {"id": 96126, "type": "weapon_ev", "price": 10, "val": 1}
 }
 
 

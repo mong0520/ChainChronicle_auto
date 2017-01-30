@@ -86,9 +86,10 @@ except:
 
 # print processed_card_list
 with open (downloaded_file_list, 'a') as f:
-    f.writelines(["%s\n" % item  for item in result])
+    # f.writelines(["%s\n" % item  for item in result])
     for r in result:
         url = '{0}Resource/Card/cha_2d_card_{1}.scr'.format(ctroot, r)
+        # print r
         if r not in processed_card_list:
             print 'Put #{0} in downloading queue'.format(r)
             q.put(url)
