@@ -34,6 +34,11 @@ data_mapping = {
         'db_source': DB_SOURCE_BASE + 'questdigest',
         'db_obj': TinyDB(os.path.join(DB_PATH, 'questdigest')),
         'raw_list': list()
+    },
+    'skilllist': {
+        'db_source': DB_SOURCE_BASE + 'skilllist',
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'skilllist')),
+        'raw_list': list()
     }
 
     # note, weaponlist有兩個資料可以拿，一個叫weaponlist，是一般武器，另一個叫evolve，是鍊金武器
