@@ -51,6 +51,11 @@ class DBOperator(object):
     @staticmethod
     def __query(db, field, value):
         card = Query()
+        if not field and not value:
+            result_list = db.search(card.name.exists())
+            # print result_list[0]
+            return [result_list[0]]
+
         my_search = getattr(card, field)
         try:
             v = int(value)

@@ -1046,44 +1046,44 @@ class ChainChronicle(object):
 
     def do_gacha_process(self, gacha_info):
         """Gacha and sell"""
-        for i in xrange(0, gacha_info['count']):
-            if gacha_info['gacha_type'] in [3, 8]:
-                time.sleep(3)
-            self.logger.info(u"#{0}: 轉蛋開始！".format(i + 1))
-            gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
-            #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            if gacha_info['verbose']:
-                cids = gacha_result.values()
-                for cid in cids:
-                    cards = utils.db_operator.DBOperator.get_cards('cid', cid)
-                    # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
-                    # use BIF all() to check if the dict has key 'name' AND 'rarity'
-                    if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
-                        self.logger.debug(cid)
-                    else:
-                        card = cards[0]  # cid is key index
-                        msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
-                        if card['rarity'] == 5:
-                            self.logger.slack(msg)
-                        self.logger.debug(msg)
+        # for i in xrange(0, gacha_info['count']):
+            # if gacha_info['gacha_type'] in [3, 8]:
+                # time.sleep(3)
+        self.logger.info(u"轉蛋開始！")
+        gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
+        #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+        self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+        if gacha_info['verbose']:
+            cids = gacha_result.values()
+            for cid in cids:
+                cards = utils.db_operator.DBOperator.get_cards('cid', cid)
+                # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
+                # use BIF all() to check if the dict has key 'name' AND 'rarity'
+                if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
+                    self.logger.debug(cid)
+                else:
+                    card = cards[0]  # cid is key index
+                    msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
+                    # if card['rarity'] == 5:
+                    #     self.logger.slack(msg)
+                    self.logger.debug(msg)
 
-            #if gacha_result is None or len(gacha_result) == 0:
-            if not gacha_result:
-                self.logger.debug("Gacha Error")
-                break
+        #if gacha_result is None or len(gacha_result) == 0:
+        if not gacha_result:
+            self.logger.debug("Gacha Error")
+            raise Exception('Gacha Error')
 
-            # Auto sell cards and keep some cards
-            if gacha_info['auto_sell'] == 1:
-                for cidx, cid in gacha_result.iteritems():
-                    if str(cid) in gacha_info['keep_cards']:
-                        continue
+        # Auto sell cards and keep some cards
+        if gacha_info['auto_sell'] == 1:
+            for cidx, cid in gacha_result.iteritems():
+                if str(cid) in gacha_info['keep_cards']:
+                    continue
+                else:
+                    ret = self.do_sell_item(cidx)
+                    if ret['res'] == 0:
+                        self.logger.debug(u"賣出卡片成功")
                     else:
-                        ret = self.do_sell_item(cidx)
-                        if ret['res'] == 0:
-                            self.logger.debug(u"賣出卡片成功")
-                        else:
-                            self.logger.debug(u"賣出卡片失敗")
+                        self.logger.debug(u"賣出卡片失敗")
 
     def do_recover_stamina_process(self):
         """process for recovery stamina
@@ -1140,11 +1140,12 @@ class ChainChronicle(object):
             for record in r['body']:
                 # 新卡和舊卡位置不同，且新卡的位置也不固定
                 try:
-                    tmp = dict()
-                    idx = record['data'][0]['idx']
-                    cid = record['data'][0]['id']
-                    tmp[idx] = cid
-                    gacha_result[idx] = cid
+                    for data in record['data']:
+                        tmp = dict()
+                        idx = data['idx']
+                        cid = data['id']
+                        tmp[idx] = cid
+                        gacha_result[idx] = cid
                 except Exception as e:
                     continue
             # print gacha_result
@@ -1226,8 +1227,9 @@ class ChainChronicle(object):
             if card['id'] in except_card_id:
                 self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
                 continue
+
+
             if card['type'] == 0:
-                temp_idx = card['idx']
                 card_doc = None
                 card_doc_list = utils.db_operator.DBOperator.get_cards('cid', card['id'])
                 if len(card_doc_list) > 0:
@@ -1235,14 +1237,16 @@ class ChainChronicle(object):
                 if card_doc:
                     if 'rarity' in card_doc and card_doc['rarity'] >= 5:
                         continue
+                    temp_idx = card['idx']
+
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
                     # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
                     # TODO: bug here, weapon type is not equal to battletype
                     # how to solve it due to mongodb has no weapon type record
                     # self.logger.debug("weapontype:{0}".format(card_doc['battletype']))
                     if (int(area_pickup_list['home']) == card_doc['home']) or (
-                            int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (
-                            int(area_pickup_list['weapontype']) == card_doc['battletype']):
+                        int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (
+                        int(area_pickup_list['weapontype']) == card_doc['battletype']):
 
                         temp_idx = card['idx']
                         self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))

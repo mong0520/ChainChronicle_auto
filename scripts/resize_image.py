@@ -12,6 +12,8 @@ images = os.listdir(img_path)
 
 
 for img_name in images:
+    if not img_name.lower().endswith('jpg'):
+        continue
     org_filename = os.path.join(img_path, img_name)
     updated_filename = os.path.join(img_path, img_name)
     print org_filename
