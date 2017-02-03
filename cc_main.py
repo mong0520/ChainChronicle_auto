@@ -859,6 +859,11 @@ class ChainChronicle(object):
             gacha_info['auto_sell'] = 0
 
         try:
+            gacha_info['auto_sell_rarity_threshold'] = self.config.getint(section, 'AutoSellRarityThreshold')
+        except :
+            gacha_info['auto_sell_rarity_threshold'] = 0
+
+        try:
             gacha_info['verbose'] = self.config.getint(section, 'Verbose')
         except:
             gacha_info['verbose'] = 0
@@ -1049,13 +1054,15 @@ class ChainChronicle(object):
         # for i in xrange(0, gacha_info['count']):
             # if gacha_info['gacha_type'] in [3, 8]:
                 # time.sleep(3)
+        sell_candidate = list()
         self.logger.info(u"轉蛋開始！")
         gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
         #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
         self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
         if gacha_info['verbose']:
             cids = gacha_result.values()
-            for cid in cids:
+            for cidx, cid in gacha_result.iteritems():
+            # for cid in cids:
                 cards = utils.db_operator.DBOperator.get_cards('cid', cid)
                 # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
                 # use BIF all() to check if the dict has key 'name' AND 'rarity'
@@ -1065,6 +1072,9 @@ class ChainChronicle(object):
                     card = cards[0]  # cid is key index
                     msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
                     # if card['rarity'] == 5:
+                    if card['rarity'] < gacha_info['auto_sell_rarity_threshold']:
+                        sell_candidate.append([cidx, card['name']])
+
                     #     self.logger.slack(msg)
                     self.logger.debug(msg)
 
@@ -1072,6 +1082,16 @@ class ChainChronicle(object):
         if not gacha_result:
             self.logger.debug("Gacha Error")
             raise Exception('Gacha Error')
+
+        if gacha_info['auto_sell_rarity_threshold']:
+            for candidate in sell_candidate:
+                cidx = candidate[0]
+                c_name = candidate[1]
+                ret = self.do_sell_item(cidx)
+                if ret['res'] == 0:
+                    self.logger.debug(u"賣出 {0} 成功".format(c_name))
+                else:
+                    self.logger.debug(u"賣出 {0} 失敗".format(c_name))
 
         # Auto sell cards and keep some cards
         if gacha_info['auto_sell'] == 1:
