@@ -182,9 +182,9 @@ class DBUpdater(object):
 
             print 'remove existing data'
             try:
-                getattr(db.category).remove({})
+                getattr(db, category).remove({})
             except:
-                pass
+                print 'unable to remove db.{0}'.format(category)
 
             # Insert latest data
             for element in r[category]:
