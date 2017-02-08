@@ -3,6 +3,7 @@ from tinydb import TinyDB, Query
 import os
 from os.path import expanduser
 import poster
+from pymongo import MongoClient
 
 DB_PATH = expanduser('~/ChainChronicle/db/')
 if not os.path.isdir(DB_PATH):
@@ -166,8 +167,37 @@ class DBUpdater(object):
             os.unlink(db_path)
         data_mapping[category]['db_obj'] = TinyDB(db_path)
 
+    
+
     @staticmethod
-    def update_db():
+    def update_mongodb():
+        client = MongoClient('127.0.0.1', 27017)
+        db = client.cc
+        # Get latest charainfo 
+        for category in data_mapping.keys():
+            url = data_mapping[category]['db_source']
+            print 'Getting data from {0}'.format(url)
+            r = poster.Poster.get_data(url)
+            print 'complete'
+
+            print 'remove existing data'
+            try:
+                getattr(db.category).remove({})
+            except:
+                pass
+
+            # Insert latest data
+            for element in r[category]:
+                # print element
+                if type(element) is list:
+                    for doc in element:
+                        collection = getattr(db, category).insert_one(doc)
+                elif type(element) is dict:
+                    collection = getattr(db, category).insert_one(element) 
+
+
+    @staticmethod
+    def update_tinydb():
         # Get latest charainfo data
         for category in data_mapping.keys():
             url = data_mapping[category]['db_source']
