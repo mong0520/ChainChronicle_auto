@@ -636,7 +636,24 @@ class ChainChronicle(object):
         以1張5星 +  3張4星鍊金
         """
         count = self.config.getint(section, 'Count')
-        item_type = self.config.get(section, 'BaseWeapon')
+        base_weapon_id = self.config.getint(section, 'BaseWeaponID')
+        base_weapon_data = data = {
+            'kind': 'item',
+            'type': 'weapon_ev',
+            'id': base_weapon_id,
+            'val': 1,
+            'price': 10,
+        }
+        try:
+            eid = self.config.getint(section, 'Eid')
+        except:
+            eid = None
+
+        try:
+            target_weapon = [int(i) for i in self.config.get(section, 'Targets').split(',')]
+        except:
+            target_weapon = None
+
         weapon_list_rank3 = list()
         weapon_list_rank4 = list()
         # weapon_list_rank5 = list()
@@ -649,14 +666,15 @@ class ChainChronicle(object):
                 buy_count = 4
             # 買三星武器
             for j in range(0, buy_count):
-                ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+                # ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+                ret = item_client.buy_item(base_weapon_data, self.account_info['sid'])
                 weapon_list_rank3.append(ret['body'][1]['data'][0]['idx'])
 
             # 五把三星器武器，鍊成四星武器
             if len(weapon_list_rank3) == 5:
                 # self.logger.info(u'開始鍊金 -  3星*5')
                 # self.logger.debug(weapon_list_rank3)
-                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
+                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3, eid)
                 weapon_list_rank3[:] = []
                 # pprint.pprint(ret)
                 idx = ret['body'][1]['data'][0]['idx']
@@ -671,7 +689,7 @@ class ChainChronicle(object):
             if weapon_base_rank5_idx and len(weapon_list_rank3) == 4:
                 # self.logger.info(u'開始鍊金 -  5星*1 + 3星*4')
                 weapon_list_rank3.append(weapon_base_rank5_idx)
-                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3)
+                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3, eid)
                 weapon_list_rank3[:] = []
                 # pprint.pprint(ret)
                 try:
@@ -683,7 +701,7 @@ class ChainChronicle(object):
                     raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
                 # print idx, item_id
-                if int(item_id) in [85200, 26011, 26068, 85200, 26066]:
+                if target_weapon and str(item_id) in target_weapon:
                     self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
                     weapon_base_rank5_idx = None
                     break
@@ -695,7 +713,7 @@ class ChainChronicle(object):
             # 鍊出做為基底的五星武器
             elif len(weapon_list_rank4) == 5:
                     # self.logger.info(u'開始鍊金 -  4星*5')
-                    ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4)
+                    ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4, eid)
                     weapon_list_rank4[:] = []
                     # pprint.pprint(ret)
                     idx = ret['body'][1]['data'][0]['idx']
@@ -861,7 +879,7 @@ class ChainChronicle(object):
         try:
             gacha_info['auto_sell_rarity_threshold'] = self.config.getint(section, 'AutoSellRarityThreshold')
         except :
-            gacha_info['auto_sell_rarity_threshold'] = 0
+            gacha_info['auto_sell_rarity_threshold'] = None
 
         try:
             gacha_info['verbose'] = self.config.getint(section, 'Verbose')
@@ -1068,6 +1086,7 @@ class ChainChronicle(object):
                 # use BIF all() to check if the dict has key 'name' AND 'rarity'
                 if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
                     self.logger.debug(cid)
+                    sell_candidate.append([cidx, 'None'])
                 else:
                     card = cards[0]  # cid is key index
                     msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
