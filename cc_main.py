@@ -44,19 +44,23 @@ from lib import card_client
 
 class ChainChronicle(object):
 
-    def __init__(self, c, console_log_level=logging.DEBUG):
+    def __init__(self, c, log_level=logging.DEBUG):
         if os.path.isfile(c):
             self.config_file = c
         else:
             raise IOError("{0} is not exist".format(c))
 
         self.poster = utils.poster.Poster
+        self.poster2 = utils.poster.Poster()
 
         self.action_list = list()
         self.account_info = dict()
         log_id = os.path.basename(os.path.splitext(self.config_file)[0])
-        self.__init_logger(log_id, console_log_level)
-        self.config = utils.enhanced_config_parser.EnhancedConfigParser()
+        self.config = utils.enhanced_config_parser.EnhancedConfigParser(
+            default_value={'LogLevel': 'DEBUG'})
+        self.load_config()
+        log_level = getattr(logging, self.config.get('GLOBAL', 'LogLevel').upper())
+        self.__init_logger(log_id, log_level)
         self.action_mapping = {
             'QUEST': self.do_quest_section,
             'GACHA': self.do_gacha_section,
@@ -440,15 +444,15 @@ class ChainChronicle(object):
         # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for data in data_list:
             try:
-                self.logger.debug("{0} = {1}".format(item_mapping[data['item_id']], data['cnt']))
+                self.logger.info("{0} = {1}".format(item_mapping[data['item_id']], data['cnt']))
             except KeyError:
                 pass
-        self.logger.debug(u'精靈石 = {0}'.format(stone_count))
+        self.logger.info(u'精靈石 = {0}'.format(stone_count))
 
         user_info = r['body'][4]['data']
         for key, data in user_info.iteritems():
             if key in accepted_keys:
-                self.logger.debug(u"{0} = {1}".format(key, data))
+                self.logger.info(u"{0} = {1}".format(key, data))
 
     def do_show_all_cards(self, section, *args, **kwargs):
         """ 只列出四星/五星角色卡 """
@@ -473,11 +477,11 @@ class ChainChronicle(object):
                 cid = int(card['id'])
                 card_dict = utils.db_operator.DBOperator.get_cards('cid', cid)[0]
                 if card_dict and card_dict['rarity'] >= rank_threshold:
-                    self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}/{4}, 稀有度: {5}, ID: {6}, IDX: {7}".format(
+                    self.logger.info(u"{0}-{1}, 界限突破：{2}, 等級: {3}/{4}, 稀有度: {5}, ID: {6}, IDX: {7}".format(
                         card_dict['title'], card_dict['name'], card['limit_break'], card['lv'],
                         card['maxlv'], card_dict['rarity'], cid, card['idx']))
                     if auto_compose:
-                        self.logger.debug(u'Start to upgrade Card {0}'.format(card_dict['name']))
+                        self.logger.info(u'Start to upgrade Card {0}'.format(card_dict['name']))
                         self.__auto_compose(card['idx'], card['maxlv'])
 
                     # self.logger.debug(int(card['idx']))
@@ -514,7 +518,7 @@ class ChainChronicle(object):
             current += 1
             if current > count and b_infinite is False:
                 break
-            self.logger.debug(u"#{0} 開始關卡: [{1}]".format(current, quest_info['qid']))
+            self.logger.info(u"#{0} 開始關卡: [{1}]".format(current, quest_info['qid']))
             result = quest_client.start_quest(quest_info, self.account_info['sid'])
             # self.logger.debug(result)
             if result['res'] == 0:
@@ -1075,8 +1079,7 @@ class ChainChronicle(object):
         sell_candidate = list()
         self.logger.info(u"轉蛋開始！")
         gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
-        #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-        self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+        # self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
         if gacha_info['verbose']:
             cids = gacha_result.values()
             for cidx, cid in gacha_result.iteritems():
@@ -1089,7 +1092,11 @@ class ChainChronicle(object):
                     sell_candidate.append([cidx, 'None'])
                 else:
                     card = cards[0]  # cid is key index
-                    msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
+                    greeting_msg = '獲得 {0} 星卡, {1}'.format(card['rarity'], card['name'].encode('utf-8'))
+                    if card['rarity'] == 5:
+                        msg = '賀！！' + greeting_msg
+                    else:
+                        msg = greeting_msg
                     # if card['rarity'] == 5:
                     if card['rarity'] < gacha_info['auto_sell_rarity_threshold']:
                         sell_candidate.append([cidx, card['name']])
@@ -1345,7 +1352,6 @@ def main():
     args = parser.parse_args()
     config_file = args.config
     cc = ChainChronicle(config_file)
-    cc.load_config()
     if args.list_command:
         print "Valid actions:"
         print cc.action_mapping.keys()
