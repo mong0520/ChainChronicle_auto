@@ -54,7 +54,7 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser):
         ConfigParser.SafeConfigParser.read(self, filename)
         self.__import_global_setting()
         self.__validate()
-        self.__translate_env_variables()
+        # self.__translate_env_variables()
 
     def sections_with_prefix(self, prefix):
         """Return a list of section names with specific prefix."""
@@ -73,7 +73,7 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser):
         for section in self.sections():
             print "[%s]" % section
             for option in self.options(section):
-                print " ", option, "=", self.get(section, option)
+                print " ", option, "=", self.get(section, option), type(self.get(section, option))
 
 
 class MissingRequiredOptionsException(Exception):

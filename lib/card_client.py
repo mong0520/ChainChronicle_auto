@@ -2,14 +2,23 @@ import utils.poster
 import time
 import urllib
 import requests
-import sys
-sys.path.append('utils')
-from poster import Poster
 import zlib
 import json
 
-def compose(sid, ba, mt_list):
+
+def do_sell_item(sid, cidx):
     poster = utils.poster.Poster
+    url = 'http://v272.cc.mobimon.com.tw/card/sell'
+    cookies = {'sid': sid}
+    headers = {'Cookie': 'sid={0}'.format(sid)}
+    data = {
+        'c': cidx
+    }
+    r = poster.post_data(url, headers, cookies, payload=None, **data)
+    return r
+
+def compose(sid, ba, mt_list):
+    # poster = utils.poster.Poster
     url = 'http://v272.cc.mobimon.com.tw/card/compose'
     headers = {'Cookie': 'sid={0}'.format(sid)}
     headers.update(Poster.DEFAULT_HEADERS)

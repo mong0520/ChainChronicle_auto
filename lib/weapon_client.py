@@ -26,7 +26,7 @@ def compose(sid, weapon_list, eid=None):
         query_string += "&eid={0}".format(eid) #  special event
     post_url = url + query_string
     # print post_url
-    payload = urllib.quote_plus(query_string)
+    payload = urllib    .quote_plus(query_string)
     payload = 'nature=' + payload
     # print payload
 
