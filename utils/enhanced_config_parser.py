@@ -3,7 +3,7 @@ import ConfigParser
 import sys
 
 
-class EnhancedConfigParser(ConfigParser.SafeConfigParser):
+class EnhancedConfigParser(ConfigParser.SafeConfigParser, object):
 
     SEC_GLOBAL = 'GLOBAL'
 
@@ -19,7 +19,7 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser):
             """
             self.required_section_options = {"GLOBAL": []}
         self.optionxform = str # make is case sensitive
-        ConfigParser.SafeConfigParser.__init__(self, defaults=default_value)
+        super(EnhancedConfigParser, self).__init__(defaults=default_value)
 
     def __translate_env_variables(self):
         for section in self.sections():
@@ -51,7 +51,7 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser):
     def read(self, filename):
         if not os.path.isfile(filename):
             raise IOError("%s not found" % filename)
-        ConfigParser.SafeConfigParser.read(self, filename)
+        super(EnhancedConfigParser, self).read(filename)
         self.__import_global_setting()
         self.__validate()
         self.__translate_env_variables()
