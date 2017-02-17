@@ -163,7 +163,6 @@ class ChainChronicle(object):
             self.logger.warning(e)
             return None
 
-
     def do_action(self, action_name):
         for action, action_function in self.action_mapping.iteritems():
             # if action == action_name:

@@ -3,6 +3,7 @@ from logging.handlers import RotatingFileHandler
 import os
 from pyslack import SlackHandler
 import requests
+import sys
 requests.packages.urllib3.disable_warnings() # disable slack warning
 
 # Slack integration for logger
@@ -24,8 +25,9 @@ class CCLogger(object):
         file_formatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
                                            '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
 
-        console_formatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
-                                              '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
+        #console_formatter = logging.Formatter('%(asctime)s: [%(levelname)s]' \
+        #                                      '(%(lineno)d) - %(message)s', datefmt='%B %d %H:%M:%S')
+        console_formatter = logging.Formatter('%(message)s', datefmt='%B %d %H:%M:%S')
 
         slack_formatter = logging.Formatter('[%(asctime)s]: %(message)s', datefmt='%B %d %H:%M:%S')
 
@@ -45,7 +47,7 @@ class CCLogger(object):
         rh.setLevel(logging.DEBUG)
         rh.setFormatter(file_formatter)
 
-        console = logging.StreamHandler()
+        console = logging.StreamHandler(sys.stdout)
         console.setLevel(level)
         console.setFormatter(console_formatter)
 
