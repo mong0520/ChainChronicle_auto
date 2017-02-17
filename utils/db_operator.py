@@ -15,9 +15,9 @@ data_mapping = {
         'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
         'raw_list': list()
     },
-    'reinforce':{
+    'weaponlist':{
         'db_source': DB_SOURCE_BASE + 'weaponlist',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'weaponlist')),
         'raw_list': list()
     }
     ,
@@ -42,7 +42,7 @@ data_mapping = {
         'raw_list': list()
     }
 
-    # note, weaponlist有兩個資料可以拿，一個叫weaponlist，是一般武器，另一個叫evolve，是鍊金武器
+    # note, weaponlist有三個資料可以拿，一個叫weaponlist，是一般武器，一個叫evolve，是鍊金武器，一個叫reinforce，是武器強化卡
     # weaponlist, skilllist, charainfo, questdigest, supportersskill, bossinfo, weaponcomposeevent, explorerlocation
 }
 
@@ -147,6 +147,7 @@ class DBOperator(object):
             for result in result_list:
                 for k, v in result.iteritems():
                     print u'{0}: {1}'.format(k, v)
+                print "==============================="
 
 
     @staticmethod
@@ -182,9 +183,9 @@ class DBUpdater(object):
 
             print 'remove existing data'
             try:
-                getattr(db.category).remove({})
+                getattr(db, category).remove({})
             except:
-                pass
+                print 'unable to remove db.{0}'.format(category)
 
             # Insert latest data
             for element in r[category]:

@@ -9,7 +9,7 @@ import zlib
 import json
 
 
-def compose(sid, weapon_list):
+def compose(sid, weapon_list, eid=None):
     """ Due to this api use same key 'mt' 5 times, so it can not use commom poster lib"""
     url = "http://v272.cc.mobimon.com.tw/weapon/compose"
     data = {}
@@ -22,7 +22,8 @@ def compose(sid, weapon_list):
     # query_string = urllib.urlencode(data)
     query_string = "?mt={0}&mt={1}&mt={2}&mt={3}&mt={4}&timestamp={5}&cnt={6}".format(
         weapon_list[0], weapon_list[1], weapon_list[2], weapon_list[3], weapon_list[4], data['timestamp'], data['cnt'])
-    # query_string += "&eid=3" #  special event
+    if eid:
+        query_string += "&eid={0}".format(eid) #  special event
     post_url = url + query_string
     # print post_url
     payload = urllib.quote_plus(query_string)
