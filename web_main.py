@@ -31,7 +31,7 @@ def run_command(cmd, cwd=os.getcwd()):
 @app.route("/show_setting/<user>/<section>", methods=['POST'])
 def show(user, section):
     config_path = os.path.join(app_root, 'config', '{0}.conf'.format(user))
-    config.read(config_path)    
+    config.read(config_path)
     if section != 'ALL':
         content = '[{0}]\n'.format(section)
         content += '\n'.join(['{0}={1}'.format(option, config.get(section, option))for option in config.options(section)])
@@ -68,7 +68,7 @@ def run(user, section):
     except Exception as e:
         return e
 
-@app.route('/quest_query', methods=['POST'])
+@app.route('/quest_query/<quest_name>', methods=['POST'])
 def quest_query(quest_name):
     try:
         cmd = cmd_template['quest_query'].format(quest_name)
@@ -77,7 +77,7 @@ def quest_query(quest_name):
         return result
     except Exception as e:
         return e
-    
+
 
 
 if __name__ == "__main__":
