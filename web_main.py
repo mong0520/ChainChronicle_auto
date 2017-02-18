@@ -14,7 +14,7 @@ config.optionxform=str
 
 cmd_template = {
     'run': "python cc_main.py -c config/{0}.conf -a {1}",
-    'quest_query': u"python scripts/find_quest.py -n {0}"
+    'query': u"python scripts/find_general.py -s {0} -f {1} -v {2}"
 }
 
 def __dump_config():
@@ -70,13 +70,12 @@ def run(user, section):
     except Exception as e:
         return e
 
-@app.route('/query_quest/<quest_name>', methods=['POST'])
-def quest_query(quest_name):
-    import urllib
-    print quest_name, type(quest_name)
+
+@app.route('/query/<db>/<field>/<value>', methods=['GET', 'POST'])
+def query(db, field, value):
+    print db, field, value
     try:
-        print 'jere'
-        cmd = cmd_template['quest_query'].format(quest_name)
+        cmd = cmd_template['query'].format(db, field, value)
         print cmd
         result = run_command(cmd)
         return result
