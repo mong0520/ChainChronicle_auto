@@ -30,7 +30,7 @@ def run_command(cmd, cwd=os.getcwd()):
     stdout, stderr = process.communicate()
     return stdout
 
-@app.route("/show_setting/<user>/<section>", methods=['POST'])
+@app.route("/show/<user>/<section>", methods=['POST'])
 def show(user, section):
     config_path = os.path.join(app_root, 'config', '{0}.conf'.format(user))
     config.read(config_path)
@@ -83,6 +83,9 @@ def query(db, field, value):
         return e
 
 
+@app.errorhandler(500)
+def internal_error(error):
+    return str(error)
 
 if __name__ == "__main__":
     app.run('0.0.0.0', port=80)
