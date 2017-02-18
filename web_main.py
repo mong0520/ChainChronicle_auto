@@ -14,7 +14,7 @@ config.optionxform=str
 
 cmd_template = {
     'run': "python cc_main.py -c config/{0}.conf -a {1}",
-    'quest_query': "scripts/find_quest.py -n {0}"
+    'quest_query': u"python scripts/find_quest.py -n {0}"
 }
 
 def __dump_config():
@@ -24,6 +24,8 @@ def __dump_config():
             print " ", option, "=", config.get(section, option)
 
 def run_command(cmd, cwd=os.getcwd()):
+    print "enter run_command"
+    print cmd
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
     stdout, stderr = process.communicate()
     return stdout
@@ -68,9 +70,12 @@ def run(user, section):
     except Exception as e:
         return e
 
-@app.route('/quest_query/<quest_name>', methods=['POST'])
+@app.route('/query_quest/<quest_name>', methods=['POST'])
 def quest_query(quest_name):
+    import urllib
+    print quest_name, type(quest_name)
     try:
+        print 'jere'
         cmd = cmd_template['quest_query'].format(quest_name)
         print cmd
         result = run_command(cmd)
