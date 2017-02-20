@@ -60,6 +60,24 @@ def set(user, section):
         config.write(configfile)
     return u'設定檔已儲存'
 
+
+@app.route("/unset/<user>/<section>/<option>", methods=['POST'])
+def unset(user, section, option):
+    config_path = os.path.join(app_root, 'config', '{0}.conf'.format(user))
+    print config_path
+    config.read(config_path)
+    #__dump_config()
+    try:
+        ret = config.remove_option(section, option)
+    except ConfigParser.NoSectionError as e:
+        return 'No section {0} found'.format(section)
+    if not ret:
+        return 'Reset option {0} failed'.format(option)
+    with open(config_path, 'wb') as configfile:
+        config.write(configfile)
+    return u'設定檔已儲存'
+
+
 @app.route("/run/<user>/<section>", methods=['POST'])
 def run(user, section):
     try:
