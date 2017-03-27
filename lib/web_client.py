@@ -18,7 +18,7 @@ def get_gacha_page(sid):
         'Accept-Language': 'zh-tw',
         'Host': 'v272.cc.mobimon.com.tw',
         'Accept-Encoding': 'gzip, deflate'
-        
+
     }
     cookies = {'sid': sid, 'devicewidth':1024, 'framewidth':577}
     r = requests.get(url, headers=headers)
