@@ -1085,12 +1085,17 @@ class ChainChronicle(object):
                     self.logger.debug(cid)
                 else:
                     card = cards[0]  # cid is key index
-                    msg = '得到 {0}-{1}, 稀有度: {2}'.format(card['title'].encode('utf-8'), card['name'].encode('utf-8'), card['rarity'])
+                    if card['rarity'] >= gacha_info['auto_sell_rarity_threshold']:
+                        msg = '得到 {0}-{1}, 稀有度: {2}'.format(card['title'].encode('utf-8'), card['name'].encode('utf-8'), card['rarity'])
+                        self.logger.debug(msg)
+                    else:
+                        pass
+
                     if card['rarity'] < gacha_info['auto_sell_rarity_threshold']:
                         sell_candidate.append([cidx, card['name']])
 
                     #     self.logger.slack(msg)
-                    self.logger.debug(msg)
+                    #self.logger.debug(msg)
 
         #if gacha_result is None or len(gacha_result) == 0:
         if not gacha_result:

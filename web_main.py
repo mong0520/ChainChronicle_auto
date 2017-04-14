@@ -5,6 +5,7 @@ import ConfigParser
 from flask import request
 import json
 import os
+import urllib
 
 
 app = Flask(__name__)
@@ -13,13 +14,13 @@ config = ConfigParser.ConfigParser()
 config.optionxform=str
 
 cmd_template = {
-    'run': "python cc_main.py -c config/{0}.conf -a {1}",
+    'run': u"python cc_main.py -c config/{0}.conf -a {1}",
     'query': u"python scripts/find_general.py -s {0} -f {1} -v {2}"
 }
 
 def __dump_config():
     for section in config.sections():
-        print "[%s]" % section
+        print u"[%s]" % section
         for option in config.options(section):
             print " ", option, "=", config.get(section, option)
 
@@ -82,10 +83,10 @@ def unset(user, section, option):
 def run(user, section):
     try:
         cmd = cmd_template['run'].format(user, section)
-        print cmd
         result = run_command(cmd)
         return result
     except Exception as e:
+        print e
         return e
 
 
