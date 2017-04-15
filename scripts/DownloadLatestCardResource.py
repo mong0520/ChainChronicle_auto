@@ -19,6 +19,7 @@ cnt = format(timestamp + 5000, 'x')
 pattern = "cha_2d_card_(\d+)\.bdl"
 output_path = 'resource'
 downloaded_file_list = 'processedCardList.txt'
+downloaded_file = list()
 
 def do_stuff(q):
     while True:
@@ -29,6 +30,9 @@ def do_stuff(q):
             file_size = os.stat(filename).st_size
             if file_size and file_size < 5000:
                 os.remove(filename)
+            else:
+                downloaded_file.append(os.path.basename(url))
+            downloaded_file.append(os.path.basename(url))
             q.task_done()
 
 def get_content_url():
@@ -72,31 +76,33 @@ for card_id in card_id_list:
         # weapons
         if int(tmp_idx) >= 26000 and int(tmp_idx) <=26127:
             continue
-        result.append(tmp_idx)
+        result.append('cha_2d_card_{0}.scr'.format(tmp_idx))
     except:
         pass
 result.sort()
 
+
 try:
-    with open (downloaded_file_list, 'r') as f_in:
+    with open (downloaded_file_list, 'a+') as f_in:
         processed_card_list = [line.rstrip() for line in f_in]
+
+        # print processed_card_list         
+        for r in result:
+            url = '{0}Resource/Card/{1}'.format(ctroot, r)
+            if r not in processed_card_list:
+                print 'Put #{0} in downloading queue'.format(r)                                                                            
+                q.put(url)
+            else:
+                print '{0} is alread downloaded'.format(r) 
 except:
-    processed_card_list = list()
-
-
-# print processed_card_list
-with open (downloaded_file_list, 'a') as f:
-    # f.writelines(["%s\n" % item  for item in result])
-    for r in result:
-        url = '{0}Resource/Card/cha_2d_card_{1}.scr'.format(ctroot, r)
-        # print r
-        if r not in processed_card_list:
-            print 'Put #{0} in downloading queue'.format(r)
-            q.put(url)
-            f.write('{0}\n'.format(r))
+    raise
 
 q.join()
 
+# print processed_card_list
+with open (downloaded_file_list, 'a') as f:
+    for r in downloaded_file:
+        f.write(r + "\n")
 
 # Remove incorrect files
 
