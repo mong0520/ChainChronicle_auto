@@ -73,6 +73,7 @@ class ChainChronicle(object):
             'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
             'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
             'COMPOSE': self.do_compose,
+            'SIMPLE_COMPOSE': self.do_compose_simple,
             'TUTORIAL': self.do_pass_tutorial,
             'DRAMA': self.do_play_drama_auto,
             'TEACHER': self.do_teacher_section,
@@ -630,11 +631,68 @@ class ChainChronicle(object):
         else:
             pass
 
+    def do_compose_simple(self, section, *args, **kwargs):
+        # 買某樣道具五次，直接鍊金
+        # cnt=15b87000f0b&id=85313&kind=item&price=1&type=weapon_ev&val=1
+        buy_count = 5
+        target_weapon = list()
+        target_weapon_keyword = list()
+        count = self.config.getint(section, 'Count')
+        try:
+            eid = self.config.get(section, 'Eid')
+        except:
+            eid = None
+        base_weapon_id = self.config.get(section, 'BaseWeaponID')
+        weapon_data = {
+            'kind': 'item',
+            'type': 'weapon_ev',
+            'id': base_weapon_id,
+            'val': 1,
+            'price': 1,
+        }
+        try:
+            target_weapon_keyword_str = self.config.get(section, 'TargetsKeyWords')
+            target_weapon_keyword = [i for i in target_weapon_keyword_str.split(',')]
+        except Exception as e:
+            pass
+
+        for i in range(0, count):
+            weapon_client_base = list()
+            for j in range(0, buy_count):
+                ret = item_client.buy_item(weapon_data, self.account_info['sid'])
+                data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                base_weapon_idx = ret['body'][1]['data'][0]['idx']
+                weapon_client_base.append(base_weapon_idx)
+
+            ret = weapon_client.compose(self.account_info['sid'], weapon_client_base, eid)
+            idx = ret['body'][1]['data'][0]['idx']
+            item_id = ret['body'][1]['data'][0]['id']
+            weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+            weapon_name = weapon_list[0]['name'].encode('utf-8')
+            # print idx, item_id
+            for keyword in target_weapon_keyword:
+                b_found = False
+                if keyword in weapon_name:
+                    b_found = True
+                    break
+                else:
+                    pass
+
+            if b_found:
+                self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_name))
+            else:
+                # self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}({3})'.format(i, count, weapon_name, item_id))
+                r = self.do_sell_item(idx)
+
+
+
+
     def do_compose(self, section, *args, **kwargs):
         """
         以1張5星 +  3張4星鍊金
         """
         count = self.config.getint(section, 'Count')
+        target_weapon = list()
         try:
             eid = self.config.get(section, 'Eid')
         except:
