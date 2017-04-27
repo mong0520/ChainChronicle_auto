@@ -23,7 +23,7 @@ def start_explorer(parameter, sid):
         'location_id': parameter['location_id'],
         'card_idx': parameter['card_idx'],
         'pickup': parameter['pickup'],
-        'interval': 1,
+        'interval': parameter['interval'],
         'helper1': '588707',
         'helper2': '1913206'
     }
@@ -50,6 +50,18 @@ def get_explorer_result(idx, sid):
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
         'explorer_idx': idx
+    }
+    r = poster.post_data(url, headers, cookies, payload=None, **data)
+    return r
+
+
+def finish_explorer(parameter, sid):
+    poster = utils.poster.Poster
+    url = '{0}/explorer/finish'.format(utils.global_config.get_hostname())
+    cookies = {'sid': sid}
+    headers = {'Cookie': 'sid={0}'.format(sid)}
+    data = {
+        'explorer_idx': parameter['explorer_idx']
     }
     r = poster.post_data(url, headers, cookies, payload=None, **data)
     return r

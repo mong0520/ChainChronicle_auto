@@ -1052,7 +1052,7 @@ class ChainChronicle(object):
             sys.exit(0)
         else:
             pickup_list = r['pickup']
-        self.logger.debug(simplejson.dumps(pickup_list, ensure_ascii=False))
+        # self.logger.debug(simplejson.dumps(pickup_list, ensure_ascii=False))
 
         explorer_area = self.config.getlist(section, 'area')
 
@@ -1096,11 +1096,44 @@ class ChainChronicle(object):
             parameter['location_id'] = area
             parameter['card_idx'] = card_idx
             parameter['pickup'] = 1
+
+            try:
+                parameter['interval'] = self.config.getint(section, 'interval')
+            except:
+                parameter['interval'] = 1
+
+            try:
+                stone_finish = self.config.getint(section, 'StoneFinish')
+            except:
+                stone_finish = 1
+
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
             if r['res'] == 2311:
                 # self.logger.debug(u"pickup value error, retry")
                 parameter['pickup'] = 0
                 explorer_client.start_explorer(parameter, self.account_info['sid'])
+
+
+            if stone_finish:
+                # self.logger.debug('Use stone to finish explorer right now!')
+                r = explorer_client.finish_explorer(parameter, self.account_info['sid'])
+                # utils.response_parser.dump_response(r)
+
+                r = explorer_client.get_explorer_result(parameter['explorer_idx'], self.account_info['sid'])
+                for reward in r['explorer_reward']:
+                    item_type = reward['item_type']
+                    item_id = reward['item_id']
+                    # self.logger.debug('==========================================')
+                    # self.logger.debug('Reward Type: {0}'.format(item_type))
+                    if item_type == 'card':
+                        card = utils.db_operator.DBOperator.get_cards('cid', item_id)[0]
+                        self.logger.debug('得到角色: {0}'.format(card['name'].encode('utf-8')))
+                    else:
+                        pass
+                        # self.logger.debug('Reward ID: {0}'.format(item_id))
+                    # self.logger.debug('Reward Val: {0}'.format(reward['item_val']))
+                # utils.response_parser.dump_response(r, key='explorer_reward')
+
 
 
     def do_buy_item_section(self, section, *args, **kwargs):
@@ -1320,13 +1353,13 @@ class ChainChronicle(object):
         # card_list = self.CC_GetAllData()['body'][6]['data']
         card_list = alldata_client.get_alldata(self.account_info['sid'])['body'][6]['data']
 
-        self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
-        self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
-        self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
+        # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
+        # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
+        # self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
         temp_idx = None
         for card in card_list:
             if card['id'] in except_card_id:
-                self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
+                # self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
                 continue
 
 
@@ -1350,8 +1383,8 @@ class ChainChronicle(object):
                         int(area_pickup_list['weapontype']) == card_doc['battletype']):
 
                         temp_idx = card['idx']
-                        self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
-                        self.logger.debug(u"{0} is picked to eplorer".format(temp_idx))
+                        # self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
+                        # self.logger.debug(u"{0} is picked to eplorer".format(temp_idx))
                         # print card
                         return temp_idx, card['id']
                     else:
