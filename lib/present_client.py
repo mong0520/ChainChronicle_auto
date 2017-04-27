@@ -1,10 +1,11 @@
 import utils.poster
+import utils.global_config
 
 
 def get_present_list(sid, card_type=None):
     # Get present list
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/present/list'
+    url = '{0}/present/list'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {}
@@ -22,7 +23,7 @@ def get_present_list(sid, card_type=None):
 def receieve_present(pid, sid):
     # Get present
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/present/recv'
+    url = '{0}/present/recv'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
 

@@ -19,6 +19,7 @@ import utils.db_operator
 import utils.enhanced_config_parser
 import utils.poster
 import utils.response_parser
+import utils.global_config
 import requests
 from lib import alldata_client
 from lib import explorer_client
@@ -1294,7 +1295,7 @@ class ChainChronicle(object):
                 self.logger.debug("sell present result: {0}".format(ret['res']))
 
     def do_sell_item(self, cidx):
-        url = 'http://v272.cc.mobimon.com.tw/card/sell'
+        url = '{0}/card/sell'.format(utils.global_config.get_hostname())
         cookies = {'sid': self.account_info['sid']}
         headers = {'Cookie': 'sid={0}'.format(self.account_info['sid'])}
         data = {

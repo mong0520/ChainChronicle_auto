@@ -1,11 +1,11 @@
 import utils.poster
 import time
-
+import utils.global_config
 
 def tutorial(sid, entry=False, **kwargs):
     poster = utils.poster.Poster
     #url = "http://ios5.cc.mobimon.com.tw/user/all_data"
-    url = "http://v272.cc.mobimon.com.tw/tutorial"
+    url = "{0}/tutorial".format(utils.global_config.get_hostname())
     if entry:
         url += '/entry'
     data = dict()

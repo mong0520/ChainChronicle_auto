@@ -9,12 +9,13 @@ import lib.friend_client as friend_client
 import argparse
 import find_cards
 import utils
+import utils.global_config
 
 VALID_KEYS = ['uid', 'lv', 'name']
 
 
 def get_sid():
-    url = 'http://v272.cc.mobimon.com.tw/session/login'
+    url = '{0}/session/login'.format(utils.global_config.get_hostname())
     headers = {'Cookie': 'sid=INVALID'}
     data = {
         'UserUniqueID': 'ANDO9c3e5899-4e22-49a5-bf99-82d6b72aec8d',

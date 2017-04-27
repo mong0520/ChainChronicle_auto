@@ -1,4 +1,6 @@
 import utils.poster
+import utils.global_config
+
 
 item_mapping = {
     "char": {"id": 90904, "type": "chara_rf", "price": 30, "val": 1},
@@ -12,7 +14,7 @@ item_mapping = {
 
 def buy_item(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/token'
+    url = '{0}/token'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -43,7 +45,7 @@ def buy_char_card(sid):
 
 def buy_item_with_type(card_type, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/token'
+    url = '{0}/token'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -59,7 +61,7 @@ def buy_item_with_type(card_type, sid):
 
 def get_daily_gacha_ticket(sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/token'
+    url = '{0}/token'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

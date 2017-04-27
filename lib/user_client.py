@@ -1,9 +1,10 @@
 import utils.poster
+import utils.global_config
 
 
 def get_account(sid):
     poster = utils.poster.Poster
-    url = "http://v272.cc.mobimon.com.tw/user/get_account"
+    url = "{0}/user/get_account".format(utils.global_config.get_hostname())
     data = {}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}
@@ -13,7 +14,7 @@ def get_account(sid):
 
 def set_password(password, sid):
     poster = utils.poster.Poster
-    url = "http://v272.cc.mobimon.com.tw/user/set_password"
+    url = "{0}/user/set_password".format(utils.global_config.get_hostname())
     data = {'pass': password}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}

@@ -1,10 +1,11 @@
 import utils.poster
 import time
+import utils.global_config
 
 
 def gacha(parammeter, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/gacha'
+    url = '{0}/gacha'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     # if parammeter['type'] in [3, 8]:  # Raid Gacha and Sugjugation Gacha

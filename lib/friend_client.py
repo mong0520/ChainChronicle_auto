@@ -1,9 +1,10 @@
 import utils.poster
+import utils.global_config
 
 
 def query_fid(sid, oid):
     poster = utils.poster.Poster
-    url = "http://v272.cc.mobimon.com.tw/friend/search"
+    url = "{0}/friend/search".format(utils.global_config.get_hostname())
     data = {'oid': oid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}

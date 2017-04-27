@@ -2,11 +2,12 @@ import utils.poster
 import urllib
 import time
 import simplejson
+import utils.global_config
 
 
 def login(uid, token=None):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/session/login'
+    url = '{0}/session/login'.format(utils.global_config.get_hostname())
     headers = {
         'Cookie': 'sid=INVALID'
     }

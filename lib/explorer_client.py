@@ -1,9 +1,10 @@
 import utils.poster
+import utils.global_config
 
 
 def get_explorer_information(sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/explorer/list'
+    url = '{0}/explorer/list'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -14,7 +15,7 @@ def get_explorer_information(sid):
 
 def start_explorer(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/explorer/entry'
+    url = '{0}/explorer/entry'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -31,7 +32,7 @@ def start_explorer(parameter, sid):
 
 def cancel_explorer(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/explorer/cancel'
+    url = '{0}/explorer/cancel'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -44,7 +45,7 @@ def cancel_explorer(parameter, sid):
 
 def get_explorer_result(idx, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/explorer/result'
+    url = '{0}/explorer/result'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

@@ -7,11 +7,12 @@ sys.path.append('utils')
 from poster import Poster
 import zlib
 import json
+import utils.global_config
 
 
 def compose(sid, weapon_list, eid=None):
     """ Due to this api use same key 'mt' 5 times, so it can not use commom poster lib"""
-    url = "http://v272.cc.mobimon.com.tw/weapon/compose"
+    url = "{0}/weapon/compose".format(utils.global_config.get_hostname())
     data = {}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     headers.update(Poster.DEFAULT_HEADERS)

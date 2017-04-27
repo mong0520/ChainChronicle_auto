@@ -1,9 +1,10 @@
 import utils.poster
+import utils.global_config
 
 
 def debug_post(sid, path, **kwargs):
     poster = utils.poster.Poster
-    # url = "http://v272.cc.mobimon.com.tw{0}".format(path)
+    # url = "{0}{1}".format(utils.globa_config.gethostname(), path)
     # data = dict()
     # for k, v in kwargs.iteritems():
         # data[k] = v

@@ -1,11 +1,12 @@
 import utils.poster
 import time
+import utils.global_config
 
 
 def check_participant(parameter, sid):
     # Check
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/subjugation/check_participant'
+    url = '{0}/subjugation/check_participant'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -17,7 +18,7 @@ def check_participant(parameter, sid):
 
 def try_subjugation(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/subjugation/try'
+    url = '{0}/subjugation/try'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -31,7 +32,7 @@ def try_subjugation(parameter, sid):
 
 def start_subjugation(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/subjugation/entry'
+    url = '{0}/subjugation/entry'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -50,7 +51,7 @@ def finish_subjugation(parameter, sid):
     now = int(time.time())
     hex_now = format(now + 5000, 'x')
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/subjugation/result'
+    url = '{0}/subjugation/result'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     pt_cid = parameter['pt_cid']

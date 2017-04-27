@@ -1,10 +1,11 @@
 import utils.poster
 import time
 import requests
+import utils.global_config
 
 def get_treasure(quest_info, sid):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/quest/treasure'
+    url = '{0}/quest/treasure'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -17,7 +18,7 @@ def get_treasure(quest_info, sid):
 def start_quest(quest_info, sid):
     # Get Quest
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/quest/entry'
+    url = '{0}/quest/entry'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -25,7 +26,7 @@ def start_quest(quest_info, sid):
         'type': quest_info['qtype'],
         'qid': quest_info['qid'],
         'fid': quest_info['fid'],
-        'pt': 0
+        'pt': 9
     }
     r = poster.post_data(url, headers, cookies, payload=None,  **data)
     return r
@@ -35,7 +36,7 @@ def finish_quest(quest_info, sid):
     now = int(time.time())
     hex_now = format(now + 5000, 'x')
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/quest/result'
+    url = '{0}/quest/result'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

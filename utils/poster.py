@@ -3,6 +3,7 @@ import time
 import urllib
 import zlib
 import json
+import global_config
 
 class Poster(object):
 
@@ -13,10 +14,10 @@ class Poster(object):
         'Device': '0',
         'Platform': '1',
         'Content-Type': 'application/x-www-form-urlencoded',
-        'AppVersion': '2.72',
-        'user-agent': 'Chronicle/2.7.2 Rev/45834 (Android OS 6.0.1 / API-23)',
+        'AppVersion': '2.84',
+        'user-agent': 'Chronicle/2.8.4 Rev/45834 (Android OS 6.0.1 / API-23)',
         'Accept-Encoding': 'identity',
-        'Host': 'v272.cc.mobimon.com.tw',
+        'Host': '{0}'.format(global_config.get_fqdn()),
         'Connection': 'Keep-Alive'
     }
 
@@ -26,7 +27,7 @@ class Poster(object):
 
     @staticmethod
     def post_data_general(sid, path, **kwargs):
-        url = "http://v272.cc.mobimon.com.tw{0}".format(path)
+        url = "http://{0}{1}".format(global_config.get_hostname(), path)
 
         data = dict()
         if kwargs:
@@ -50,7 +51,7 @@ class Poster(object):
             payload = urllib.quote_plus(urllib.urlencode(kwargs))
             payload = 'nature=' + payload
 
-        # print post_url
+        print post_url
         # print payload
         headers.update(Poster.DEFAULT_HEADERS)
         # print headers

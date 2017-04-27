@@ -7,10 +7,11 @@ sys.path.append('utils')
 from poster import Poster
 import zlib
 import json
+import utils.global_config
 
 def compose(sid, ba, mt_list):
     poster = utils.poster.Poster
-    url = 'http://v272.cc.mobimon.com.tw/card/compose'
+    url = '{0}/card/compose'.format(utils.global_config.get_hostname())
     headers = {'Cookie': 'sid={0}'.format(sid)}
     headers.update(Poster.DEFAULT_HEADERS)
     cookies = {'sid': sid}
