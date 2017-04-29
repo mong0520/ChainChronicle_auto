@@ -27,7 +27,7 @@ class Poster(object):
 
     @staticmethod
     def post_data_general(sid, path, **kwargs):
-        url = "http://{0}{1}".format(global_config.get_hostname(), path)
+        url = "{0}{1}".format(global_config.get_hostname(), path)
 
         data = dict()
         if kwargs:

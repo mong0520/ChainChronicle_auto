@@ -6,7 +6,7 @@ import os
 sys.path.append('../')
 from lib import session_client
 from lib import web_client
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 
 def main():
     ret = session_client.login('ANDO822adb47-dd36-41ce-8640-9f17604d0778')
@@ -15,8 +15,8 @@ def main():
     data = web_client.get_gacha_page(sid)
     c = data.content
     print c
-    soup = BeautifulSoup(c, 'html.parser')
-    samples = soup.find_all("script", type="text/javascript")
+    # soup = BeautifulSoup(c, 'html.parser')
+    # samples = soup.find_all("script", type="text/javascript")
     #for s in samples:
     #    print s.attrs
     token = 'map_event_gacha_type'
