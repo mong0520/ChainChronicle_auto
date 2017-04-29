@@ -693,7 +693,7 @@ class ChainChronicle(object):
         以1張5星 +  3張4星鍊金
         """
         count = self.config.getint(section, 'Count')
-        target_weapon = list()
+        # target_weapon = list()
         try:
             eid = self.config.get(section, 'Eid')
         except:
@@ -706,14 +706,20 @@ class ChainChronicle(object):
             'val': 1,
             'price': 10,
         }
-        target_weapon_str = self.config.get(section, 'Targets')
-        if target_weapon_str:
-            target_weapon = [i for i in target_weapon_str.split(',')]
+        # target_weapon_str = self.config.get(section, 'Targets')
+        # if target_weapon_str:
+        #     target_weapon = [i for i in target_weapon_str.split(',')]
 
         weapon_list_rank3 = list()
         weapon_list_rank4 = list()
         # weapon_list_rank5 = list()
         weapon_base_rank5_idx = None # 基底武器
+
+        try:
+            target_weapon_keyword_str = self.config.get(section, 'TargetsKeyWords')
+            target_weapon_keyword = [i for i in target_weapon_keyword_str.split(',')]
+        except Exception as e:
+            pass
 
         for i in range(0, count):
             # 沒有5星武器時，先鍊出一把五星武器
@@ -757,14 +763,23 @@ class ChainChronicle(object):
                     pprint.pprint(ret)
                     raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+                weapon_name = weapon_list[0]['name'].encode('utf-8')
+
+                for keyword in target_weapon_keyword:
+                    b_found = False
+                    if keyword in weapon_name:
+                        b_found = True
+                        break
+                    else:
+                        pass
                 # print idx, item_id
-                if target_weapon and str(item_id) in target_weapon:
-                    self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
+                # if target_weapon and str(item_id) in target_weapon:
+                if b_found:
+                    self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_name))
                     weapon_base_rank5_idx = None
                     break
                 else:
-                    weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-                    self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}'.format(i, count, weapon_list[0]['name'].encode('utf-8')))
+                    self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}'.format(i, count, weapon_name))
                     weapon_base_rank5_idx = idx
 
             # 鍊出做為基底的五星武器
