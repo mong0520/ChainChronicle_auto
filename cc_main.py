@@ -79,7 +79,8 @@ class ChainChronicle(object):
             'DRAMA': self.do_play_drama_auto,
             'TEACHER': self.do_teacher_section,
             'DISCIPLE': self.do_disciple_section,
-            'DEBUG': self.do_debug_section
+            'DEBUG': self.do_debug_section,
+            'SHOW_GACHA_EVENT': self.do_show_gacha_event
             # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
@@ -255,6 +256,9 @@ class ChainChronicle(object):
                 self.logger.slack('選擇師父失敗: {0}'.format(r))
                 raise Exception('Applay teacher failed!')
 
+    def do_show_gacha_event(self, section, *args, **kwargs):
+        import subprocess
+        print subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()
 
     def do_debug_section(self, section, *args, **kwargs):
         options = dict(self.config.items(section))

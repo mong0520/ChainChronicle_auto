@@ -19,10 +19,10 @@ def main():
     # samples = soup.find_all("script", type="text/javascript")
     #for s in samples:
     #    print s.attrs
-    token = 'map_event_gacha_type'
-    content = repr(samples[3].text)
-    idx = content.index(token)
-    print content[idx:].encode('utf-8')
+    #token = 'map_event_gacha_type'
+    #content = repr(samples[3].text)
+    #idx = content.index(token)
+    #print content[idx:].encode('utf-8')
 
     #print '{0}'.format(data.text.encode('utf-8'))
 
