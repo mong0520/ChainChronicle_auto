@@ -497,6 +497,10 @@ class ChainChronicle(object):
         quest_info['qtype'] = self.config.get(section, 'QuestId').split(',')[0]
         quest_info['qid'] = self.config.get(section, 'QuestId').split(',')[1]
         quest_info['raid'] = self.config.getint(section, 'AutoRaid')
+        try:
+            quest_info['raid_recovery'] = self.config.getint(section, 'AutoRaidRecover')
+        except:
+            quest_info['raid_recovery'] = 0
         quest_info['fid'] = self.config.getint(section, 'Fid')
         quest_info['retry_interval'] = self.config.getint(section, 'RetryDuration')
         quest_info['max_event_point'] = self.config.getint(section, 'MaxEventPoint')
@@ -596,7 +600,7 @@ class ChainChronicle(object):
             # 魔神戰
             if quest_info['raid'] == 1:
                 time.sleep(0.1)
-                self.do_raid_quest(fid=quest_info['fid'])
+                self.do_raid_quest(fid=quest_info['fid'], auto_recover_bp=quest_info['raid_recovery'], auto_sell=quest_info['auto_sell'])
 
     def __dump_treasure_info(self, t_type, t_id):
         mapping = {
@@ -615,13 +619,30 @@ class ChainChronicle(object):
             parameter['boss_id'] = boss_id
             # parameter['fid'] = '1965350'
             parameter['fid'] = kwargs['fid']
+            auto_recover_bp = kwargs['auto_recover_bp']
             self.logger.debug(u"魔神來襲！魔神等級: [{0}]".format(boss_lv))
             r = raid_client.start_raid_quest(parameter, self.account_info['sid'])
             if r['res'] == 0:
-                raid_client.finish_raid_quest(parameter, self.account_info['sid'])
-                raid_client.get_raid_bonus(parameter, self.account_info['sid'])
+                ret = raid_client.finish_raid_quest(parameter, self.account_info['sid'])
+                try:
+                    earned_idx = ret['body'][1]['data'][0]['idx']
+                    raid_client.get_raid_bonus(parameter, self.account_info['sid'])
+                    if kwargs['auto_sell'] == 1:
+                        r = self.do_sell_item(earned_idx)
+                        if r['res'] == 0:
+                            self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(earned_idx, r['res']))
+                        else:
+                            self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
+                except Exception as e:
+                    self.logger.debug(ret)
             elif r['res'] == 104:
                 self.logger.debug(u"魔神戰體力不足")
+                if auto_recover_bp:
+                    self.logger.debug('Start to recovery BP')
+                    ret = user_client.recover_bp(self.account_info['sid'], item_type=0, item_id=2)
+                    if ret['res'] != 0:
+                        self.logger.debug(ret)
+
             elif r['res'] == 603:
                 self.logger.debug(u"發現的魔神已結束")
                 raid_client.finish_raid_quest(parameter, self.account_info['sid'])
@@ -1184,7 +1205,7 @@ class ChainChronicle(object):
         sell_candidate = list()
         self.logger.info(u"轉蛋開始！")
         gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
-        #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+        self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
         if gacha_info['verbose']:
             cids = gacha_result.values()
             for cidx, cid in gacha_result.iteritems():

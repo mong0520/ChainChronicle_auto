@@ -86,14 +86,14 @@ try:
     with open (downloaded_file_list, 'a+') as f_in:
         processed_card_list = [line.rstrip() for line in f_in]
 
-        # print processed_card_list         
+        # print processed_card_list
         for r in result:
             url = '{0}Resource/Card/{1}'.format(ctroot, r)
             if r not in processed_card_list:
-                print 'Put #{0} in downloading queue'.format(r)                                                                            
+                print 'Put #{0} in downloading queue'.format(r)
                 q.put(url)
             else:
-                print '{0} is alread downloaded'.format(r) 
+                print '{0} is alread downloaded'.format(r)
 except:
     raise
 
