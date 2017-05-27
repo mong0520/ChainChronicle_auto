@@ -4,7 +4,7 @@ import time
 import utils.global_config
 
 
-def get_raid_info(sid, key):
+def get_raid_info(sid, key=None):
     poster = utils.poster.Poster
     url = '{0}/raid/list'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
@@ -15,13 +15,16 @@ def get_raid_info(sid, key):
     try:
         # bossCount = len(r['body'][0]['data'])
         # logger.debug("Boss Count = {0}".format(bossCount))
-        for r in r['body'][0]['data']:
-            if r['own']:
-                if key == 'id':
-                    return r['boss_id']
-                if key == 'lv':
-                    return r['boss_param']['lv']
-        return None
+        if key:
+            for r in r['body'][0]['data']:
+                if r['own']:
+                    if key == 'id':
+                        return r['boss_id']
+                    if key == 'lv':
+                        return r['boss_param']['lv']
+            return None
+        else:
+            return r
     except Exception as e:
         return None
 
