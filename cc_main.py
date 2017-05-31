@@ -280,7 +280,7 @@ class ChainChronicle(object):
         parameter['type'] = 1 # 體果
         parameter['item_id'] = 1
         parameter['use_cnt'] = 1
-        lv_threshold = 50
+        lv_threshold = 100
         current_lv = 1
         max_retry_cnt = 10
         current_retry_cnt = 0
@@ -387,7 +387,7 @@ class ChainChronicle(object):
         self.do_login()
 
         # self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
-        self.logger.debug(u'新帳號創立成功，準備完成新手教學…')
+        self.logger.debug(u'新帳號創立成功，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
         for tutorial in tutorail_package:
             if tutorial['qid']:
                 r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
