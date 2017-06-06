@@ -387,6 +387,8 @@ class ChainChronicle(object):
         self.do_login()
 
         # self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        open_id = r['body'][4]['data']['uid']
         self.logger.debug(u'新帳號創立成功，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
         for tutorial in tutorail_package:
             if tutorial['qid']:
@@ -404,8 +406,8 @@ class ChainChronicle(object):
                 else:
                     r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
                     # print r
-        r = alldata_client.get_alldata(self.account_info['sid'])
-        open_id = r['body'][4]['data']['uid']
+        # r = alldata_client.get_alldata(self.account_info['sid'])
+        # open_id = r['body'][4]['data']['uid']
         # 一定要留open id，這樣才容易反查徒弟的 uid，不然很難找到師徒對應關係，並且取消/繼續
         self.logger.debug(u'新帳號完成新手教學，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
         self.do_get_present('PRESENT')
