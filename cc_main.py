@@ -146,7 +146,7 @@ class ChainChronicle(object):
             if action_idx >= len(self.action_list):
                 break
             try:
-                self.do_action(self.action_list[action_idx])
+                self.do_action(self.action_list[action_idx].upper())
                 action_idx += 1
             except requests.exceptions.ConnectionError as e:
                 self.logger.warning(e)
