@@ -1115,11 +1115,17 @@ class ChainChronicle(object):
         # self.logger.debug(simplejson.dumps(pickup_list, ensure_ascii=False))
 
         explorer_area = self.config.getlist(section, 'area')
+        print explorer_area
 
         # debug section
         # card_idx = self.find_best_idx_to_explorer(pickup_list[3], except_card_id)
         # print card_idx
         #sys.exit(0)
+        # for i in range(0, 3):
+
+        #     parameter = {'explorer_idx': i+1}
+        #     explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+        # sys.exit(0)
 
         # Get non-cards presents
         self.do_present_process(1, 0, 'item')
@@ -1128,6 +1134,7 @@ class ChainChronicle(object):
             # get result
             while True:
                 r = explorer_client.get_explorer_result(i + 1, self.account_info['sid'])
+                print r['res']
                 # No explorer data or get result success
                 if r['res'] == 2308 or r['res'] == 0:
                     break
@@ -1146,6 +1153,7 @@ class ChainChronicle(object):
             area = int(explorer_area[i])
             for pickup_item in pickup_list:
                 if pickup_item['location_id'] == area:
+                    self.logger.debug('Start to findout best idx')
                     card_idx, card_id = self.find_best_idx_to_explorer(pickup_item, except_card_id)
                     except_card_id.append(card_id)
                     break
