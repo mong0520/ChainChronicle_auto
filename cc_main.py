@@ -1134,7 +1134,6 @@ class ChainChronicle(object):
             # get result
             while True:
                 r = explorer_client.get_explorer_result(i + 1, self.account_info['sid'])
-                print r['res']
                 # No explorer data or get result success
                 if r['res'] == 2308 or r['res'] == 0:
                     break
@@ -1153,9 +1152,9 @@ class ChainChronicle(object):
             area = int(explorer_area[i])
             for pickup_item in pickup_list:
                 if pickup_item['location_id'] == area:
-                    self.logger.debug('Start to findout best idx')
                     card_idx, card_id = self.find_best_idx_to_explorer(pickup_item, except_card_id)
                     except_card_id.append(card_id)
+                    self.logger.debug('Explorer cards = {0}'.format(card_id))
                     break
 
             # go to explorer
@@ -1453,6 +1452,7 @@ class ChainChronicle(object):
                         temp_idx = card['idx']
                         # self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
                         # self.logger.debug(u"{0} is picked to eplorer".format(temp_idx))
+                        self.logger.debug(u'Pick {0} to explorer'.format(card_doc['name']))
                         # print card
                         return temp_idx, card['id']
                     else:
