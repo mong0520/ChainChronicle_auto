@@ -293,7 +293,7 @@ class ChainChronicle(object):
                 break
             else:
                 if lv != current_lv:
-                    # self.logger.debug(u'等級 = {0}'.format(lv))
+                    self.logger.debug(u'等級 = {0}'.format(lv))
                     pass
                 current_lv = lv
             # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
