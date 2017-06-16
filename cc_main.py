@@ -280,7 +280,7 @@ class ChainChronicle(object):
         parameter['type'] = 1 # 體果
         parameter['item_id'] = 1
         parameter['use_cnt'] = 1
-        lv_threshold = 100
+        lv_threshold = 50
         current_lv = 1
         max_retry_cnt = 10
         current_retry_cnt = 0
