@@ -280,7 +280,7 @@ class ChainChronicle(object):
         parameter['type'] = 1 # 體果
         parameter['item_id'] = 1
         parameter['use_cnt'] = 1
-        lv_threshold = 100
+        lv_threshold = 50
         current_lv = 1
         max_retry_cnt = 10
         current_retry_cnt = 0
@@ -293,7 +293,7 @@ class ChainChronicle(object):
                 break
             else:
                 if lv != current_lv:
-                    # self.logger.debug(u'等級 = {0}'.format(lv))
+                    self.logger.debug(u'等級 = {0}'.format(lv))
                     pass
                 current_lv = lv
             # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
