@@ -706,6 +706,7 @@ class ChainChronicle(object):
             weapon_client_base = list()
             for j in range(0, buy_count):
                 ret = item_client.buy_item(weapon_data, self.account_info['sid'])
+                print ret
                 data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
                 base_weapon_idx = ret['body'][1]['data'][0]['idx']
                 weapon_client_base.append(base_weapon_idx)
