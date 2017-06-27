@@ -26,7 +26,7 @@ def start_quest(quest_info, sid):
         'type': quest_info['qtype'],
         'qid': quest_info['qid'],
         'fid': quest_info['fid'],
-        'pt': 9
+        'pt': 0
     }
     r = poster.post_data(url, headers, cookies, payload=None,  **data)
     return r
