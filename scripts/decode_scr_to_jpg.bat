@@ -1,9 +1,12 @@
-cd ..\bin
+REM This script is only executed on Windows environment
+copy  ..\bin\ChainChronicleDecode.exe resource\
+cd resource
 ChainChronicleDecode.exe
 
 del *.scr
-move *.jpg ..\img
+del *.exe
+copy *.jpg ..\..\img\
 
-cd ..\scripts
-python resize_image.py ..\img
-pause
+REM cd ..\
+REM python resize_image.py ..\img
+REM pause

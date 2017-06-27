@@ -1,10 +1,11 @@
 import utils.poster
 import time
+import utils.global_config
 
 
 def recovery_ap(parammeter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/user/recover_ap'
+    url = '{0}/user/recover_ap'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

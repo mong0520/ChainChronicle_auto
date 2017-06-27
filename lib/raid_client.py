@@ -1,11 +1,12 @@
 import utils.poster
 import requests
 import time
+import utils.global_config
 
 
-def get_raid_info(sid, key):
+def get_raid_info(sid, key=None):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/list'
+    url = '{0}/raid/list'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -14,20 +15,23 @@ def get_raid_info(sid, key):
     try:
         # bossCount = len(r['body'][0]['data'])
         # logger.debug("Boss Count = {0}".format(bossCount))
-        for r in r['body'][0]['data']:
-            if r['own']:
-                if key == 'id':
-                    return r['boss_id']
-                if key == 'lv': 
-                    return r['boss_param']['lv']
-        return None
+        if key:
+            for r in r['body'][0]['data']:
+                if r['own']:
+                    if key == 'id':
+                        return r['boss_id']
+                    if key == 'lv':
+                        return r['boss_param']['lv']
+            return None
+        else:
+            return r
     except Exception as e:
         return None
 
 
 def start_raid_quest(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/entry'
+    url = '{0}/raid/entry'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -44,7 +48,7 @@ def finish_raid_quest(parameter, sid):
     now = int(time.time() * 1000)
     hex_now = format(now + 5000, 'x')
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/result'
+    url = '{0}/raid/result'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -62,7 +66,7 @@ def finish_raid_quest(parameter, sid):
 
 def get_raid_bonus(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/raid/record'
+    url = '{0}/raid/record'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

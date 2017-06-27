@@ -1,11 +1,16 @@
-# -*- coding: utf-8 -*
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
 import argparse
 import logging
 import os
 import sys
 import time
-import urllib
 from random import randint
+try:
+    import socket
+    import socks
+except:
+    pass
 
 import simplejson
 
@@ -13,6 +18,9 @@ import utils.cc_logger
 import utils.db_operator
 import utils.enhanced_config_parser
 import utils.poster
+import utils.response_parser
+import utils.global_config
+import requests
 from lib import alldata_client
 from lib import explorer_client
 from lib import gacha_client
@@ -24,7 +32,16 @@ from lib import recovery_client
 from lib import subjugation_client
 from lib import totalwar_client
 from lib import user_client
-
+from lib import friend_client
+from lib import weapon_client
+from lib import tutorial_client
+from lib import debug_client
+from lib import teacher_disciple_client
+from lib import session_client
+from lib import card_client
+'''
+在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
+'''
 
 class ChainChronicle(object):
 
@@ -46,6 +63,7 @@ class ChainChronicle(object):
             'GACHA': self.do_gacha_section,
             'BUY': self.do_buy_item_section,
             'EXPLORER': self.do_explorer_section,
+            'WASTE_MONEY': self.do_waste_money,
             'TOTALWAR': self.do_totalwar_section,
             'SUBJUGATION': self.do_subjugation_section,
             'STATUS':  self.do_show_status,  # no need section in config
@@ -53,8 +71,18 @@ class ChainChronicle(object):
             'DAILY_TICKET': self.do_daily_gacha_ticket,  # no need section in config
             'LIST_ALLDATA': self.do_show_all_data,  # no need section in config
             'PASSWORD': self.do_set_password,  # no need section in config
-            'PRESENT': self.do_get_present # no need section in config, get non-cards presents
-
+            'PRESENT': self.do_get_present, # no need section in config, get non-cards presents
+            'QUERY_FID': self.do_query_fid, # no need section in config, get non-cards presents
+            'COMPOSE': self.do_compose,
+            'SIMPLE_COMPOSE': self.do_compose_simple,
+            'TUTORIAL': self.do_pass_tutorial,
+            'DRAMA': self.do_play_drama_auto,
+            'TEACHER': self.do_teacher_section,
+            'DISCIPLE': self.do_disciple_section,
+            'DEBUG': self.do_debug_section,
+            'SHOW_GACHA_EVENT': self.do_show_gacha_event
+            # 'AUTO_COMPOSE': self.do_auto_compose
+            #'SECTION_NAME': sefl.function_name
         }
 
 
@@ -71,49 +99,322 @@ class ChainChronicle(object):
                     self.action_list = self.config.getlist(section, 'Flow')
                     self.account_info['uid'] = self.config.get(section, 'Uid')
                     self.account_info['token'] = self.config.get(section, 'Token')
+                    try:
+                        self.account_info['reuse_sid'] = self.config.getint(section, 'ReuseSid')
+                    except:
+                        self.account_info['reuse_sid'] = 0
+
+                    try:
+                        self.flow_loop = self.config.getint(section, 'FlowLoop')
+                    except:
+                        self.flow_loop = 1
+
+                    try:
+                        self.flow_loop_delay = self.config.getint(section, 'FlowLoopDelay')
+                    except:
+                        self.flow_loop_delay = 0
+
+    def set_proxy(self):
+        try:
+            # self.logger.debug('Use socks5 proxy')
+            socks_info = self.config.get('GLOBAL', 'Socks5')
+            # print socks_info.split(':')
+            [socks5_addr, socks5_port] = socks_info.split(':')
+            socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
+            socket.socket = socks.socksocket
+        except Exception as e:
+            pass
+            # self.logger.warning('Not use proxy: {0}'.format(e))
+
 
     def start(self):
-        self.do_login()
-        for action in self.action_list:
-            self.do_action(action)
+        if self.account_info['reuse_sid']:
+            reuse_sid = self.get_local_sid()
+            self.account_info['sid'] = reuse_sid
+            try:
+                self.do_show_status(None)
+                self.logger.debug('Reuse sid {0}'.format(reuse_sid))
+            except Exception as e:
+                self.logger.warning('SID is invalid, re-login: {0}'.format(e))
+                self.do_login()
+        else:
+            self.do_login()
+
+        # for action in self.action_list:
+        action_idx = 0
+        while True:
+            if action_idx >= len(self.action_list):
+                break
+            try:
+                self.do_action(self.action_list[action_idx].upper())
+                action_idx += 1
+            except requests.exceptions.ConnectionError as e:
+                self.logger.warning(e)
+                time.sleep(3)
+                self.logger.debug('Retry section {0}'.format(self.action_list[action_idx]))
+                continue
+
+
+    def get_local_sid(self):
+        sid_file = '.' + os.path.basename(os.path.splitext(self.config_file)[0])
+        try:
+            with open(sid_file, 'r') as f:
+                sid = f.read().strip()
+            self.logger.debug(u'Found sid {0}, try to reuse it'.format(sid))
+            return sid
+        except Exception as e:
+            self.logger.warning(e)
+            return None
 
     def do_action(self, action_name):
         for action, action_function in self.action_mapping.iteritems():
-            if action in action_name:
+            # if action == action_name:
+            if action_name.startswith(action):
                 self.logger.info("### Current Flow = {0} ###".format(action_name))
                 action_function(action_name)
 
-    def do_login(self):
-        #url = 'http://v267b.cc.mobimon.com.tw/session/login'
-        url = 'http://v267b.cc.mobimon.com.tw/session/login'
-        headers = {'Cookie': 'sid=INVALID'}
-        data = {
-            'UserUniqueID': self.account_info['uid'],
-            'Token': self.account_info['token'],
-            'OS':1
-        }
-        payload_dict = {       
-          "APP": {
-            "Version": "2.67",
-            "Revision": "2014",
-            "time": time.time(),
-            "Lang": "Chinese"
-        },
-            "DEV": data
-        }
-        payload = 'param=' + urllib.quote_plus(simplejson.dumps(payload_dict))
-        ret = self.poster.post_data(url, headers, None, payload, **data)
-        # self.logger.debug(ret['login']['sid'])
+    def do_login(self, uid=None):
+        if uid:
+            self.account_info['uid'] = uid
+
+        ret = session_client.login(self.account_info['uid'], self.account_info['token'])
+        # utils.response_parser.dump_response(ret)
+
+        # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+        # sys.exit(0)
         try:
             self.account_info['sid'] = ret['login']['sid']
+            # self.logger.debug('sid = {0}'.format(ret['login']['sid']))
+            sid_file = '.' + os.path.basename(os.path.splitext(self.config_file)[0])
+            with open(sid_file, 'w') as f:
+                f.write(self.account_info['sid'])
+
         except KeyError:
             msg = u"無法登入, Message = {0}".format(ret['msg'])
             self.logger.error(msg)
             raise KeyError(msg)
 
+    def __auto_compose(self, base_card_idx, max_lv):
+        # Get all 成長卡
+        card_list = alldata_client.get_allcards(self.account_info['sid'])
+        mt_list = list()
+        for c in card_list:
+            if c['type'] == 3:
+                mt_list.append(str(c['idx']))
+        # print mt_list
+        if not len(mt_list):
+            self.logger.warning('No material to compose')
+            raise Exception('No material to compose')
+
+        def chunker(seq, size):
+            return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+
+        for sub_mt in chunker(mt_list, 5):
+            # print 'submt = {0}'.format(sub_mt)
+            if not len(sub_mt):
+                self.logger.warning('No material to compose')
+                raise Exception('No material to compose')
+            ret = card_client.compose(self.account_info['sid'], base_card_idx, sub_mt)
+            lv = ret['body'][1]['data'][0]['lv']
+            # utils.response_parser.dump_response(ret)
+            if lv >= max_lv:
+                self.logger.debug('Upgrade is completed')
+                break
+            self.logger.debug('Current LV {0}'.format(ret['body'][1]['data'][0]['lv']))
+
+    def do_teacher_section(self, section, *args, **kwargs):
+        accept = self.config.get(section, 'Accept')
+        r = teacher_disciple_client.toggle_acceptance(self.account_info['sid'], accept=accept)
+        self.logger.debug(r['body'][0]['data'])
+
+    def do_disciple_section(self, section, *args, **kwargs):
+        tid = self.config.get(section, 'Teacher_Id')
+        # teacher_disciple_client.IS_DISCIPLE_GRADUATED = 1
+        if teacher_disciple_client.IS_DISCIPLE_GRADUATED:
+            for i in [5,10,15,20,25,30,35,40,45]:
+                r = teacher_disciple_client.thanks_achievement(self.account_info['sid'], lv=i)
+                self.logger.debug('UID {0} 給與 Rank {1} 獎勵, res= {2}'.format(self.account_info['uid'], i, r['res']))
+                if r['res'] != 0:
+                    self.logger.warning('UID {0} 無法給與 Rank {1} 獎勵, msg = {2}'.format(
+                        self.account_info['uid'], tid, r))
+
+            # r = teacher_disciple_client.reset_from_disciple(self.account_info['sid'])
+            # print r
+            #self.logger.debug('UID {0} reset from disciple {1}'.format(self.account_info['uid'], r['res']))
+
+            r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
+            if r['res'] == 0:
+                self.logger.slack('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = False
+            else:
+                self.logger.slack('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
+        else:
+            # 徒：申請師父
+            r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
+            self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
+            if r['res'] != 0:
+                self.logger.slack('選擇師父失敗: {0}'.format(r))
+                raise Exception('Applay teacher failed!')
+
+    def do_show_gacha_event(self, section, *args, **kwargs):
+        import subprocess
+        print subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()
+
+    def do_debug_section(self, section, *args, **kwargs):
+        options = dict(self.config.items(section))
+        options_global = dict(self.config.items("GLOBAL"))
+        for k in options.keys():
+            if k in options_global.keys():
+                options.pop(k)
+
+        api_path = options.pop('API')
+        r = debug_client.debug_post(self.account_info['sid'], api_path, **options)
+        # print r
+        data = simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+        print data
+
+    def do_play_drama_auto(self, section, *args, **kwargs):
+        quest_info = dict()
+        results = list()
+        parameter = dict()
+        parameter['type'] = 1 # 體果
+        parameter['item_id'] = 1
+        parameter['use_cnt'] = 1
+        lv_threshold = 50
+        current_lv = 1
+        max_retry_cnt = 10
+        current_retry_cnt = 0
+        self.logger.debug(u'開始通過主線任務...')
+        while True:
+            qtype, qid, lv = self.__get_latest_quest()
+            if lv >= lv_threshold:
+                self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
+                break
+            else:
+                if lv != current_lv:
+                    self.logger.debug(u'等級 = {0}'.format(lv))
+                    pass
+                current_lv = lv
+            # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
+            results[:] = []
+            quest_info['qtype'] = qtype
+            quest_info['qid'] = qid
+            quest_info['fid'] = 1965350
+
+            # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
+            result = quest_client.start_quest(quest_info, self.account_info['sid'])
+            rc_quest_entry = int(result['res'])
+            results.append(rc_quest_entry)
+            # self.logger.debug(rc_quest_entry)
+
+            if rc_quest_entry == 0:
+                result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                rc_quest_finish = int(result['res'])
+                results.append(rc_quest_finish)
+                # self.logger.debug(rc_quest_finish)
+            elif rc_quest_entry == 103:
+                # 體果
+                ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                if ret['res'] == 0:
+                    continue
+                else:
+                    # 精靈石
+                    parameter['type'] = 0
+                    ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                    if ret['res'] == 0:
+                        continue
+                    else:
+                        self.logger.error('Unable to recover stamina, break')
+                        break
+            else:
+                result = quest_client.get_treasure(quest_info, self.account_info['sid'])
+                rc = int(result['res'])
+                results.append(rc)
+                # self.logger.debug(rc)
+
+            # self.do_get_present('PRESENT')
+            # Unknown error, retry can solve it
+            if 0 not in results:
+                # 主線可能會失敗，原因不明，會造成產生無法畢業的幽靈徒弟，會讓師父佔一個位置，重試一次可解決
+                # Unknown error in drama [502, -501, 2]
+                self.logger.error('Unknown error in drama {0}'.format(results))
+                current_retry_cnt += 1
+                if current_retry_cnt > max_retry_cnt:
+                    self.logger.error(
+                        'UID:{0} reaches max retry count but cannot finish drama, force break drama,\
+                         please manually finish drama and make the disciple gradudate'.format(self.account_info['uid']))
+                    break
+                else:
+                    self.logger.debug('Something wrong, retry...')
+                    continue
+            else:
+                current_retry_cnt = 0
+
+
+    def do_pass_tutorial(self, section, *args, **kwargs):
+        import uuid
+        # tutorial_count = self.config.getint(section, 'Count')
+        tid_list = range(0, 21)
+        tutorail_package = [
+            {'tid': 0, 'qid': None},
+            {'tid': 1, 'qid': None},
+            {'tid': 2, 'qid': None},
+            {'tid': 3, 'qid': 210001},
+            {'tid': 4, 'qid': 210001},
+            {'tid': 5, 'qid': None},
+            {'tid': 6, 'qid': 210002},
+            {'tid': 7, 'qid': None},
+            {'tid': 8, 'qid': 210101},
+            {'tid': 9, 'qid': None},
+            {'tid': 10, 'qid': 210101},
+            {'tid': 11, 'qid': None},
+            {'tid': 12, 'qid': None},
+            {'tid': 13, 'qid': 210102},
+            {'tid': 14, 'qid': None},
+            {'tid': 15, 'qid': 210102},
+            {'tid': 16, 'qid': None},
+            {'tid': 17, 'qid': 215000},
+            {'tid': 18, 'qid': 215000},
+            {'tid': 19, 'qid': None},
+            {'tid': 20, 'qid': None}
+        ]
+        # for i in range(0, tutorial_count):
+        # self.account_info['uid'] = '{0}{1}'.format('test', str(uuid.uuid4()))
+        account_uuid =  ''.join(['ANDO', str(uuid.uuid4())])
+        self.config.set('GENERAL', 'Uid', account_uuid)
+        self.account_info['uid'] = account_uuid
+        self.do_login()
+
+        # self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        open_id = r['body'][4]['data']['uid']
+        self.logger.debug(u'新帳號創立成功，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
+        for tutorial in tutorail_package:
+            if tutorial['qid']:
+                r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
+                quest_info = dict()
+                quest_info['qid'] = tutorial['qid']
+                quest_info['fid'] = 1965350
+                r = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                # print r
+            else:
+                if tutorial['tid'] == 1:
+                    r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'],
+                        name='Allen', hero='Allen')
+                    # print r
+                else:
+                    r = tutorial_client.tutorial(self.account_info['sid'], tid=tutorial['tid'])
+                    # print r
+        # r = alldata_client.get_alldata(self.account_info['sid'])
+        # open_id = r['body'][4]['data']['uid']
+        # 一定要留open id，這樣才容易反查徒弟的 uid，不然很難找到師徒對應關係，並且取消/繼續
+        self.logger.debug(u'新帳號完成新手教學，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
+        self.do_get_present('PRESENT')
+
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
-        self.logger.debug(r)
+        self.logger.slack(r)
 
     def do_set_password(self, section, *args, **kwargs):
         r = user_client.get_account(self.account_info['sid'])
@@ -127,6 +428,8 @@ class ChainChronicle(object):
         print(simplejson.dumps(r, sort_keys=True, indent=2))
 
     def do_show_status(self, section, *args, **kwargs):
+        accepted_keys = ['uid', 'heroName', 'open_id', 'lv', 'cardMax', 'accept_disciple', 'name', 'friendCnt'
+        'only_friend_disciple', 'staminaMax']
         r = alldata_client.get_alldata(self.account_info['sid'])
         item_mapping = {
             # 2: '魂力果實',
@@ -141,32 +444,51 @@ class ChainChronicle(object):
         }
 
         data_list = r['body'][8]['data']
+        stone_count = r['body'][11]['data']
         # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for data in data_list:
             try:
                 self.logger.debug("{0} = {1}".format(item_mapping[data['item_id']], data['cnt']))
             except KeyError:
                 pass
+        self.logger.debug(u'精靈石 = {0}'.format(stone_count))
 
         user_info = r['body'][4]['data']
         for key, data in user_info.iteritems():
-            self.logger.debug(u"{0} = {1}".format(key, data))
+            if key in accepted_keys:
+                self.logger.debug(u"{0} = {1}".format(key, data))
 
     def do_show_all_cards(self, section, *args, **kwargs):
         """ 只列出四星/五星角色卡 """
         r = alldata_client.get_alldata(self.account_info['sid'])
         card_list = r['body'][6]['data']
+        try:
+            auto_compose = self.config.getboolean(section, 'AutoCompose')
+        except:
+            auto_compose = False
 
+        try:
+            rank_threshold = self.config.getint(section, 'RankThreshold')
+        except:
+            rank_threshold = 4
         # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for card in card_list:
             if card['type'] != 0:  # not character card
                 continue
             try:
+                if auto_compose and card['lv'] == card['maxlv']:
+                    continue
                 cid = int(card['id'])
                 card_dict = utils.db_operator.DBOperator.get_cards('cid', cid)[0]
-                if card_dict and card_dict['rarity'] >= 4:
-                    self.logger.debug(u"{0}, 界限突破：{1}, 等級: {2}, 稀有度: {3}".format(
-                        card_dict['name'], card['limit_break'], card['lv'], card_dict['rarity']))
+                if card_dict and card_dict['rarity'] >= rank_threshold:
+                    self.logger.debug(u"{0}-{1}, 界限突破：{2}, 等級: {3}/{4}, 稀有度: {5}, ID: {6}, IDX: {7}".format(
+                        card_dict['title'], card_dict['name'], card['limit_break'], card['lv'],
+                        card['maxlv'], card_dict['rarity'], cid, card['idx']))
+                    if auto_compose:
+                        self.logger.debug(u'Start to upgrade Card {0}'.format(card_dict['name']))
+                        self.__auto_compose(card['idx'], card['maxlv'])
+
+                    # self.logger.debug(int(card['idx']))
             except KeyError:
                 raise
             except TypeError:
@@ -178,10 +500,18 @@ class ChainChronicle(object):
         quest_info['qtype'] = self.config.get(section, 'QuestId').split(',')[0]
         quest_info['qid'] = self.config.get(section, 'QuestId').split(',')[1]
         quest_info['raid'] = self.config.getint(section, 'AutoRaid')
-        quest_info['fid'] = 1965350
+        try:
+            quest_info['raid_recovery'] = self.config.getint(section, 'AutoRaidRecover')
+        except:
+            quest_info['raid_recovery'] = 0
+        quest_info['fid'] = self.config.getint(section, 'Fid')
         quest_info['retry_interval'] = self.config.getint(section, 'RetryDuration')
         quest_info['max_event_point'] = self.config.getint(section, 'MaxEventPoint')
         quest_info['auto_sell'] = self.config.getint(section, 'AutoSell')
+        try:
+            quest_info['show_treasure'] = self.config.getint(section, 'ShowTreasure')
+        except:
+            quest_info['show_treasure'] = 0
         try:
             quest_info['get_present'] = self.config.getint(section, 'GetPresent')
         except:
@@ -215,6 +545,16 @@ class ChainChronicle(object):
                 self.__sleep(self.config.getint('GLOBAL', 'Delay'), salt=True)
 
             result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+            # utils.response_parser.dump_response(result)
+            if quest_info['show_treasure']:
+                treasure_list = result['earns']['treasure']
+                for t in treasure_list:
+                    # print t['type'], t['id']
+                    try:
+                        self.__dump_treasure_info(t['type'], t['id'])
+                    except:
+                        self.logger.debug(u'{0}, {1}, {2}'.format(t['type'], t['id'], t['val']))
+
             # self.logger.debug("Quest finish result = {0}".format(result))
             if result['res'] == 0:
                 # self.logger.debug(u"    -> 關卡完成".format(current))
@@ -227,6 +567,7 @@ class ChainChronicle(object):
                     # not event time
                     pass
                 # sell treasure
+                # print simplejson.dumps(result, ensure_ascii=True)
                 if quest_info['auto_sell'] == 1:
                     try:
                         for earn in result['body'][1]['data']:
@@ -259,35 +600,69 @@ class ChainChronicle(object):
                 self.logger.error(u"    -> 關卡失敗".format(current))
                 self.logger.debug(result)
                 return
-            time.sleep(0.5)
             # 魔神戰
             if quest_info['raid'] == 1:
-                self.do_raid_quest()
+                time.sleep(0.1)
+                self.do_raid_quest(fid=quest_info['fid'], auto_recover_bp=quest_info['raid_recovery'], auto_sell=quest_info['auto_sell'])
 
-    def do_raid_quest(self):
-        # r = raid_client.get_raid_boss_id(self.account_info['sid'])
-        # self.logger.debug(r)
-        # self.logger.debug(type(r))
-        # try:
-        #    boss_id = r['boss_id']
-        #    boss_lv = r['boss_param']['lv']
-        #except:
-        #    raise
-            # 非魔神戰期間
-        #    return
+    def __dump_treasure_info(self, t_type, t_id):
+        mapping = {
+            'chara_rf': 'chararein',
+            'weapon_rf': 'reinforce'
+        }
+        res = utils.db_operator.DBOperator.get_general(mapping[t_type], 'id', t_id)
+        for r in res:
+            self.logger.debug(r['name'])
+
+    def do_raid_quest(self, **kwargs):
         boss_id = raid_client.get_raid_info(self.account_info['sid'], 'id')
         boss_lv = raid_client.get_raid_info(self.account_info['sid'], 'lv')
+        # ret = raid_client.get_raid_info(self.account_info['sid'])
+        # data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+        # print data
         if boss_id:
             parameter = dict()
             parameter['boss_id'] = boss_id
-            parameter['fid'] = '1965350'
+            # parameter['fid'] = '1965350'
+            parameter['fid'] = kwargs['fid']
+            auto_recover_bp = kwargs['auto_recover_bp']
             self.logger.debug(u"魔神來襲！魔神等級: [{0}]".format(boss_lv))
             r = raid_client.start_raid_quest(parameter, self.account_info['sid'])
             if r['res'] == 0:
-                raid_client.finish_raid_quest(parameter, self.account_info['sid'])
-                raid_client.get_raid_bonus(parameter, self.account_info['sid'])
+                ret = raid_client.finish_raid_quest(parameter, self.account_info['sid'])
+                ret2 = raid_client.get_raid_bonus(parameter, self.account_info['sid'])
+                data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                print data
+                data = simplejson.dumps(ret2, ensure_ascii=False).encode('utf-8')
+                print data
+                earned_idx = None
+                if boss_lv > 0:
+                    data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                    # print data
+                    earned_idx = ret['body'][1]['data'][0]['idx']
+                else:
+                    self.logger.debug(u'爆走魔神獎勵')
+                    try:
+                        data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                        # print data
+                        earned_idx = ret2['body'][0]['data'][0]['idx']
+                    except Exception as e:
+                        pass
+
+                if kwargs['auto_sell'] == 1 and earned_idx:
+                    r = self.do_sell_item(earned_idx)
+                    if r['res'] == 0:
+                        self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(earned_idx, r['res']))
+                    else:
+                        self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
             elif r['res'] == 104:
                 self.logger.debug(u"魔神戰體力不足")
+                if auto_recover_bp:
+                    self.logger.debug('Start to recovery BP')
+                    ret = user_client.recover_bp(self.account_info['sid'], item_type=0, item_id=2)
+                    if ret['res'] != 0:
+                        self.logger.debug(ret)
+
             elif r['res'] == 603:
                 self.logger.debug(u"發現的魔神已結束")
                 raid_client.finish_raid_quest(parameter, self.account_info['sid'])
@@ -302,6 +677,167 @@ class ChainChronicle(object):
         else:
             pass
 
+    def do_compose_simple(self, section, *args, **kwargs):
+        # 買某樣道具五次，直接鍊金
+        # cnt=15b87000f0b&id=85313&kind=item&price=1&type=weapon_ev&val=1
+        buy_count = 5
+        target_weapon = list()
+        target_weapon_keyword = list()
+        count = self.config.getint(section, 'Count')
+        try:
+            eid = self.config.get(section, 'Eid')
+        except:
+            eid = None
+        base_weapon_id = self.config.get(section, 'BaseWeaponID')
+        weapon_data = {
+            'kind': 'item',
+            'type': 'weapon_ev',
+            'id': base_weapon_id,
+            'val': 1,
+            'price': 1,
+        }
+        try:
+            target_weapon_keyword_str = self.config.get(section, 'TargetsKeyWords')
+            target_weapon_keyword = [i for i in target_weapon_keyword_str.split(',')]
+        except Exception as e:
+            pass
+
+        for i in range(0, count):
+            weapon_client_base = list()
+            for j in range(0, buy_count):
+                ret = item_client.buy_item(weapon_data, self.account_info['sid'])
+                print ret
+                data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                base_weapon_idx = ret['body'][1]['data'][0]['idx']
+                weapon_client_base.append(base_weapon_idx)
+
+            ret = weapon_client.compose(self.account_info['sid'], weapon_client_base, eid)
+            idx = ret['body'][1]['data'][0]['idx']
+            item_id = ret['body'][1]['data'][0]['id']
+            weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+            weapon_name = weapon_list[0]['name'].encode('utf-8')
+            # print idx, item_id
+            for keyword in target_weapon_keyword:
+                b_found = False
+                if keyword in weapon_name:
+                    b_found = True
+                    break
+                else:
+                    pass
+
+            if b_found:
+                self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_name))
+            else:
+                # self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}({3})'.format(i, count, weapon_name, item_id))
+                r = self.do_sell_item(idx)
+
+
+
+
+    def do_compose(self, section, *args, **kwargs):
+        """
+        以1張5星 +  3張4星鍊金
+        """
+        count = self.config.getint(section, 'Count')
+        # target_weapon = list()
+        try:
+            eid = self.config.get(section, 'Eid')
+        except:
+            eid = None
+        base_weapon_id = self.config.get(section, 'BaseWeaponID')
+        weapon_data = {
+            'kind': 'item',
+            'type': 'weapon_ev',
+            'id': base_weapon_id,
+            'val': 1,
+            'price': 10,
+        }
+        # target_weapon_str = self.config.get(section, 'Targets')
+        # if target_weapon_str:
+        #     target_weapon = [i for i in target_weapon_str.split(',')]
+
+        weapon_list_rank3 = list()
+        weapon_list_rank4 = list()
+        # weapon_list_rank5 = list()
+        weapon_base_rank5_idx = None # 基底武器
+
+        try:
+            target_weapon_keyword_str = self.config.get(section, 'TargetsKeyWords')
+            target_weapon_keyword = [i for i in target_weapon_keyword_str.split(',')]
+        except Exception as e:
+            pass
+
+        for i in range(0, count):
+            # 沒有5星武器時，先鍊出一把五星武器
+            buy_count = 5
+            if weapon_base_rank5_idx:
+                buy_count = 4
+            # 買三星武器
+            for j in range(0, buy_count):
+                # ret = item_client.buy_item_with_type(item_type, self.account_info['sid'])
+                ret = item_client.buy_item(weapon_data, self.account_info['sid'])
+                data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                base_weapon_idx = ret['body'][1]['data'][0]['idx']
+                weapon_list_rank3.append(base_weapon_idx)
+
+            # 五把三星器武器，鍊成四星武器
+            if len(weapon_list_rank3) == 5:
+                # self.logger.info(u'開始鍊金 -  3星*5')
+                # self.logger.debug(weapon_list_rank3)
+                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3, eid)
+                weapon_list_rank3[:] = []
+                idx = ret['body'][1]['data'][0]['idx']
+                item_id = ret['body'][1]['data'][0]['id']
+                # print idx, item_id
+                # print item_id
+                # weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+                # self.logger.info('得到武器 {0}'.format(weapon_list[0]['name'].encode('utf-8')))
+                weapon_list_rank4.append(idx)
+
+            # 有一張基底五星武器，且有四張三星武器
+            if weapon_base_rank5_idx and len(weapon_list_rank3) == 4:
+                # self.logger.info(u'開始鍊金 -  5星*1 + 3星*4')
+                weapon_list_rank3.append(weapon_base_rank5_idx)
+                ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3, eid)
+                weapon_list_rank3[:] = []
+                # pprint.pprint(ret)
+                try:
+                    idx = ret['body'][1]['data'][0]['idx']
+                    item_id = ret['body'][1]['data'][0]['id']
+                except:
+                    import pprint
+                    pprint.pprint(ret)
+                    raise
+                weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
+                weapon_name = weapon_list[0]['name'].encode('utf-8')
+
+                for keyword in target_weapon_keyword:
+                    b_found = False
+                    if keyword in weapon_name:
+                        b_found = True
+                        break
+                    else:
+                        pass
+                # print idx, item_id
+                # if target_weapon and str(item_id) in target_weapon:
+                if b_found:
+                    self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_name))
+                    weapon_base_rank5_idx = None
+                    break
+                else:
+                    self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}'.format(i, count, weapon_name))
+                    weapon_base_rank5_idx = idx
+
+            # 鍊出做為基底的五星武器
+            elif len(weapon_list_rank4) == 5:
+                    # self.logger.info(u'開始鍊金 -  4星*5')
+                    ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank4, eid)
+                    weapon_list_rank4[:] = []
+                    # pprint.pprint(ret)
+                    idx = ret['body'][1]['data'][0]['idx']
+                    item_id = ret['body'][1]['data'][0]['id']
+                    weapon_base_rank5_idx = idx
+
     def do_subjugation_section(self, section, *args, **kwargs):
         try:
             count = self.config.getint(section, 'Count')
@@ -315,6 +851,7 @@ class ChainChronicle(object):
     def do_subjugation(self, section, *args, **kwargs):
         parameter = dict()
         parameter['jid'] = self.config.getint(section, 'Jid')
+        parameter['fid'] = self.config.getint(section, 'Fid')
         parties = self.config.options_with_prefix(section, 'pt_')
         parameter['pt_cids'] = list()
         for party in parties:
@@ -347,7 +884,7 @@ class ChainChronicle(object):
             trying = r['body'][18]['data']['trying']
         except:
             trying = False
-        
+
         if parameter['ecnt'] > 40:
             parameter['ecnt'] = 40
         # parameter['ecnt'] = 40
@@ -432,7 +969,7 @@ class ChainChronicle(object):
             else:
                 self.logger.debug(r)
                 return
-                
+
             # result = simplejson.dumps(r, indent=2)
             # print result
             # self.logger.debug("End entry = {0}".format(r))
@@ -442,6 +979,15 @@ class ChainChronicle(object):
 
         gacha_info['count'] = self.config.getint(section, 'Count')
         gacha_info['gacha_type'] = self.config.getint(section, 'Type')
+        try:
+            gacha_info['area'] = self.config.getint(section, 'Area')
+        except:
+            gacha_info['area'] = None
+
+        try:
+            gacha_info['place'] = self.config.getint(section, 'Place')
+        except:
+            gacha_info['place'] = None
 
         try:
             gacha_info['auto_sell'] = self.config.getint(section, 'AutoSell')
@@ -449,10 +995,19 @@ class ChainChronicle(object):
             gacha_info['auto_sell'] = 0
 
         try:
+            gacha_info['auto_sell_rarity_threshold'] = self.config.getint(section, 'AutoSellRarityThreshold')
+        except :
+            gacha_info['auto_sell_rarity_threshold'] = 0
+
+        try:
+            gacha_info['verbose'] = self.config.getint(section, 'Verbose')
+        except:
+            gacha_info['verbose'] = 0
+
+        try:
             gacha_info['keep_cards'] = self.config.getlist(section, 'KeepCards')
         except:
             gacha_info['keep_cards'] = list()
-
         self.do_gacha_process(gacha_info)
 
     def do_totalwar_section(self, section, *args, **kwargs):
@@ -489,6 +1044,66 @@ class ChainChronicle(object):
                 return
 
 
+    def do_waste_money(self, section, *args, **kwargs):
+        import  threading
+
+        monitor_period = 30 # display money in every 30 seconds
+        money_threshold = 1500000000
+        def run(i):
+            # print i
+            card_idx_pool = [358771956, 330984563, 364031956]
+            parameter = dict()
+            parameter['explorer_idx'] = i + 1
+            parameter['location_id'] = i
+            parameter['card_idx'] = card_idx_pool[i]
+            counter = 0
+            parameter['pickup'] = 0
+
+            while True:
+                try:
+                    r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+                    r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+                    if r['res'] == 0:
+                        counter += 1
+                    elif r['res'] == 2311:
+                        parameter['pickup'] = 1
+                    elif r['res'] == -2001:
+                        # now processing
+                        pass
+                    elif r['res'] == 2304:
+                        # is used explorer_idx, maybe too fask
+                        pass
+                    else:
+                        self.logger.debug('Thread-{0} is breaking on unknown result: {1}'.format(i, r))
+                        break
+                except Exception as e:
+                    self.logger.debug('Thread-{0} is breaking on exception: {1}'.format(i, e))
+                    print e
+                    break
+
+        threads = []
+        for i in range(0, 3):
+            threads.append(threading.Thread(target=run, args=[i]))
+
+        self.logger.debug('Threads start!')
+        for t in threads:
+            t.setDaemon(True)
+            t.start()
+
+        while True:
+            r = alldata_client.get_alldata(self.account_info['sid'])
+            data = r['body'][8]['data']
+            for d in data:
+                if d['item_id'] == 10:
+                    if d['cnt'] <= money_threshold:
+                        # BAD practice
+                        sys.exit(0)
+                    self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
+                    money_current = d['cnt']
+            time.sleep(monitor_period)
+
+
+
     def do_explorer_section(self, section, *args, **kwargs):
         # Hard code cid to exclude them to explorer
         except_card_id = [7017, 7024, 7015, 51]
@@ -498,17 +1113,23 @@ class ChainChronicle(object):
             sys.exit(0)
         else:
             pickup_list = r['pickup']
-        # self.logger.debug(pickup_list)
+        # self.logger.debug(simplejson.dumps(pickup_list, ensure_ascii=False))
 
         explorer_area = self.config.getlist(section, 'area')
-        
+        print explorer_area
+
         # debug section
         # card_idx = self.find_best_idx_to_explorer(pickup_list[3], except_card_id)
         # print card_idx
         #sys.exit(0)
+        # for i in range(0, 3):
+
+        #     parameter = {'explorer_idx': i+1}
+        #     explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+        # sys.exit(0)
 
         # Get non-cards presents
-        self.do_present_process(1, 0, 'item')        
+        self.do_present_process(1, 0, 'item')
 
         for i in range(0, 3):
             # get result
@@ -520,14 +1141,22 @@ class ChainChronicle(object):
                 elif r['res'] == 2302:
                     self.logger.warning(u"探索尚未結束..稍後重試")
                     time.sleep(60)
+                elif r['res'] == 1:
+                    self.logging.warning(u'已被登出, 稍後重試')
+                    time.sleep(60*5)
+                    self.do_login()
                 else:
                     self.logger.warning(u"未知的探索結果")
                     self.logger.warning(r)
-                    break            
+                    break
 
             area = int(explorer_area[i])
-            print pickup_list[area], except_card_id
-            card_idx = self.find_best_idx_to_explorer(pickup_list[area], except_card_id)
+            for pickup_item in pickup_list:
+                if pickup_item['location_id'] == area:
+                    card_idx, card_id = self.find_best_idx_to_explorer(pickup_item, except_card_id)
+                    except_card_id.append(card_id)
+                    self.logger.debug('Explorer cards = {0}'.format(card_id))
+                    break
 
             # go to explorer
             parameter = dict()
@@ -535,11 +1164,44 @@ class ChainChronicle(object):
             parameter['location_id'] = area
             parameter['card_idx'] = card_idx
             parameter['pickup'] = 1
+
+            try:
+                parameter['interval'] = self.config.getint(section, 'interval')
+            except:
+                parameter['interval'] = 1
+
+            try:
+                stone_finish = self.config.getint(section, 'StoneFinish')
+            except:
+                stone_finish = 1
+
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
             if r['res'] == 2311:
                 # self.logger.debug(u"pickup value error, retry")
                 parameter['pickup'] = 0
                 explorer_client.start_explorer(parameter, self.account_info['sid'])
+
+
+            if stone_finish:
+                # self.logger.debug('Use stone to finish explorer right now!')
+                r = explorer_client.finish_explorer(parameter, self.account_info['sid'])
+                # utils.response_parser.dump_response(r)
+
+                r = explorer_client.get_explorer_result(parameter['explorer_idx'], self.account_info['sid'])
+                for reward in r['explorer_reward']:
+                    item_type = reward['item_type']
+                    item_id = reward['item_id']
+                    # self.logger.debug('==========================================')
+                    # self.logger.debug('Reward Type: {0}'.format(item_type))
+                    if item_type == 'card':
+                        card = utils.db_operator.DBOperator.get_cards('cid', item_id)[0]
+                        self.logger.debug('得到角色: {0}'.format(card['name'].encode('utf-8')))
+                    else:
+                        pass
+                        # self.logger.debug('Reward ID: {0}'.format(item_id))
+                    # self.logger.debug('Reward Val: {0}'.format(reward['item_val']))
+                # utils.response_parser.dump_response(r, key='explorer_reward')
+
 
 
     def do_buy_item_section(self, section, *args, **kwargs):
@@ -565,40 +1227,65 @@ class ChainChronicle(object):
 
     def do_gacha_process(self, gacha_info):
         """Gacha and sell"""
-        for i in xrange(0, gacha_info['count']):
-            if gacha_info['gacha_type'] in [3, 8]:
-                time.sleep(3)
-            self.logger.info(u"#{0}: 轉蛋開始！".format(i + 1))
-            gacha_result = self.do_gacha(gacha_info['gacha_type'])
-            #self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
-            self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+        # for i in xrange(0, gacha_info['count']):
+            # if gacha_info['gacha_type'] in [3, 8]:
+                # time.sleep(3)
+        sell_candidate = list()
+        self.logger.info(u"轉蛋開始！")
+        gacha_result = self.do_gacha(gacha_info['gacha_type'], **gacha_info)
+        self.logger.debug(u"得到卡片: {0}".format(gacha_result.values()))
+        if gacha_info['verbose']:
             cids = gacha_result.values()
-            for cid in cids:
+            for cidx, cid in gacha_result.iteritems():
+            # for cid in cids:
                 cards = utils.db_operator.DBOperator.get_cards('cid', cid)
                 # if not cards or 'name' not in cards[0] or 'rarity' not in cards[0]:
                 # use BIF all() to check if the dict has key 'name' AND 'rarity'
-                if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity']]):
+                if not cards or not all([i in cards[0].keys() for i in ['name', 'rarity', 'title']]):
                     self.logger.debug(cid)
                 else:
                     card = cards[0]  # cid is key index
-                    msg = 'Name={0}, Rarity={1}'.format(card['name'].encode('utf-8'), card['rarity'])
-                    self.logger.debug(msg)
-            #if gacha_result is None or len(gacha_result) == 0:
-            if not gacha_result:
-                self.logger.debug("Gacha Error")
-                break
-
-            # Auto sell cards and keep some cards
-            if gacha_info['auto_sell'] == 1:
-                for cidx, cid in gacha_result.iteritems():
-                    if str(cid) in gacha_info['keep_cards']:
-                        continue
+                    if card['rarity'] >= gacha_info['auto_sell_rarity_threshold']:
+                        msg = '得到 {0}-{1}, 稀有度: {2}'.format(card['title'].encode('utf-8'), card['name'].encode('utf-8'), card['rarity'])
+                        self.logger.debug(msg)
                     else:
-                        ret = self.do_sell_item(cidx)
-                        if ret['res'] == 0:
-                            self.logger.debug(u"賣出卡片成功")
-                        else:
-                            self.logger.debug(u"賣出卡片失敗")
+                        pass
+
+                    if card['rarity'] < gacha_info['auto_sell_rarity_threshold']:
+                        sell_candidate.append([cidx, card['name']])
+
+                    #     self.logger.slack(msg)
+                    #self.logger.debug(msg)
+
+        #if gacha_result is None or len(gacha_result) == 0:
+        if not gacha_result:
+            self.logger.debug("Gacha Error")
+            raise Exception('Gacha Error')
+
+        if gacha_info['auto_sell_rarity_threshold']:
+            self.logger.info('開始賣出稀有度{0}(含) 以下的卡片...'.format(gacha_info['auto_sell_rarity_threshold']-1))
+            for candidate in sell_candidate:
+                cidx = candidate[0]
+                c_name = candidate[1]
+                ret = self.do_sell_item(cidx)
+                '''
+                if ret['res'] == 0:
+                    self.logger.debug(u"賣出 {0} 成功".format(c_name))
+                else:
+                    self.logger.debug(u"賣出 {0} 失敗".format(c_name))
+                '''
+
+        # Auto sell cards and keep some cards
+        if gacha_info['auto_sell'] == 1:
+            for cidx, cid in gacha_result.iteritems():
+                if str(cid) in gacha_info['keep_cards']:
+                    continue
+                else:
+                    ret = self.do_sell_item(cidx)
+                    if ret['res'] == 0:
+                        self.logger.debug(u"賣出卡片成功")
+                    else:
+                        self.logger.debug(u"賣出卡片失敗")
 
     def do_recover_stamina_process(self):
         """process for recovery stamina
@@ -632,43 +1319,39 @@ class ChainChronicle(object):
         parameter = dict()
         parameter['type'] = 1
         parameter['item_id'] = 16
-        parameter['use_cnt'] = 10
-        ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
-        if ret['res'] != 0:
-            parameter['item_id'] = 1
+        parameter['use_cnt'] = 1
+        ret = None
+        for i in range(0, 10):
             ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+            if ret['res'] != 0:
+                parameter['item_id'] = 1
+                ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
+                return ret
         return ret
 
-    def do_gacha(self, g_type):
+    def do_gacha(self, g_type, **kwargs):
         gacha_result = dict()
         parameter = dict()
         parameter['type'] = g_type
+        for k, v in kwargs.iteritems():
+            parameter[k] = v
         r = gacha_client.gacha(parameter, self.account_info['sid'])
-        # self.logger.debug(r)
+        # print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
 
         if r['res'] == 0:
-            try:
-                for record in r['body'][1]['data']:
-                    tmp = dict()
-                    idx = record['idx']
-                    cid = record['id']
-                    tmp[idx] = cid
-                    gacha_result[idx] = cid
-            except KeyError:
-                # self.logger.error(u"Key Error:{0}, 找不到卡片idx, 可能是包包已滿，或是卡片是新的".format(e))
-                # print simplejson.dumps(r, indent=4, sort_keys=True)
-                # error handling for 新卡片
-                for record in r['body'][3]['data']:
-                    tmp = dict()
-                    idx = record['idx']
-                    cid = record['id']
-                    tmp[idx] = cid
-                    gacha_result[idx] = cid
-            except Exception:
-                self.logger.error(u"轉蛋完成，但有未知的錯誤，可能是包包滿了，無法賣出: {0}".format(r['res']))
-                self.logger.debug(simplejson.dumps(r))
-                # raise
-                return gacha_result
+            for record in r['body']:
+                # 新卡和舊卡位置不同，且新卡的位置也不固定
+                try:
+                    for data in record['data']:
+                        tmp = dict()
+                        idx = data['idx']
+                        cid = data['id']
+                        tmp[idx] = cid
+                        gacha_result[idx] = cid
+                except Exception as e:
+                    continue
+            # print gacha_result
+
 
         elif r['res'] == 703:
             self.logger.error(u"轉蛋失敗，聖靈幣不足")
@@ -679,22 +1362,29 @@ class ChainChronicle(object):
             return self.do_gacha(parameter['type'])
         else:
             self.logger.error(u"轉蛋失敗，未知的錯誤，無法繼續轉蛋:{0}, {1}".format(r['res'], r))
-            sys.exit(0)
+            raise Exception('Unable to gacha')
             # return gacha_result
         return gacha_result
-    
+
+    def do_query_fid(self, section, *args, **kwargs):
+        oid = 114386130
+        result = friend_client.query_fid(self.account_info['sid'], oid)
+        for key, data in result['friend'].iteritems():
+            self.logger.debug(u"{0} = {1}".format(key, data))
+
     def do_get_present(self, section, *args, **kwargs):
         self.do_present_process(1, 0, 'item')
+        self.do_present_process(1, 0, 'stone')
 
     def do_present_process(self, i_flag, b_sell, item_type=None):
         if i_flag == 0:
             return
         sid = self.account_info['sid']
         present_ids = present_client.get_present_list(sid, item_type)
-        self.logger.debug('禮物清單: {0}'.format(present_ids))
+        # self.logger.debug('禮物清單: {0}'.format(present_ids))
         while len(present_ids) > 0:
             pid = present_ids.pop(0)
-            self.logger.debug("接收禮物 {0}".format(pid))
+            # self.logger.debug("接收禮物 {0}".format(pid))
             ret = present_client.receieve_present(pid, sid)
             if ret['res'] == 0:
                 # self.logger.debug(u"    -> 接收成功")
@@ -706,7 +1396,7 @@ class ChainChronicle(object):
                 self.logger.debug("sell present result: {0}".format(ret['res']))
 
     def do_sell_item(self, cidx):
-        url = 'http://v267b.cc.mobimon.com.tw/card/sell'
+        url = '{0}/card/sell'.format(utils.global_config.get_hostname())
         cookies = {'sid': self.account_info['sid']}
         headers = {'Cookie': 'sid={0}'.format(self.account_info['sid'])}
         data = {
@@ -731,36 +1421,41 @@ class ChainChronicle(object):
         # card_list = self.CC_GetAllData()['body'][6]['data']
         card_list = alldata_client.get_alldata(self.account_info['sid'])['body'][6]['data']
 
-        self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
-        self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
-        self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
+        # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
+        # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
+        # self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
         temp_idx = None
         for card in card_list:
             if card['id'] in except_card_id:
-                self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
+                # self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
                 continue
+
+
             if card['type'] == 0:
-                temp_idx = card['idx']
                 card_doc = None
                 card_doc_list = utils.db_operator.DBOperator.get_cards('cid', card['id'])
                 if len(card_doc_list) > 0:
                     card_doc = card_doc_list[0]
                 if card_doc:
+                    if 'rarity' in card_doc and card_doc['rarity'] >= 5:
+                        continue
+                    temp_idx = card['idx']
+
                     # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
                     # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
                     # TODO: bug here, weapon type is not equal to battletype
                     # how to solve it due to mongodb has no weapon type record
                     # self.logger.debug("weapontype:{0}".format(card_doc['battletype']))
                     if (int(area_pickup_list['home']) == card_doc['home']) or (
-                            int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (
-                            int(area_pickup_list['weapontype']) == card_doc['battletype']):
+                        int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (
+                        int(area_pickup_list['weapontype']) == card_doc['battletype']):
 
                         temp_idx = card['idx']
-                        if card_doc['rarity'] == 5:
-                            continue
-                        self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
-                        self.logger.debug(u"{0} is picked to eplorer".format(temp_idx))
-                        return temp_idx
+                        # self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
+                        # self.logger.debug(u"{0} is picked to eplorer".format(temp_idx))
+                        self.logger.debug(u'Pick {0} to explorer'.format(card_doc['name']))
+                        # print card
+                        return temp_idx, card['id']
                     else:
                         # this card does not fit pick up criteria
                         continue
@@ -773,7 +1468,19 @@ class ChainChronicle(object):
                 # card is not character
                 continue
         self.logger.warning(u"找不到適合的探索角色，使用[{0}]".format(card_doc['name']))
-        return temp_idx
+        return temp_idx, card['id']
+
+    def __get_latest_quest(self):
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        try:
+            data = r['body'][1]['data'][-1]
+            qtype = data['type']
+            qid = data['id']
+            lv = r['body'][4]['data']['lv']
+            return qtype, qid, lv
+        except Exception as e:
+            self.logger.error(e)
+            return None
 
     def __is_meet_event_point(self, result, max_event_point):
         # 踏破活動
@@ -808,10 +1515,18 @@ def main():
         print cc.action_mapping.keys()
         sys.exit(0)
 
-    if args.action is not None:
-        # force overwrite config flow and just do the action from args
-        cc.action_list = [args.action]
-    cc.start()
+    for i in xrange(0, cc.flow_loop):
+        cc.logger.debug('Start #{0}/{1} Flow'.format(i+1, cc.flow_loop))
+        if args.action is not None:
+            # force overwrite config flow and just do the action from args
+            cc.action_list = [args.action]
+        cc.set_proxy()
+        cc.start()
+        cc.logger.debug('End of #{0} Flow'.format(i+1, cc.flow_loop))
+        if cc.flow_loop_delay > 0:
+            cc.logger.debug('Sleeping {0} seconds'.format(cc.flow_loop_delay))
+            time.sleep(cc.flow_loop_delay)
+
 
 if __name__ == '__main__':
     main()

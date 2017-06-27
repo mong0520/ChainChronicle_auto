@@ -1,15 +1,20 @@
 import utils.poster
+import utils.global_config
+
 
 item_mapping = {
     "char": {"id": 90904, "type": "chara_rf", "price": 30, "val": 1},
     "weapon": {"id": 93902, "type": "weapon_rf", "price": 30, "val": 1},
-    "ap_fruit": {"id": 1, "type": "item", "price": 10, "val": 1}
+    "ap_fruit": {"id": 1, "type": "item", "price": 10, "val": 1},
+    "itm_weapon": {"id": 96019, "type": "weapon_ev", "price": 10, "val": 1},
+    "itm_weapon_bow": {"id": 96064, "type": "weapon_ev", "price": 10, "val": 1},
+    "itm_weapon_magic": {"id": 96126, "type": "weapon_ev", "price": 10, "val": 1}
 }
 
 
 def buy_item(parameter, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/token'
+    url = '{0}/token'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -40,7 +45,7 @@ def buy_char_card(sid):
 
 def buy_item_with_type(card_type, sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/token'
+    url = '{0}/token'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
@@ -56,7 +61,7 @@ def buy_item_with_type(card_type, sid):
 
 def get_daily_gacha_ticket(sid):
     poster = utils.poster.Poster
-    url = 'http://v267b.cc.mobimon.com.tw/token'
+    url = '{0}/token'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {

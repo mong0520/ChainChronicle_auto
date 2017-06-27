@@ -1,17 +1,22 @@
 import sys
 import os
 from PIL import Image
-import time
-
+"""
+If you are running under MacOS, please install:
+0) xcode-select --install (not sure)
+1) brew install libjpeg zlib
+2) pip install pillow
+"""
 img_path = sys.argv[1]
-
 images = os.listdir(img_path)
+
+
 for img_name in images:
+    if not img_name.lower().endswith('jpg'):
+        continue
+    org_filename = os.path.join(img_path, img_name)
+    updated_filename = os.path.join(img_path, img_name)
+    print org_filename
     with Image.open(os.path.join(img_path, img_name)) as img:
-        print "Resize: {0}".format(img_name)
-        nim = img.resize((960, 1440), Image.BILINEAR )
-    nim.save(os.path.join(img_path, img_name))
-
-    # to avoid hang issue
-    time.sleep(0.5)
-
+        new_img = img.resize((960, 1440))
+    new_img.save(updated_filename, 'jpeg')

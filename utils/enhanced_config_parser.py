@@ -3,12 +3,12 @@ import ConfigParser
 import sys
 
 
-class EnhancedConfigParser(ConfigParser.SafeConfigParser):
+class EnhancedConfigParser(ConfigParser.SafeConfigParser, object):
 
     SEC_GLOBAL = 'GLOBAL'
 
-    def __init__(self, required_section_options=None, env_virable=None):
-        ConfigParser.SafeConfigParser.__init__(self)
+    def __init__(self, default_value=None, required_section_options=None, env_virable=None):
+        # ConfigParser.SafeConfigParser.__init__(self)
         if required_section_options:
             self.required_section_options = required_section_options
             self.required_section_options["GLOBAL"] = []
@@ -18,8 +18,8 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser):
             value: the required option of the section
             """
             self.required_section_options = {"GLOBAL": []}
-        ConfigParser.SafeConfigParser.__init__(self, env_virable)
-        self.optionxform = str
+        self.optionxform = str # make is case sensitive
+        super(EnhancedConfigParser, self).__init__(defaults=default_value)
 
     def __translate_env_variables(self):
         for section in self.sections():
@@ -51,7 +51,7 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser):
     def read(self, filename):
         if not os.path.isfile(filename):
             raise IOError("%s not found" % filename)
-        ConfigParser.SafeConfigParser.read(self, filename)
+        super(EnhancedConfigParser, self).read(filename)
         self.__import_global_setting()
         self.__validate()
         self.__translate_env_variables()
