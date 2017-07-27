@@ -39,6 +39,7 @@ from lib import debug_client
 from lib import teacher_disciple_client
 from lib import session_client
 from lib import card_client
+from lib import general_client
 '''
 在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
 '''
@@ -80,7 +81,8 @@ class ChainChronicle(object):
             'TEACHER': self.do_teacher_section,
             'DISCIPLE': self.do_disciple_section,
             'DEBUG': self.do_debug_section,
-            'SHOW_GACHA_EVENT': self.do_show_gacha_event
+            'SHOW_GACHA_EVENT': self.do_show_gacha_event,
+            'UZU': self.do_uzu_section
             # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
@@ -259,6 +261,41 @@ class ChainChronicle(object):
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
         print subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()
+
+    def do_uzu_section(self, section, *args, **kwars):
+        uzu_api = {
+            'entry': '/uzu/entry',
+            'result': '/uzu/result'
+        }
+
+        options_entry = dict()
+        options_entry['uzid'] = self.config.get(section, 'uzid')
+        options_entry['scid'] = self.config.get(section, 'scid')
+        options_entry['fid'] = 1965350
+        options_entry['htype'] = 0
+        options_entry['st'] = self.config.get(section, 'st')
+        options_entry['pt'] = self.config.get(section, 'pt')
+
+        options_result = dict()
+        options_result['res'] = 1
+        options_result['uzid'] = self.config.get(section, 'uzid')
+
+        # ret = general_client.general_post(self.account_info['sid'], '/data/uzuinfo')
+        # utils.response_parser.dump_response(ret)
+        self.logger.debug(u'天魔挑戰開始, ID = {0}, 層數 = {1}'.format(options_entry['uzid'], options_entry['st']))
+        ret = general_client.general_post(self.account_info['sid'], uzu_api['entry'], **options_entry)
+
+        # utils.response_parser.dump_response(ret)
+
+        ret = general_client.general_post(self.account_info['sid'], uzu_api['result'], **options_result)
+        if ret['res'] == 0:
+            self.logger.debug(u'天魔挑戰完成，目前層數 = {0}'.format(options_entry['st']))
+        else:
+            self.logger.debug(u'天魔挑戰失敗')
+
+        utils.response_parser.dump_response(ret)
+
+
 
     def do_debug_section(self, section, *args, **kwargs):
         options = dict(self.config.items(section))
