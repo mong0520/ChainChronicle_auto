@@ -82,7 +82,8 @@ class ChainChronicle(object):
             'DISCIPLE': self.do_disciple_section,
             'DEBUG': self.do_debug_section,
             'SHOW_GACHA_EVENT': self.do_show_gacha_event,
-            'UZU': self.do_uzu_section
+            'UZU': self.do_uzu_section,
+            'INFO_UZU': self.do_uzu_info_section
             # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
@@ -262,6 +263,35 @@ class ChainChronicle(object):
         import subprocess
         print subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()
 
+    def do_uzu_info_section(self, section, *args, **kwars):
+        import time
+        ts = int(time.time())
+        uzu_info_api = '/data/uzuinfo'
+        ret = general_client.general_post(self.account_info['sid'], uzu_info_api)
+        uzu_data_list = ret['uzu']
+
+        # alldata = alldata_client.get_alldata(self.account_info['sid'])
+        # uzu_info_list = alldata['body'][25]['data']
+        # utils.response_parser.dump_response(alldata)
+        # print uzu_info_list
+        # for uzu_info in uzu_info_list:
+        #     print uzu_info['uzu_id']
+        #     print uzu_info['clear_list']
+
+        for idx, uzu_data in enumerate(uzu_data_list):
+            print '================='
+            # cleared_list = uzu_info_list[idx]['clear_list']
+            for sc in uzu_data['schedule']:
+                if sc['start'] <= ts <= sc['end']:
+                    current_scid = sc['schedule_id']
+                    break
+            print u'UZU Name = {0}, uzu_id = {1}, sc_id = {2}'.format(
+                uzu_data['name'], uzu_data['uzu_id'], current_scid)
+            # print u'Cleared List = {0}'.format(cleared_list)
+
+            # print simplejson.dumps(uzu_data, ensure_ascii=False).encode('utf-8')
+
+
     def do_uzu_section(self, section, *args, **kwars):
         uzu_api = {
             'entry': '/uzu/entry',
@@ -289,11 +319,11 @@ class ChainChronicle(object):
 
         ret = general_client.general_post(self.account_info['sid'], uzu_api['result'], **options_result)
         if ret['res'] == 0:
-            self.logger.debug(u'天魔挑戰完成，目前層數 = {0}'.format(options_entry['st']))
+            add_point = ret['uzu_result']['add_point']
+            self.logger.debug(u'天魔挑戰完成，目前層數 = {0}，獲得點數 = {1}'.format(options_entry['st'], add_point))
         else:
             self.logger.debug(u'天魔挑戰失敗')
-
-        utils.response_parser.dump_response(ret)
+            utils.response_parser.dump_response(ret)
 
 
 
