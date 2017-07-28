@@ -83,7 +83,8 @@ class ChainChronicle(object):
             'DEBUG': self.do_debug_section,
             'SHOW_GACHA_EVENT': self.do_show_gacha_event,
             'UZU': self.do_uzu_section,
-            'INFO_UZU': self.do_uzu_info_section
+            'INFO_UZU': self.do_uzu_info_section,
+            'DISCIPLE': self.do_show_disciple,
             # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
@@ -247,21 +248,33 @@ class ChainChronicle(object):
 
             r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
             if r['res'] == 0:
-                self.logger.slack('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
+                self.logger.debug('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
                 teacher_disciple_client.IS_DISCIPLE_GRADUATED = False
             else:
-                self.logger.slack('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
+                self.logger.debug('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
         else:
             # 徒：申請師父
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
             self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
-                self.logger.slack('選擇師父失敗: {0}'.format(r))
+                self.logger.debug('選擇師父失敗: {0}'.format(r))
                 raise Exception('Applay teacher failed!')
 
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
         print subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()
+
+    def do_show_disciple(self, section, *args, **kwars):
+        api_path = '/teacher/confirm_disciple'
+        ret = general_client.general_post(self.account_info['sid'], api_path)
+        disciple_info = ret['body'][0]['data']
+        for disciple in disciple_info:
+            if disciple['resetable']:
+                self.logger.debug('Resetable student = {0}'.format(disciple['uid']))
+                reset_api = '/teacher/reset_from_teacher'
+                options = {'did': disciple['uid']}
+                ret = general_client.general_post(self.account_info['sid'], reset_api, **options)
+                self.logger.debug(ret)
 
     def do_uzu_info_section(self, section, *args, **kwars):
         import time
@@ -481,7 +494,7 @@ class ChainChronicle(object):
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
-        self.logger.slack(r)
+        self.logger.debug(r)
 
     def do_set_password(self, section, *args, **kwargs):
         r = user_client.get_account(self.account_info['sid'])
@@ -1166,7 +1179,7 @@ class ChainChronicle(object):
                     if d['cnt'] <= money_threshold:
                         # BAD practice
                         sys.exit(0)
-                    self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
+                    self.logger.debug("剩餘金幣 = {0}".format(d['cnt']))
                     money_current = d['cnt']
             time.sleep(monitor_period)
 
@@ -1322,7 +1335,7 @@ class ChainChronicle(object):
                     if card['rarity'] < gacha_info['auto_sell_rarity_threshold']:
                         sell_candidate.append([cidx, card['name']])
 
-                    #     self.logger.slack(msg)
+                    #     self.logger.debug(msg)
                     #self.logger.debug(msg)
 
         #if gacha_result is None or len(gacha_result) == 0:
