@@ -84,7 +84,7 @@ class ChainChronicle(object):
             'SHOW_GACHA_EVENT': self.do_show_gacha_event,
             'UZU': self.do_uzu_section,
             'INFO_UZU': self.do_uzu_info_section,
-            'DISCIPLE': self.do_show_disciple,
+            'RESET_DISCIPLE': self.do_reset_disciple,
             # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
@@ -264,7 +264,7 @@ class ChainChronicle(object):
         import subprocess
         print subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()
 
-    def do_show_disciple(self, section, *args, **kwars):
+    def do_reset_disciple(self, section, *args, **kwars):
         api_path = '/teacher/confirm_disciple'
         ret = general_client.general_post(self.account_info['sid'], api_path)
         disciple_info = ret['body'][0]['data']
