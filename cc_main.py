@@ -306,6 +306,7 @@ class ChainChronicle(object):
 
 
     def do_uzu_section(self, section, *args, **kwars):
+        max_st = 12
         uzu_api = {
             'entry': '/uzu/entry',
             'result': '/uzu/result'
@@ -316,7 +317,8 @@ class ChainChronicle(object):
         options_entry['scid'] = self.config.get(section, 'scid')
         options_entry['fid'] = 1965350
         options_entry['htype'] = 0
-        options_entry['st'] = self.config.get(section, 'st')
+        # options_entry['st'] = self.config.get(section, 'st')
+        options_entry['st'] = max_st
         options_entry['pt'] = self.config.get(section, 'pt')
 
         options_result = dict()
@@ -325,19 +327,28 @@ class ChainChronicle(object):
 
         # ret = general_client.general_post(self.account_info['sid'], '/data/uzuinfo')
         # utils.response_parser.dump_response(ret)
-        self.logger.debug(u'天魔挑戰開始, ID = {0}, 層數 = {1}'.format(options_entry['uzid'], options_entry['st']))
-        ret = general_client.general_post(self.account_info['sid'], uzu_api['entry'], **options_entry)
-
-        # utils.response_parser.dump_response(ret)
+        for i in xrange(options_entry['st'], 0, -1):
+            options_entry['st'] = i
+            self.logger.debug(u'天魔挑戰開始, ID = {0}, 層數 = {1}'.format(options_entry['uzid'], options_entry['st']))
+            ret = general_client.general_post(self.account_info['sid'], uzu_api['entry'], **options_entry)
+            # self.logger.debug(ret['res'])
+            # utils.response_parser.dump_response(ret)
+            if ret['res'] == 0:
+                self.logger.debug(u'挑戰天魔樓層 = {0}'.format(i))
+                break
+            elif ret['res'] == 2803:
+                self.logger.warning(u'天魔挑戰權不足')
+                return
+            else:
+                self.logger.warning(u'天魔層數: {0} 進入失敗: {1}'.format(i, ret['msg']))
 
         ret = general_client.general_post(self.account_info['sid'], uzu_api['result'], **options_result)
         if ret['res'] == 0:
             add_point = ret['uzu_result']['add_point']
-            self.logger.debug(u'天魔挑戰完成，目前層數 = {0}，獲得點數 = {1}'.format(options_entry['st'], add_point))
+            self.logger.debug(u'天魔挑戰成功，目前層數 = {0}，獲得點數 = {1}'.format(options_entry['st'], add_point))
         else:
             self.logger.debug(u'天魔挑戰失敗')
             utils.response_parser.dump_response(ret)
-
 
 
     def do_debug_section(self, section, *args, **kwargs):
