@@ -39,6 +39,7 @@ from lib import debug_client
 from lib import teacher_disciple_client
 from lib import session_client
 from lib import card_client
+from lib import general_client
 '''
 在Assembly-CSharp.dll中找'StartCoroutine'可以看到所有api call
 '''
@@ -80,7 +81,10 @@ class ChainChronicle(object):
             'TEACHER': self.do_teacher_section,
             'DISCIPLE': self.do_disciple_section,
             'DEBUG': self.do_debug_section,
-            'SHOW_GACHA_EVENT': self.do_show_gacha_event
+            'SHOW_GACHA_EVENT': self.do_show_gacha_event,
+            'UZU': self.do_uzu_section,
+            'INFO_UZU': self.do_uzu_info_section,
+            'RESET_DISCIPLE': self.do_reset_disciple,
             # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
@@ -244,21 +248,108 @@ class ChainChronicle(object):
 
             r = teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
             if r['res'] == 0:
-                self.logger.slack('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
+                self.logger.debug('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
                 teacher_disciple_client.IS_DISCIPLE_GRADUATED = False
             else:
-                self.logger.slack('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
+                self.logger.debug('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
         else:
             # 徒：申請師父
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
             self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
-                self.logger.slack('選擇師父失敗: {0}'.format(r))
+                self.logger.debug('選擇師父失敗: {0}'.format(r))
                 raise Exception('Applay teacher failed!')
 
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
         print subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()
+
+    def do_reset_disciple(self, section, *args, **kwars):
+        api_path = '/teacher/confirm_disciple'
+        ret = general_client.general_post(self.account_info['sid'], api_path)
+        disciple_info = ret['body'][0]['data']
+        for disciple in disciple_info:
+            if disciple['resetable']:
+                self.logger.debug('Resetable student = {0}'.format(disciple['uid']))
+                reset_api = '/teacher/reset_from_teacher'
+                options = {'did': disciple['uid']}
+                ret = general_client.general_post(self.account_info['sid'], reset_api, **options)
+                self.logger.debug(ret)
+
+    def do_uzu_info_section(self, section, *args, **kwars):
+        import time
+        ts = int(time.time())
+        uzu_info_api = '/data/uzuinfo'
+        ret = general_client.general_post(self.account_info['sid'], uzu_info_api)
+        uzu_data_list = ret['uzu']
+
+        # alldata = alldata_client.get_alldata(self.account_info['sid'])
+        # uzu_info_list = alldata['body'][25]['data']
+        # utils.response_parser.dump_response(alldata)
+        # print uzu_info_list
+        # for uzu_info in uzu_info_list:
+        #     print uzu_info['uzu_id']
+        #     print uzu_info['clear_list']
+
+        for idx, uzu_data in enumerate(uzu_data_list):
+            print '================='
+            # cleared_list = uzu_info_list[idx]['clear_list']
+            for sc in uzu_data['schedule']:
+                if sc['start'] <= ts <= sc['end']:
+                    current_scid = sc['schedule_id']
+                    break
+            print u'UZU Name = {0}, uzu_id = {1}, sc_id = {2}'.format(
+                uzu_data['name'], uzu_data['uzu_id'], current_scid)
+            # print u'Cleared List = {0}'.format(cleared_list)
+
+            # print simplejson.dumps(uzu_data, ensure_ascii=False).encode('utf-8')
+
+
+    def do_uzu_section(self, section, *args, **kwars):
+        max_st = 12
+        uzu_api = {
+            'entry': '/uzu/entry',
+            'result': '/uzu/result'
+        }
+
+        options_entry = dict()
+        options_entry['uzid'] = self.config.get(section, 'uzid')
+        options_entry['scid'] = self.config.get(section, 'scid')
+        options_entry['fid'] = 1965350
+        options_entry['htype'] = 0
+        # options_entry['st'] = self.config.get(section, 'st')
+        options_entry['st'] = max_st
+        options_entry['pt'] = self.config.get(section, 'pt')
+
+        options_result = dict()
+        options_result['res'] = 1
+        options_result['uzid'] = self.config.get(section, 'uzid')
+
+        # ret = general_client.general_post(self.account_info['sid'], '/data/uzuinfo')
+        # utils.response_parser.dump_response(ret)
+        for i in xrange(options_entry['st'], 0, -1):
+            options_entry['st'] = i
+            self.logger.debug(u'天魔挑戰開始, ID = {0}, 層數 = {1}'.format(options_entry['uzid'], options_entry['st']))
+            ret = general_client.general_post(self.account_info['sid'], uzu_api['entry'], **options_entry)
+            # self.logger.debug(ret['res'])
+            # utils.response_parser.dump_response(ret)
+            if ret['res'] == 0:
+                self.logger.debug(u'挑戰天魔樓層 = {0}'.format(i))
+                break
+            elif ret['res'] == 2803:
+                self.logger.warning(u'天魔挑戰權不足')
+                return
+            else:
+                self.logger.warning(u'天魔層數: {0} 進入失敗: {1}'.format(i, ret['msg']))
+
+        ret = general_client.general_post(self.account_info['sid'], uzu_api['result'], **options_result)
+        if ret['res'] == 0:
+            add_point = ret['uzu_result']['add_point']
+            self.logger.debug(u'天魔挑戰成功，目前層數 = {0}，獲得點數 = {1}'.format(options_entry['st'], add_point))
+        else:
+            self.logger.debug(u'天魔挑戰失敗')
+            utils.response_parser.dump_response(ret)
+
 
     def do_debug_section(self, section, *args, **kwargs):
         options = dict(self.config.items(section))
@@ -414,7 +505,7 @@ class ChainChronicle(object):
 
     def do_daily_gacha_ticket(self, section, *args, **kwargs):
         r = item_client.get_daily_gacha_ticket(self.account_info['sid'])
-        self.logger.slack(r)
+        self.logger.debug(r)
 
     def do_set_password(self, section, *args, **kwargs):
         r = user_client.get_account(self.account_info['sid'])
@@ -566,6 +657,7 @@ class ChainChronicle(object):
                 except Exception:
                     # not event time
                     pass
+                    print simplejson.dumps(result, ensure_ascii=False).encode('utf-8')
                 # sell treasure
                 # print simplejson.dumps(result, ensure_ascii=True)
                 if quest_info['auto_sell'] == 1:
@@ -1098,7 +1190,7 @@ class ChainChronicle(object):
                     if d['cnt'] <= money_threshold:
                         # BAD practice
                         sys.exit(0)
-                    self.logger.slack("剩餘金幣 = {0}".format(d['cnt']))
+                    self.logger.debug("剩餘金幣 = {0}".format(d['cnt']))
                     money_current = d['cnt']
             time.sleep(monitor_period)
 
@@ -1254,7 +1346,7 @@ class ChainChronicle(object):
                     if card['rarity'] < gacha_info['auto_sell_rarity_threshold']:
                         sell_candidate.append([cidx, card['name']])
 
-                    #     self.logger.slack(msg)
+                    #     self.logger.debug(msg)
                     #self.logger.debug(msg)
 
         #if gacha_result is None or len(gacha_result) == 0:
@@ -1484,7 +1576,10 @@ class ChainChronicle(object):
 
     def __is_meet_event_point(self, result, max_event_point):
         # 踏破活動
-        event_point = result['body'][2]['data']['point']
+        try:
+            event_point = result['body'][2]['data']['point']
+        except Exception as e:
+            event_point = result['body'][3]['data']['point']
         fever_rate = 1.0
         self.logger.info("目前戰功： {0}".format(event_point))
         try:
