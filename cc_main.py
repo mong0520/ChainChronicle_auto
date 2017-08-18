@@ -517,6 +517,7 @@ class ChainChronicle(object):
     def do_show_all_data(self, section, *args, **kwargs):
         r = alldata_client.get_alldata(self.account_info['sid'])
         print(simplejson.dumps(r, sort_keys=True, indent=2))
+        self.do_compose()
 
     def do_show_status(self, section, *args, **kwargs):
         accepted_keys = ['uid', 'heroName', 'open_id', 'lv', 'cardMax', 'accept_disciple', 'name', 'friendCnt'
