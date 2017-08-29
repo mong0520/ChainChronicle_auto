@@ -1578,9 +1578,9 @@ class ChainChronicle(object):
     def __is_meet_event_point(self, result, max_event_point):
         # 踏破活動
         try:
-            event_point = result['body'][2]['data']['point']
+            event_point = result['body'][1]['data']['point']
         except Exception as e:
-            event_point = result['body'][3]['data']['point']
+            event_point = result['body'][2]['data']['point']
         fever_rate = 1.0
         self.logger.info("目前戰功： {0}".format(event_point))
         try:
