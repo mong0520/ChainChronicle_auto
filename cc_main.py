@@ -317,8 +317,10 @@ class ChainChronicle(object):
         options_entry['scid'] = self.config.get(section, 'scid')
         options_entry['fid'] = 1965350
         options_entry['htype'] = 0
-        # options_entry['st'] = self.config.get(section, 'st')
-        options_entry['st'] = max_st
+        try:
+            options_entry['st'] = self.config.getint(section, 'st')
+        except Exception as e:    
+            options_entry['st'] = max_st
         options_entry['pt'] = self.config.get(section, 'pt')
 
         options_result = dict()
