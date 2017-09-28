@@ -14,11 +14,11 @@ def login(uid, token=None):
     data = {
         'UserUniqueID': uid,
         'Token': token,
-        'OS': 2
+        'OS': 1
     }
     payload_dict = {
       "APP": {
-        "Version": "2.72",
+        "Version": "3.22",
         "Revision": "2014",
         "time": time.time(),
         "Lang": "Chinese"
