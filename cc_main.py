@@ -319,7 +319,7 @@ class ChainChronicle(object):
         options_entry['htype'] = 0
         try:
             options_entry['st'] = self.config.getint(section, 'st')
-        except Exception as e:    
+        except Exception as e:
             options_entry['st'] = max_st
         options_entry['pt'] = self.config.get(section, 'pt')
 
