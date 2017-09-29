@@ -519,7 +519,7 @@ class ChainChronicle(object):
     def do_show_all_data(self, section, *args, **kwargs):
         r = alldata_client.get_alldata(self.account_info['sid'])
         print(simplejson.dumps(r, sort_keys=True, indent=2))
-        self.do_compose()
+        # self.do_compose()
 
     def do_show_status(self, section, *args, **kwargs):
         accepted_keys = ['uid', 'heroName', 'open_id', 'lv', 'cardMax', 'accept_disciple', 'name', 'friendCnt'
@@ -538,7 +538,7 @@ class ChainChronicle(object):
         }
 
         data_list = r['body'][8]['data']
-        stone_count = r['body'][11]['data']
+        stone_count = r['body'][12]['data']
         # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for data in data_list:
             try:
