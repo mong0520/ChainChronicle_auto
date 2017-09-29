@@ -8,7 +8,7 @@ from pymongo import MongoClient
 DB_PATH = expanduser('~/ChainChronicle/db/')
 if not os.path.isdir(DB_PATH):
     os.makedirs(DB_PATH)
-DB_SOURCE_BASE = 'http://v284.cc.mobimon.com.tw/data/'
+DB_SOURCE_BASE = 'http://v322.cc.mobimon.com.tw/data/'
 data_mapping = {
     'evolve':{
         'db_source': DB_SOURCE_BASE + 'weaponlist',
