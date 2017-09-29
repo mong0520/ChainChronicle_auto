@@ -4,7 +4,7 @@ import utils.global_config
 
 
 def get_gacha_page(sid):
-    url = "{0}/web/gacha".format(utils.global_config.get_hostname())
+    url = "{0}/web/gacha?type=story&gacha_id=1".format(utils.global_config.get_hostname())
     headers = {
         'DeviceWidth': '1024',
         'Proxy-Connection': 'keep-alive',
@@ -21,6 +21,7 @@ def get_gacha_page(sid):
         'Accept-Encoding': 'gzip, deflate'
 
     }
+    print url
     cookies = {'sid': sid, 'devicewidth':1024, 'framewidth':577}
     r = requests.get(url, headers=headers)
     return r
