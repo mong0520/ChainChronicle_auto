@@ -418,6 +418,7 @@ class ChainChronicle(object):
             quest_info['qid'] = qid
             quest_info['fid'] = -1
             quest_info['lv'] = drama_lv
+            quest_info['hcid'] = 9210
 
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
             result = quest_client.start_quest(quest_info, self.account_info['sid'], version=3)
@@ -471,10 +472,16 @@ class ChainChronicle(object):
                     continue
             else:
                 current_retry_cnt = 0
-                if qid != 331043:
-                    flag = flag + 1
-                else:
+                # End of main drama
+                if qid == 331043:
                     drama_lv = 2
+                    # stop trying new quest
+                else:
+                    if current_lv >= 17:
+                        self.logger.debug('set drama level to 2')
+                        drama_lv = 2
+                    flag = flag + 1
+
 
 
     def do_pass_tutorial(self, section, *args, **kwargs):
