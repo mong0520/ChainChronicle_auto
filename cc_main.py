@@ -396,6 +396,7 @@ class ChainChronicle(object):
         # print quest_list[0]
         # sys.exit(0)
         flag = 0
+        drama_lv = 1
         while True:
             qtype, qid, lv = self.__get_latest_quest()
             qtype = quest_list[flag]['type']
@@ -415,11 +416,8 @@ class ChainChronicle(object):
             results[:] = []
             quest_info['qtype'] = qtype
             quest_info['qid'] = qid
-            quest_info['fid'] = 1965350
-            if lv <= '17':
-                quest_info['lv'] = 1
-            else:
-                quest_info['lv'] = 2
+            quest_info['fid'] = -1
+            quest_info['lv'] = drama_lv
 
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
             result = quest_client.start_quest(quest_info, self.account_info['sid'], version=3)
@@ -473,7 +471,10 @@ class ChainChronicle(object):
                     continue
             else:
                 current_retry_cnt = 0
-                flag = flag + 1
+                if qid != 331043:
+                    flag = flag + 1
+                else:
+                    drama_lv = 2
 
 
     def do_pass_tutorial(self, section, *args, **kwargs):
