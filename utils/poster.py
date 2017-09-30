@@ -51,7 +51,7 @@ class Poster(object):
             payload = urllib.quote_plus(urllib.urlencode(kwargs))
             payload = 'nature=' + payload
 
-        # print post_url
+        print post_url
         # print payload
         headers.update(Poster.DEFAULT_HEADERS)
         # print headers
@@ -65,6 +65,7 @@ class Poster(object):
 
         # gzip decompress in-the-fly
         decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
+        # print decompressed_data
         return decompressed_data
 
 

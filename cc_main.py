@@ -384,8 +384,24 @@ class ChainChronicle(object):
         max_retry_cnt = 10
         current_retry_cnt = 0
         self.logger.debug(u'開始通過主線任務...')
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        quest_list = r['body'][29]['data']
+        # self.logger.debug(quest_list)
+
+        # data = r['body'][1]['data'][-1]
+        # qtype = data['type']
+        # qid = data['id']
+        # lv = r['body'][4]['data']['lv']
+        # print quest_list, type(quest_list)
+        # print quest_list[0]
+        # sys.exit(0)
+        flag = 0
         while True:
             qtype, qid, lv = self.__get_latest_quest()
+            qtype = quest_list[flag]['type']
+            qid = quest_list[flag]['id']
+
+            # qtype =
             if lv >= lv_threshold:
                 self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
                 teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
@@ -400,18 +416,25 @@ class ChainChronicle(object):
             quest_info['qtype'] = qtype
             quest_info['qid'] = qid
             quest_info['fid'] = 1965350
+            if lv <= '17':
+                quest_info['lv'] = 1
+            else:
+                quest_info['lv'] = 2
 
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
-            result = quest_client.start_quest(quest_info, self.account_info['sid'])
+            result = quest_client.start_quest(quest_info, self.account_info['sid'], version=3)
+
+
             rc_quest_entry = int(result['res'])
             results.append(rc_quest_entry)
             # self.logger.debug(rc_quest_entry)
 
             if rc_quest_entry == 0:
-                result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                result = quest_client.finish_quest(quest_info, self.account_info['sid'], version=3)
                 rc_quest_finish = int(result['res'])
                 results.append(rc_quest_finish)
                 # self.logger.debug(rc_quest_finish)
+                # sys.exit(0)
             elif rc_quest_entry == 103:
                 # 體果
                 ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
@@ -427,6 +450,7 @@ class ChainChronicle(object):
                         self.logger.error('Unable to recover stamina, break')
                         break
             else:
+                print result
                 result = quest_client.get_treasure(quest_info, self.account_info['sid'])
                 rc = int(result['res'])
                 results.append(rc)
@@ -449,6 +473,7 @@ class ChainChronicle(object):
                     continue
             else:
                 current_retry_cnt = 0
+                flag = flag + 1
 
 
     def do_pass_tutorial(self, section, *args, **kwargs):
