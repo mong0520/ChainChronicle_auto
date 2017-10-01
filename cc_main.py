@@ -182,7 +182,7 @@ class ChainChronicle(object):
             self.account_info['uid'] = uid
 
         ret = session_client.login(self.account_info['uid'], self.account_info['token'])
-        utils.response_parser.dump_response(ret)
+        # utils.response_parser.dump_response(ret)
 
         # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
@@ -273,9 +273,9 @@ class ChainChronicle(object):
     def do_reset_disciple(self, section, *args, **kwars):
         api_path = '/teacher/confirm_disciple'
         ret = general_client.general_post(self.account_info['sid'], api_path)
+        self.logger.debug(simplejson.dumps(ret, ensure_ascii=False).encode('utf-8'))
 
         disciple_info = ret['body'][0]['data']
-        # print simplejson.dumps(disciple_info, ensure_ascii=False).encode('utf-8')
         for disciple in disciple_info:
             disp_id = disciple['uid']
             disp_lv = disciple['lv']
