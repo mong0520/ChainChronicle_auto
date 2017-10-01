@@ -267,9 +267,15 @@ class ChainChronicle(object):
     def do_reset_disciple(self, section, *args, **kwars):
         api_path = '/teacher/confirm_disciple'
         ret = general_client.general_post(self.account_info['sid'], api_path)
+
         disciple_info = ret['body'][0]['data']
+        # print simplejson.dumps(disciple_info, ensure_ascii=False).encode('utf-8')
         for disciple in disciple_info:
-            if disciple['resetable']:
+            disp_id = disciple['uid']
+            disp_lv = disciple['lv']
+            resetable = disciple['resetable']
+            self.logger.debug('Pending disciple = {0}, LV = {1}, Resetable = {2}'.format(disp_id, disp_lv, resetable))
+            if resetable:
                 self.logger.debug('Resetable student = {0}'.format(disciple['uid']))
                 reset_api = '/teacher/reset_from_teacher'
                 options = {'did': disciple['uid']}
