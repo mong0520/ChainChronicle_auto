@@ -182,7 +182,7 @@ class ChainChronicle(object):
             self.account_info['uid'] = uid
 
         ret = session_client.login(self.account_info['uid'], self.account_info['token'])
-        # utils.response_parser.dump_response(ret)
+        utils.response_parser.dump_response(ret)
 
         # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
@@ -234,6 +234,12 @@ class ChainChronicle(object):
     def do_disciple_section(self, section, *args, **kwargs):
         tid = self.config.get(section, 'Teacher_Id')
         # teacher_disciple_client.IS_DISCIPLE_GRADUATED = 1
+        try:
+            is_graduated = self.config.getint(section, 'Graduate')
+            if is_graduated:
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = 1
+        except Exception as e:
+            self.logger.warning('No value is set for Graduate')
         if teacher_disciple_client.IS_DISCIPLE_GRADUATED:
             for i in [5,10,15,20,25,30,35,40,45]:
                 r = teacher_disciple_client.thanks_achievement(self.account_info['sid'], lv=i)
@@ -477,8 +483,8 @@ class ChainChronicle(object):
                     drama_lv = 2
                     # stop trying new quest
                 else:
-                    if current_lv >= 17:
-                        self.logger.debug('set drama level to 2')
+                    if flag >= 4:
+                        # self.logger.debug('set drama level to 2')
                         drama_lv = 2
                     flag = flag + 1
 
