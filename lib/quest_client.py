@@ -19,9 +19,8 @@ def start_quest(quest_info, sid, version=2):
     # Get Quest
     poster = utils.poster.Poster
 
-    if version ==2:
-        url = '{0}/quest/entry'.format(utils.global_config.get_hostname())
-    elif version == 3:
+    url = '{0}/quest/entry'.format(utils.global_config.get_hostname())
+    if version == 3:
         url = '{0}/quest/v3_entry'.format(utils.global_config.get_hostname())
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
