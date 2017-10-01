@@ -120,7 +120,7 @@ class ChainChronicle(object):
 
     def set_proxy(self):
         try:
-            # self.logger.debug('Use socks5 proxy')
+            self.logger.debug('Use socks5 proxy')
             socks_info = self.config.get('GLOBAL', 'Socks5')
             # print socks_info.split(':')
             [socks5_addr, socks5_port] = socks_info.split(':')
@@ -128,7 +128,7 @@ class ChainChronicle(object):
             socket.socket = socks.socksocket
         except Exception as e:
             pass
-            # self.logger.warning('Not use proxy: {0}'.format(e))
+            self.logger.warning('Not use proxy: {0}'.format(e))
 
 
     def start(self):
