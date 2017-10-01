@@ -402,22 +402,29 @@ class ChainChronicle(object):
         # print quest_list[0]
         # sys.exit(0)
         flag = 0
+        counter = 0
         drama_lv = 1
+        gradudate_threshold = 38 # No.38 will make the Level t0 50
         while True:
-            qtype, qid, lv = self.__get_latest_quest()
+            # qtype, qid, lv = self.__get_latest_quest()
             qtype = quest_list[flag]['type']
             qid = quest_list[flag]['id']
 
             # qtype =
-            if lv >= lv_threshold:
-                self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
+            counter +=1
+            self.logger.debug('# {0}/{1}'.format(counter, gradudate_threshold))
+
+            # if lv >= lv_threshold:
+            if counter >= gradudate_threshold:
+                # self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
+                self.logger.debug(u'等級達到門檻，停止主線任務')
                 teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
                 break
-            else:
-                if lv != current_lv:
-                    self.logger.debug(u'等級 = {0}'.format(lv))
-                    pass
-                current_lv = lv
+            # else:
+            #     if lv != current_lv:
+            #         self.logger.debug(u'等級 = {0}'.format(lv))
+            #         pass
+            #     current_lv = lv
             # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
             results[:] = []
             quest_info['qtype'] = qtype
@@ -486,7 +493,7 @@ class ChainChronicle(object):
                     if flag >= 4:
                         # self.logger.debug('set drama level to 2')
                         drama_lv = 2
-                    flag = flag + 1
+                    flag += 1
 
 
 
