@@ -125,15 +125,16 @@ class ChainChronicle(object):
 
     def set_proxy(self):
         try:
-            self.logger.debug('Use socks5 proxy')
+            # self.logger.debug('Use socks5 proxy')
             socks_info = self.config.get('GLOBAL', 'Socks5')
             # print socks_info.split(':')
             [socks5_addr, socks5_port] = socks_info.split(':')
             socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
+            socks
             socket.socket = socks.socksocket
         except Exception as e:
             pass
-            self.logger.warning('Not use proxy: {0}'.format(e))
+            # self.logger.warning('Not use proxy: {0}'.format(e))
 
 
     def start(self):
@@ -269,8 +270,10 @@ class ChainChronicle(object):
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
             self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
-                self.logger.debug('選擇師父失敗: {0}'.format(r))
-                raise Exception('Applay teacher failed!')
+                self.logger.error('選擇師父失敗: {0}'.format(r))
+                sys.exit(0)
+                # raise Exception('Applay teacher failed!')
+
 
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
@@ -395,22 +398,16 @@ class ChainChronicle(object):
         current_lv = 1
         max_retry_cnt = 10
         current_retry_cnt = 0
-        self.logger.debug(u'開始通過主線任務...')
         r = alldata_client.get_alldata(self.account_info['sid'])
         quest_list = r['body'][29]['data']
-        # self.logger.debug(quest_list)
-
-        # data = r['body'][1]['data'][-1]
-        # qtype = data['type']
-        # qid = data['id']
-        # lv = r['body'][4]['data']['lv']
-        # print quest_list, type(quest_list)
-        # print quest_list[0]
-        # sys.exit(0)
+        hcid = 9210
+        last_qid = 331043
         flag = 0
         counter = 0
         drama_lv = 1
         gradudate_threshold = 38 # No.38 will make the Level t0 50
+
+        self.logger.debug(u'開始通過主線任務...')
         while True:
             # qtype, qid, lv = self.__get_latest_quest()
             qtype = quest_list[flag]['type']
@@ -418,14 +415,21 @@ class ChainChronicle(object):
 
             # qtype =
             counter +=1
-            self.logger.debug('# {0}/{1}'.format(counter, gradudate_threshold))
+            self.logger.debug(u'# {0}/{1}'.format(counter, gradudate_threshold))
 
             # if lv >= lv_threshold:
             if counter >= gradudate_threshold:
                 # self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
-                self.logger.debug(u'等級達到門檻，停止主線任務')
-                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
-                break
+                self.logger.debug(u'確定是否已經 {0} 級'.format(lv_threshold))
+                qtype, qid, lv = self.__get_latest_quest()
+                self.logger.debug('Current LV = {0}'.format(lv))
+                if lv >= lv_threshold:
+                    self.logger.debug(u'等級達到門檻，停止主線任務')
+                    teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
+                    break
+                else:
+                    self.logger.debug('current lv = {0}'.format(lv))
+                    continue
             # else:
             #     if lv != current_lv:
             #         self.logger.debug(u'等級 = {0}'.format(lv))
@@ -437,7 +441,7 @@ class ChainChronicle(object):
             quest_info['qid'] = qid
             quest_info['fid'] = -1
             quest_info['lv'] = drama_lv
-            quest_info['hcid'] = 9210
+            quest_info['hcid'] = hcid
 
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
             result = quest_client.start_quest(quest_info, self.account_info['sid'], version=3)
@@ -491,13 +495,13 @@ class ChainChronicle(object):
                     continue
             else:
                 current_retry_cnt = 0
-                # End of main drama
-                if qid == 331043:
-                    drama_lv = 2
+                # End of main drama, 331043 means the last qid for drama
+                if qid == last_qid:
+                    # no need to add flag
                     # stop trying new quest
+                    pass
                 else:
                     if flag >= 4:
-                        # self.logger.debug('set drama level to 2')
                         drama_lv = 2
                     flag += 1
 
@@ -506,6 +510,14 @@ class ChainChronicle(object):
     def do_pass_tutorial(self, section, *args, **kwargs):
         import uuid
         # tutorial_count = self.config.getint(section, 'Count')
+        try:
+            self.logger.info('Found proxy setting')
+            is_proxy = True
+            socks_info = self.config.get(section, 'Socks5')
+            # print socks_info.split(':')
+            [socks5_addr, socks5_port] = socks_info.split(':')
+        except Exception as e:
+            pass
         tid_list = range(0, 21)
         tutorail_package = [
             {'tid': 0, 'qid': None},
@@ -535,12 +547,38 @@ class ChainChronicle(object):
         account_uuid =  ''.join(['ANDO', str(uuid.uuid4())])
         self.config.set('GENERAL', 'Uid', account_uuid)
         self.account_info['uid'] = account_uuid
-        self.do_login()
+        proxy_in_use = False
+        # self.do_login()
+        while True:
+            try:
+                # self.logger.debug('Creating a new account..')
+                self.do_login()
+                break
+            except Exception as e:
+                if proxy_in_use:
+                    self.logger.error('Still unable to login with Proxy, skipped')
+                    self.logger.debug(e)
+                    sys.exit(0)
+                if is_proxy:
+                    self.logger.debug('登入失敗, 使用 Proxy 連線...: {0}'.format(e))
+                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, socks5_addr, int(socks5_port))
+                    temp = socket.socket
+                    socket.socket = socks.socksocket
+                    proxy_in_use = True
+                else:
+                    raise e
 
+        self.logger.debug('Disable socks proxy')
+        try:
+            socket.socket=temp
+        except Exception as e:
+            pass
         # self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
         r = alldata_client.get_alldata(self.account_info['sid'])
         open_id = r['body'][4]['data']['uid']
         self.logger.debug(u'新帳號創立成功，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
+
+
         for tutorial in tutorail_package:
             if tutorial['qid']:
                 r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
