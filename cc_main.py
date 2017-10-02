@@ -95,6 +95,11 @@ class ChainChronicle(object):
 
     def load_config(self):
         self.config.read(self.config_file)
+        try:
+            self.debug = self.config.getint('GLOBAL', 'Debug')
+        except Exception as e:
+            self.debug = 0
+
         for section in self.config.sections():
             if section == utils.enhanced_config_parser.EnhancedConfigParser.SEC_GLOBAL:
                 continue
@@ -182,7 +187,8 @@ class ChainChronicle(object):
             self.account_info['uid'] = uid
 
         ret = session_client.login(self.account_info['uid'], self.account_info['token'])
-        # utils.response_parser.dump_response(ret)
+        if self.debug:
+            utils.response_parser.dump_response(ret)
 
         # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
@@ -462,7 +468,7 @@ class ChainChronicle(object):
                         self.logger.error('Unable to recover stamina, break')
                         break
             else:
-                print result
+                logger.error(result)
                 result = quest_client.get_treasure(quest_info, self.account_info['sid'])
                 rc = int(result['res'])
                 results.append(rc)
