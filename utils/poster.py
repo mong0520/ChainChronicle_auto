@@ -67,7 +67,8 @@ class Poster(object):
 
         # gzip decompress in-the-fly
         decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
-        # print decompressed_data
+        if global_config.is_debug():
+            print decompressed_data
         return decompressed_data
 
 

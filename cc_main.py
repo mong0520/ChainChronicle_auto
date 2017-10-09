@@ -96,7 +96,7 @@ class ChainChronicle(object):
     def load_config(self):
         self.config.read(self.config_file)
         try:
-            self.debug = self.config.getint('GLOBAL', 'Debug')
+            self.debug = self.config.getint('GLOBAL', 'debug')
         except Exception as e:
             self.debug = 0
 
@@ -208,10 +208,12 @@ class ChainChronicle(object):
     def __auto_compose(self, base_card_idx, max_lv):
         # Get all 成長卡
         card_list = alldata_client.get_allcards(self.account_info['sid'])
+        # self.logger.debug(simplejson.dumps(ret, ensure_ascii=False).encode('utf-8'))
         mt_list = list()
         for c in card_list:
-            if c['type'] == 3:
+            if c['type'] == 1:
                 mt_list.append(str(c['idx']))
+        print mt_list
         # print mt_list
         if not len(mt_list):
             self.logger.warning('No material to compose')
@@ -226,6 +228,7 @@ class ChainChronicle(object):
                 self.logger.warning('No material to compose')
                 raise Exception('No material to compose')
             ret = card_client.compose(self.account_info['sid'], base_card_idx, sub_mt)
+            print ret
             lv = ret['body'][1]['data'][0]['lv']
             # utils.response_parser.dump_response(ret)
             if lv >= max_lv:
@@ -442,6 +445,7 @@ class ChainChronicle(object):
             quest_info['fid'] = -1
             quest_info['lv'] = drama_lv
             quest_info['hcid'] = hcid
+            quest_info['pt'] = 0
 
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
             result = quest_client.start_quest(quest_info, self.account_info['sid'], version=3)
@@ -585,6 +589,7 @@ class ChainChronicle(object):
                 quest_info = dict()
                 quest_info['qid'] = tutorial['qid']
                 quest_info['fid'] = 1965350
+                quest_info['pt'] = 0
                 r = quest_client.finish_quest(quest_info, self.account_info['sid'])
                 # print r
             else:
@@ -706,6 +711,10 @@ class ChainChronicle(object):
             quest_info['get_present'] = self.config.getint(section, 'GetPresent')
         except:
             quest_info['get_present'] = 0
+        try:
+            quest_info['pt'] = self.config.getint(section, 'pt')
+        except:
+            quest_info['pt'] = 0
         if quest_info['max_event_point'] == -1:
             quest_info['max_event_point'] = sys.maxint
         count = self.config.getint(section, 'Count')
@@ -756,7 +765,7 @@ class ChainChronicle(object):
                 except Exception:
                     # not event time
                     pass
-                    print simplejson.dumps(result, ensure_ascii=False).encode('utf-8')
+                    # print simplejson.dumps(result, ensure_ascii=False).encode('utf-8')
                 # sell treasure
                 # print simplejson.dumps(result, ensure_ascii=True)
                 if quest_info['auto_sell'] == 1:
