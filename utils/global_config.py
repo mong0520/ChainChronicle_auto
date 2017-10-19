@@ -14,6 +14,14 @@ def get_hostname():
 def get_fqdn():
     return host.replace('http://', '')
 
+
+def is_debug():
+    try:
+        debug = config.getint('GLOBAL', 'debug')
+    except Exception as e:
+        debug = 0
+    return debug
+
 if __name__ == '__main__':
     hostname = get_hostname()
     fqdn = get_fqdn()

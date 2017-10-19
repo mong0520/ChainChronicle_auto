@@ -95,6 +95,11 @@ class ChainChronicle(object):
 
     def load_config(self):
         self.config.read(self.config_file)
+        try:
+            self.debug = self.config.getint('GLOBAL', 'debug')
+        except Exception as e:
+            self.debug = 0
+
         for section in self.config.sections():
             if section == utils.enhanced_config_parser.EnhancedConfigParser.SEC_GLOBAL:
                 continue
@@ -125,6 +130,7 @@ class ChainChronicle(object):
             # print socks_info.split(':')
             [socks5_addr, socks5_port] = socks_info.split(':')
             socks.set_default_proxy(socks.SOCKS5, socks5_addr, int(socks5_port))
+            socks
             socket.socket = socks.socksocket
         except Exception as e:
             pass
@@ -182,7 +188,8 @@ class ChainChronicle(object):
             self.account_info['uid'] = uid
 
         ret = session_client.login(self.account_info['uid'], self.account_info['token'])
-        # utils.response_parser.dump_response(ret)
+        if self.debug:
+            utils.response_parser.dump_response(ret)
 
         # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
@@ -201,10 +208,12 @@ class ChainChronicle(object):
     def __auto_compose(self, base_card_idx, max_lv):
         # Get all 成長卡
         card_list = alldata_client.get_allcards(self.account_info['sid'])
+        # self.logger.debug(simplejson.dumps(ret, ensure_ascii=False).encode('utf-8'))
         mt_list = list()
         for c in card_list:
-            if c['type'] == 3:
+            if c['type'] == 1:
                 mt_list.append(str(c['idx']))
+        print mt_list
         # print mt_list
         if not len(mt_list):
             self.logger.warning('No material to compose')
@@ -219,6 +228,7 @@ class ChainChronicle(object):
                 self.logger.warning('No material to compose')
                 raise Exception('No material to compose')
             ret = card_client.compose(self.account_info['sid'], base_card_idx, sub_mt)
+            print ret
             lv = ret['body'][1]['data'][0]['lv']
             # utils.response_parser.dump_response(ret)
             if lv >= max_lv:
@@ -234,6 +244,12 @@ class ChainChronicle(object):
     def do_disciple_section(self, section, *args, **kwargs):
         tid = self.config.get(section, 'Teacher_Id')
         # teacher_disciple_client.IS_DISCIPLE_GRADUATED = 1
+        try:
+            is_graduated = self.config.getint(section, 'Graduate')
+            if is_graduated:
+                teacher_disciple_client.IS_DISCIPLE_GRADUATED = 1
+        except Exception as e:
+            self.logger.warning('No value is set for Graduate')
         if teacher_disciple_client.IS_DISCIPLE_GRADUATED:
             for i in [5,10,15,20,25,30,35,40,45]:
                 r = teacher_disciple_client.thanks_achievement(self.account_info['sid'], lv=i)
@@ -257,8 +273,10 @@ class ChainChronicle(object):
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)
             self.logger.debug('UID {0} 選擇 {1} 為師父, res = {2}'.format(self.account_info['uid'], tid, r['res']))
             if r['res'] != 0:
-                self.logger.debug('選擇師父失敗: {0}'.format(r))
-                raise Exception('Applay teacher failed!')
+                self.logger.error('選擇師父失敗: {0}'.format(r))
+                sys.exit(0)
+                # raise Exception('Applay teacher failed!')
+
 
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
@@ -267,9 +285,9 @@ class ChainChronicle(object):
     def do_reset_disciple(self, section, *args, **kwars):
         api_path = '/teacher/confirm_disciple'
         ret = general_client.general_post(self.account_info['sid'], api_path)
+        self.logger.debug(simplejson.dumps(ret, ensure_ascii=False).encode('utf-8'))
 
         disciple_info = ret['body'][0]['data']
-        # print simplejson.dumps(disciple_info, ensure_ascii=False).encode('utf-8')
         for disciple in disciple_info:
             disp_id = disciple['uid']
             disp_lv = disciple['lv']
@@ -367,10 +385,13 @@ class ChainChronicle(object):
                 options.pop(k)
 
         api_path = options.pop('API')
-        r = debug_client.debug_post(self.account_info['sid'], api_path, **options)
-        # print r
-        data = simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
-        print data
+        for i in range(0, 1000):
+            options = {'item_id': 0, 'type': i}
+            print options
+            r = debug_client.debug_post(self.account_info['sid'], api_path, **options)
+
+            data = simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+            print data
 
     def do_play_drama_auto(self, section, *args, **kwargs):
         quest_info = dict()
@@ -383,35 +404,66 @@ class ChainChronicle(object):
         current_lv = 1
         max_retry_cnt = 10
         current_retry_cnt = 0
+        r = alldata_client.get_alldata(self.account_info['sid'])
+        quest_list = r['body'][29]['data']
+        hcid = 9210
+        last_qid = 331043
+        flag = 0
+        counter = 0
+        drama_lv = 1
+        gradudate_threshold = 38 # No.38 will make the Level t0 50
+
         self.logger.debug(u'開始通過主線任務...')
         while True:
-            qtype, qid, lv = self.__get_latest_quest()
-            if lv >= lv_threshold:
-                self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
-                teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
-                break
-            else:
-                if lv != current_lv:
-                    self.logger.debug(u'等級 = {0}'.format(lv))
-                    pass
-                current_lv = lv
+            # qtype, qid, lv = self.__get_latest_quest()
+            qtype = quest_list[flag]['type']
+            qid = quest_list[flag]['id']
+
+            # qtype =
+            counter +=1
+            self.logger.debug(u'# {0}/{1}'.format(counter, gradudate_threshold))
+
+            # if lv >= lv_threshold:
+            if counter >= gradudate_threshold:
+                # self.logger.debug(u'等級達到門檻，停止主線任務'.format(lv_threshold))
+                self.logger.debug(u'確定是否已經 {0} 級'.format(lv_threshold))
+                qtype, qid, lv = self.__get_latest_quest()
+                self.logger.debug('Current LV = {0}'.format(lv))
+                if lv >= lv_threshold:
+                    self.logger.debug(u'等級達到門檻，停止主線任務')
+                    teacher_disciple_client.IS_DISCIPLE_GRADUATED = True
+                    break
+                else:
+                    self.logger.debug('current lv = {0}'.format(lv))
+                    continue
+            # else:
+            #     if lv != current_lv:
+            #         self.logger.debug(u'等級 = {0}'.format(lv))
+            #         pass
+            #     current_lv = lv
             # self.logger.debug(u'下一個關卡為: {0},{1}'.format(qtype, qid))
             results[:] = []
             quest_info['qtype'] = qtype
             quest_info['qid'] = qid
-            quest_info['fid'] = 1965350
+            quest_info['fid'] = -1
+            quest_info['lv'] = drama_lv
+            quest_info['hcid'] = hcid
+            quest_info['pt'] = 0
 
             # workaround, 從response中無法判斷qtype為5的quest是寶物或是戰鬥，只好都試試看
-            result = quest_client.start_quest(quest_info, self.account_info['sid'])
+            result = quest_client.start_quest(quest_info, self.account_info['sid'], version=3)
+
+
             rc_quest_entry = int(result['res'])
             results.append(rc_quest_entry)
             # self.logger.debug(rc_quest_entry)
 
             if rc_quest_entry == 0:
-                result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+                result = quest_client.finish_quest(quest_info, self.account_info['sid'], version=3)
                 rc_quest_finish = int(result['res'])
                 results.append(rc_quest_finish)
                 # self.logger.debug(rc_quest_finish)
+                # sys.exit(0)
             elif rc_quest_entry == 103:
                 # 體果
                 ret = recovery_client.recovery_ap(parameter, self.account_info['sid'])
@@ -427,6 +479,7 @@ class ChainChronicle(object):
                         self.logger.error('Unable to recover stamina, break')
                         break
             else:
+                logger.error(result)
                 result = quest_client.get_treasure(quest_info, self.account_info['sid'])
                 rc = int(result['res'])
                 results.append(rc)
@@ -449,11 +502,29 @@ class ChainChronicle(object):
                     continue
             else:
                 current_retry_cnt = 0
+                # End of main drama, 331043 means the last qid for drama
+                if qid == last_qid:
+                    # no need to add flag
+                    # stop trying new quest
+                    pass
+                else:
+                    if flag >= 4:
+                        drama_lv = 2
+                    flag += 1
+
 
 
     def do_pass_tutorial(self, section, *args, **kwargs):
         import uuid
         # tutorial_count = self.config.getint(section, 'Count')
+        try:
+            self.logger.info('Found proxy setting')
+            is_proxy = True
+            socks_info = self.config.get(section, 'Socks5')
+            # print socks_info.split(':')
+            [socks5_addr, socks5_port] = socks_info.split(':')
+        except Exception as e:
+            pass
         tid_list = range(0, 21)
         tutorail_package = [
             {'tid': 0, 'qid': None},
@@ -483,18 +554,45 @@ class ChainChronicle(object):
         account_uuid =  ''.join(['ANDO', str(uuid.uuid4())])
         self.config.set('GENERAL', 'Uid', account_uuid)
         self.account_info['uid'] = account_uuid
-        self.do_login()
+        proxy_in_use = False
+        # self.do_login()
+        while True:
+            try:
+                # self.logger.debug('Creating a new account..')
+                self.do_login()
+                break
+            except Exception as e:
+                if proxy_in_use:
+                    self.logger.error('Still unable to login with Proxy, skipped')
+                    self.logger.debug(e)
+                    sys.exit(0)
+                if is_proxy:
+                    self.logger.debug('登入失敗, 使用 Proxy 連線...: {0}'.format(e))
+                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, socks5_addr, int(socks5_port))
+                    temp = socket.socket
+                    socket.socket = socks.socksocket
+                    proxy_in_use = True
+                else:
+                    raise e
 
+        self.logger.debug('Disable socks proxy')
+        try:
+            socket.socket=temp
+        except Exception as e:
+            pass
         # self.logger.debug(u'{0}/{1} - 開始新帳號'.format(i+1, tutorial_count))
         r = alldata_client.get_alldata(self.account_info['sid'])
         open_id = r['body'][4]['data']['uid']
         self.logger.debug(u'新帳號創立成功，UID = {0}, OpenID = {1}'.format(self.account_info['uid'], open_id))
+
+
         for tutorial in tutorail_package:
             if tutorial['qid']:
                 r = tutorial_client.tutorial(self.account_info['sid'], entry=True, tid=tutorial['tid'], pt=0)
                 quest_info = dict()
                 quest_info['qid'] = tutorial['qid']
                 quest_info['fid'] = 1965350
+                quest_info['pt'] = 0
                 r = quest_client.finish_quest(quest_info, self.account_info['sid'])
                 # print r
             else:
@@ -616,6 +714,10 @@ class ChainChronicle(object):
             quest_info['get_present'] = self.config.getint(section, 'GetPresent')
         except:
             quest_info['get_present'] = 0
+        try:
+            quest_info['pt'] = self.config.getint(section, 'pt')
+        except:
+            quest_info['pt'] = 0
         if quest_info['max_event_point'] == -1:
             quest_info['max_event_point'] = sys.maxint
         count = self.config.getint(section, 'Count')
@@ -666,7 +768,7 @@ class ChainChronicle(object):
                 except Exception:
                     # not event time
                     pass
-                    print simplejson.dumps(result, ensure_ascii=False).encode('utf-8')
+                    # print simplejson.dumps(result, ensure_ascii=False).encode('utf-8')
                 # sell treasure
                 # print simplejson.dumps(result, ensure_ascii=True)
                 if quest_info['auto_sell'] == 1:
@@ -733,29 +835,30 @@ class ChainChronicle(object):
                 ret = raid_client.finish_raid_quest(parameter, self.account_info['sid'])
                 ret2 = raid_client.get_raid_bonus(parameter, self.account_info['sid'])
                 data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
-                print data
+                # print data
                 data = simplejson.dumps(ret2, ensure_ascii=False).encode('utf-8')
-                print data
-                earned_idx = None
-                if boss_lv > 0:
-                    data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
-                    # print data
-                    earned_idx = ret['body'][1]['data'][0]['idx']
-                else:
-                    self.logger.debug(u'爆走魔神獎勵')
-                    try:
-                        data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
-                        # print data
-                        earned_idx = ret2['body'][0]['data'][0]['idx']
-                    except Exception as e:
-                        pass
+                # print data
 
-                if kwargs['auto_sell'] == 1 and earned_idx:
-                    r = self.do_sell_item(earned_idx)
-                    if r['res'] == 0:
-                        self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(earned_idx, r['res']))
-                    else:
-                        self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
+                # earned_idx = None
+                # if boss_lv > 0:
+                #     data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                #     print data
+                #     earned_idx = ret['body'][1]['data'][0]['idx']
+                # else:
+                #     self.logger.debug(u'爆走魔神獎勵')
+                #     try:
+                #         data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                #         # print data
+                #         earned_idx = ret2['body'][0]['data'][0]['idx']
+                #     except Exception as e:
+                #         pass
+
+                # if kwargs['auto_sell'] == 1 and earned_idx:
+                #     r = self.do_sell_item(earned_idx)
+                #     if r['res'] == 0:
+                #         self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(earned_idx, r['res']))
+                #     else:
+                #         self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
             elif r['res'] == 104:
                 self.logger.debug(u"魔神戰體力不足")
                 if auto_recover_bp:
