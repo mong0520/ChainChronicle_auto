@@ -898,7 +898,8 @@ class ChainChronicle(object):
             'type': 'weapon_ev',
             'id': base_weapon_id,
             'val': 1,
-            'price': 1,
+            'price': 10,
+            'buy_cnt': 1
         }
         try:
             target_weapon_keyword_str = self.config.get(section, 'TargetsKeyWords')
@@ -910,14 +911,17 @@ class ChainChronicle(object):
             weapon_client_base = list()
             for j in range(0, buy_count):
                 ret = item_client.buy_item(weapon_data, self.account_info['sid'])
-                print ret
                 data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
-                base_weapon_idx = ret['body'][1]['data'][0]['idx']
+                # print data
+                # base_weapon_idx = ret['body'][1]['data'][0]['idx']
+                base_weapon_idx = base_weapon_id
                 weapon_client_base.append(base_weapon_idx)
 
             ret = weapon_client.compose(self.account_info['sid'], weapon_client_base, eid)
-            idx = ret['body'][1]['data'][0]['idx']
-            item_id = ret['body'][1]['data'][0]['id']
+            # idx = ret['body'][1]['data'][0]['idx']
+            data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+            # print data
+            item_id = ret['body'][2]['data'][0]['item_id']
             weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
             weapon_name = weapon_list[0]['name'].encode('utf-8')
             # print idx, item_id
@@ -932,8 +936,8 @@ class ChainChronicle(object):
             if b_found:
                 self.logger.info('{0}/{1} - 鍊金完成，得到神器!!! {2}'.format(i, count, weapon_name))
             else:
-                # self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}({3})'.format(i, count, weapon_name, item_id))
-                r = self.do_sell_item(idx)
+                self.logger.info('{0}/{1} - 鍊金完成，得到武器: {2}({3})'.format(i, count, weapon_name, item_id))
+                # r = self.do_sell_item(idx)
 
 
 

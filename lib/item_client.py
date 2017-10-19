@@ -23,6 +23,7 @@ def buy_item(parameter, sid):
         'id': parameter['id'],
         'val': parameter['val'],
         'price': parameter['price'],
+        'buy_cnt': parameter['buy_cnt'],
     }
     r = poster.post_data(url, headers, cookies, payload=None, **data)
     return r

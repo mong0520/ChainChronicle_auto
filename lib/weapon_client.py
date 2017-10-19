@@ -21,7 +21,7 @@ def compose(sid, weapon_list, eid=None):
     data['timestamp'] = int(time.time() * 1000)
     data['cnt'] = format(data['timestamp'] + 5000, 'x')
     # query_string = urllib.urlencode(data)
-    query_string = "?mt={0}&mt={1}&mt={2}&mt={3}&mt={4}&timestamp={5}&cnt={6}".format(
+    query_string = "?wia={0}&wia={1}&wia={2}&wia={3}&wia={4}&timestamp={5}&cnt={6}".format(
         weapon_list[0], weapon_list[1], weapon_list[2], weapon_list[3], weapon_list[4], data['timestamp'], data['cnt'])
     if eid:
         query_string += "&eid={0}".format(eid) #  special event
