@@ -385,10 +385,13 @@ class ChainChronicle(object):
                 options.pop(k)
 
         api_path = options.pop('API')
-        r = debug_client.debug_post(self.account_info['sid'], api_path, **options)
-        # print r
-        data = simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
-        print data
+        for i in range(0, 1000):
+            options = {'item_id': 0, 'type': i}
+            print options
+            r = debug_client.debug_post(self.account_info['sid'], api_path, **options)
+
+            data = simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+            print data
 
     def do_play_drama_auto(self, section, *args, **kwargs):
         quest_info = dict()
@@ -832,29 +835,30 @@ class ChainChronicle(object):
                 ret = raid_client.finish_raid_quest(parameter, self.account_info['sid'])
                 ret2 = raid_client.get_raid_bonus(parameter, self.account_info['sid'])
                 data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
-                print data
+                # print data
                 data = simplejson.dumps(ret2, ensure_ascii=False).encode('utf-8')
-                print data
-                earned_idx = None
-                if boss_lv > 0:
-                    data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
-                    # print data
-                    earned_idx = ret['body'][1]['data'][0]['idx']
-                else:
-                    self.logger.debug(u'爆走魔神獎勵')
-                    try:
-                        data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
-                        # print data
-                        earned_idx = ret2['body'][0]['data'][0]['idx']
-                    except Exception as e:
-                        pass
+                # print data
 
-                if kwargs['auto_sell'] == 1 and earned_idx:
-                    r = self.do_sell_item(earned_idx)
-                    if r['res'] == 0:
-                        self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(earned_idx, r['res']))
-                    else:
-                        self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
+                # earned_idx = None
+                # if boss_lv > 0:
+                #     data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                #     print data
+                #     earned_idx = ret['body'][1]['data'][0]['idx']
+                # else:
+                #     self.logger.debug(u'爆走魔神獎勵')
+                #     try:
+                #         data = simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
+                #         # print data
+                #         earned_idx = ret2['body'][0]['data'][0]['idx']
+                #     except Exception as e:
+                #         pass
+
+                # if kwargs['auto_sell'] == 1 and earned_idx:
+                #     r = self.do_sell_item(earned_idx)
+                #     if r['res'] == 0:
+                #         self.logger.debug(u"\t-> 賣出卡片 {0}, result = {1}".format(earned_idx, r['res']))
+                #     else:
+                #         self.logger.error(u"\t-> 卡片無法賣出, Error Code = {0}".format(r['res']))
             elif r['res'] == 104:
                 self.logger.debug(u"魔神戰體力不足")
                 if auto_recover_bp:
