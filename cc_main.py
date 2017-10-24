@@ -999,7 +999,7 @@ class ChainChronicle(object):
                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3, eid)
                 weapon_list_rank3[:] = []
                 # idx = ret['body'][1]['data'][0]['idx']
-                item_id = ret['body'][2]['data'][0]['item_id']
+                item_id = ret['body'][-2]['data'][0]['item_id']
                 # print idx, item_id
                 # print item_id
                 # weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
@@ -1015,7 +1015,7 @@ class ChainChronicle(object):
                 # pprint.pprint(ret)
                 try:
                     # idx = ret['body'][1]['data'][0]['idx']
-                    item_id = ret['body'][2]['data'][0]['item_id']
+                    item_id = ret['body'][-2]['data'][0]['item_id']
                 except:
                     import pprint
                     pprint.pprint(ret)
@@ -1047,7 +1047,7 @@ class ChainChronicle(object):
                     weapon_list_rank4[:] = []
                     # pprint.pprint(ret)
                     # idx = ret['body'][1]['data'][0]['idx']
-                    item_id = ret['body'][2]['data'][0]['item_id']
+                    item_id = ret['body'][-2]['data'][0]['item_id']
                     weapon_base_rank5_idx = item_id
 
     def do_subjugation_section(self, section, *args, **kwargs):
@@ -1472,7 +1472,7 @@ class ChainChronicle(object):
         #if gacha_result is None or len(gacha_result) == 0:
         if not gacha_result:
             self.logger.debug("Gacha Error")
-            raise Exception('Gacha Error')
+            # raise Exception('Gacha Error')
 
         if gacha_info['auto_sell_rarity_threshold']:
             self.logger.info('開始賣出稀有度{0}(含) 以下的卡片...'.format(gacha_info['auto_sell_rarity_threshold']-1))
@@ -1541,6 +1541,50 @@ class ChainChronicle(object):
                 return ret
         return ret
 
+    # def do_gacha_v2(self, g_type, **kwargs):
+    #     gacha_result = dict()
+    #     gacha_result['items'] = list()  # for non-char cards
+    #     gacha_result['chars'] = list()
+    #     parameter = dict()
+    #     parameter['type'] = g_type
+    #     for k, v in kwargs.iteritems():
+    #         parameter[k] = v
+    #     r = gacha_client.gacha(parameter, self.account_info['sid'])
+    #     # print simplejson.dumps(r, ensure_ascii=False).encode('utf-8')
+
+    #     if r['res'] == 0:
+    #         for record in r['body']:
+    #             try:
+    #                 for data in record['data']:
+    #                     # print simplejson.dumps(data, ensure_ascii=False).encode('utf-8')
+    #                     if 'item_id' in data and data['item_id'] != 13:
+    #                         gacha_result['items'].append(data)
+    #                     else:
+    #                         tmp = dict()
+    #                         idx = data['idx']
+    #                         cid = data['id']
+    #                         tmp[idx] = cid
+    #                         gacha_result[idx] = cid
+    #                         gacha_result['items'].append(data)
+    #             except Exception as e:
+    #                 # print data
+    #                 # gacha_result[idx] = recor
+    #                 continue
+    #         # print gacha_result
+
+    #     elif r['res'] == 703:
+    #         self.logger.error(u"轉蛋失敗，聖靈幣不足")
+    #         return gacha_result
+    #     elif r['res'] == 207:
+    #         time.sleep(3)
+    #         self.logger.debug('retry')
+    #         return self.do_gacha(parameter['type'])
+    #     else:
+    #         self.logger.error(u"轉蛋失敗，未知的錯誤，無法繼續轉蛋:{0}, {1}".format(r['res'], r))
+    #         raise Exception('Unable to gacha')
+    #         # return gacha_result
+    #     return gacha_result
+
     def do_gacha(self, g_type, **kwargs):
         gacha_result = dict()
         parameter = dict()
@@ -1555,12 +1599,20 @@ class ChainChronicle(object):
                 # 新卡和舊卡位置不同，且新卡的位置也不固定
                 try:
                     for data in record['data']:
-                        tmp = dict()
-                        idx = data['idx']
-                        cid = data['id']
-                        tmp[idx] = cid
-                        gacha_result[idx] = cid
+                        if 'item_id' in data and data['item_id'] != 13:
+                            # self.logger.debug('Got Item {0}, current counts = {1}'.format(data['item_id'], data['cnt']))
+                            weapons = utils.db_operator.DBOperator.get_weapons('id', data['item_id'])
+                            if len(weapons) > 0:
+                                self.logger.debug(u'得到武器 - {0}'.format(weapons[0]['name']))
+                        else:
+                            tmp = dict()
+                            idx = data['idx']
+                            cid = data['id']
+                            tmp[idx] = cid
+                            gacha_result[idx] = cid
                 except Exception as e:
+                    # print data
+                    # gacha_result[idx] = recor
                     continue
             # print gacha_result
 
@@ -1720,6 +1772,7 @@ def main():
     parser.add_argument('-c', '--config', help='Config file path', required=True)
     parser.add_argument('-a', '--action', help='Execute specific section of config file', required=False)
     parser.add_argument('-l', '--list_command', help='List commands', required=False, action='store_true')
+    parser.add_argument('-n', '--number', help='Number of loops', required=False, type=int)
 
     args = parser.parse_args()
     config_file = args.config
@@ -1730,6 +1783,8 @@ def main():
         print cc.action_mapping.keys()
         sys.exit(0)
 
+    if args.number:
+        cc.flow_loop = args.number
     for i in xrange(0, cc.flow_loop):
         cc.logger.debug('Start #{0}/{1} Flow'.format(i+1, cc.flow_loop))
         if args.action is not None:
