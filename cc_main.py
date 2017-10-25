@@ -997,6 +997,10 @@ class ChainChronicle(object):
                 # self.logger.info(u'開始鍊金 -  3星*5')
                 # self.logger.debug(weapon_list_rank3)
                 ret = weapon_client.compose(self.account_info['sid'], weapon_list_rank3, eid)
+                if ret['res'] != 0:
+                    self.logger.error('Compose Error: {0}'.format(simplejson.dumps(ret)))
+                    return
+
                 weapon_list_rank3[:] = []
                 # idx = ret['body'][1]['data'][0]['idx']
                 item_id = ret['body'][-2]['data'][0]['item_id']
