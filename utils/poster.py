@@ -91,5 +91,5 @@ class Poster(object):
     def get_data(url):
         # return requests.get(url, headers=Poster.DEFAULT_HEADERS).json()
         r = requests.get(url, headers=Poster.DEFAULT_HEADERS)
-        decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
+        decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS).decode('utf-8')
         return json.loads(decompressed_data)
