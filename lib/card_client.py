@@ -1,6 +1,6 @@
 import utils.poster
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import requests
 import sys
 sys.path.append('utils')
@@ -29,7 +29,7 @@ def compose(sid, ba, mt_list):
 
     post_url = url + query_string
     # print post_url
-    payload = urllib.quote_plus(query_string)
+    payload = urllib.parse.quote_plus(query_string)
     payload = 'nature=' + payload
     # print payload
 

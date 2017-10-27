@@ -1,5 +1,5 @@
 import utils.poster
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import time
 import simplejson
 import utils.global_config
@@ -25,7 +25,7 @@ def login(uid, token=None):
     },
         "DEV": data
     }
-    payload = 'param=' + urllib.quote_plus(simplejson.dumps(payload_dict))
+    payload = 'param=' + urllib.parse.quote_plus(simplejson.dumps(payload_dict))
     # print url
     # print payload
     # ret = poster.post_data(url, headers, None, payload, **data)

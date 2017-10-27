@@ -1,5 +1,5 @@
-import ConfigParser
-import enhanced_config_parser
+import configparser
+import utils.enhanced_config_parser as enhanced_config_parser
 import os
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'global.conf')
@@ -25,6 +25,6 @@ def is_debug():
 if __name__ == '__main__':
     hostname = get_hostname()
     fqdn = get_fqdn()
-    print hostname
-    print fqdn
+    print(hostname)
+    print(fqdn)
 

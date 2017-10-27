@@ -21,7 +21,7 @@ def get_gacha_page(sid):
         'Accept-Encoding': 'gzip, deflate'
 
     }
-    print url
+    print(url)
     cookies = {'sid': sid, 'devicewidth':1024, 'framewidth':577}
     r = requests.get(url, headers=headers)
     return r

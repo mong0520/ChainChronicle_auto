@@ -2,7 +2,7 @@
 from tinydb import TinyDB, Query
 import os
 from os.path import expanduser
-import poster
+from . import poster
 from pymongo import MongoClient
 
 DB_PATH = expanduser('~/ChainChronicle/db/')
@@ -63,7 +63,7 @@ class DBOperator(object):
             result_list = db.search(my_search == v)
         except ValueError:
             v = value
-            name_keyword = u'.?{0}.?'.format(v.decode("utf-8"))
+            name_keyword = '.?{0}.?'.format(v.decode("utf-8"))
             result_list = db.search(my_search.search(name_keyword))
 
         return result_list
@@ -102,12 +102,12 @@ class DBOperator(object):
         results = DBOperator.get_cards(field, value)
         target_fields = ['cid', 'title', 'name', 'profile', 'rarity']
         for r in results:
-            print '==========================='
+            print('===========================')
             for key in target_fields:
                 try:
-                    print '{0}: {1}'.format(key, r[key])
+                    print('{0}: {1}'.format(key, r[key]))
                 except UnicodeEncodeError:
-                    print '{0}: {1}'.format(key, r[key].encode('utf-8'))
+                    print('{0}: {1}'.format(key, r[key].encode('utf-8')))
                 except KeyError:
                     pass
 
@@ -116,25 +116,25 @@ class DBOperator(object):
         quests = DBOperator.get_quests(quest_name)
         if verbose:
             for quest in quests:
-                print '==========================='
-                for k, v in quest.iteritems():
-                    print u'{0}: {1}'.format(k, v)
+                print('===========================')
+                for k, v in quest.items():
+                    print('{0}: {1}'.format(k, v))
         else:
             for quest in quests:
-                print '==========================='
-                print 'Chapter: {0}'.format(quest['chapter_cnt'])
-                print 'ID: {0}'.format(quest['quest_id'])
-                print 'Name: {0}'.format(quest['name'].encode('utf-8'))
-                print 'Difficult: {0}'.format(quest['difficulty'])
+                print('===========================')
+                print('Chapter: {0}'.format(quest['chapter_cnt']))
+                print('ID: {0}'.format(quest['quest_id']))
+                print('Name: {0}'.format(quest['name'].encode('utf-8')))
+                print('Difficult: {0}'.format(quest['difficulty']))
 
 
     @staticmethod
     def dump_weapon(field, value):
         weapons = DBOperator.get_weapons(field, value)
         for weapon in weapons:
-            print '==========================='
-            for k, v in weapon.iteritems():
-                print u'{0}: {1}'.format(k, v)
+            print('===========================')
+            for k, v in weapon.items():
+                print('{0}: {1}'.format(k, v))
 
     @staticmethod
     def dump_general(source, field, value):
@@ -145,9 +145,9 @@ class DBOperator(object):
             DBOperator.dump_cards(field, value)
         else:
             for result in result_list:
-                for k, v in result.iteritems():
-                    print u'{0}: {1}'.format(k, v)
-                print "==============================="
+                for k, v in result.items():
+                    print('{0}: {1}'.format(k, v))
+                print("===============================")
 
 
     @staticmethod
@@ -164,7 +164,7 @@ class DBUpdater(object):
     def _initial_db_file(category):
         db_path = os.path.join(DB_PATH, category)
         if os.path.exists(db_path):
-            print 'Remove existence db file'
+            print('Remove existence db file')
             os.unlink(db_path)
         data_mapping[category]['db_obj'] = TinyDB(db_path)
 
@@ -175,17 +175,17 @@ class DBUpdater(object):
         client = MongoClient('127.0.0.1', 27017)
         db = client.cc
         # Get latest charainfo 
-        for category in data_mapping.keys():
+        for category in list(data_mapping.keys()):
             url = data_mapping[category]['db_source']
-            print 'Getting data from {0}'.format(url)
+            print('Getting data from {0}'.format(url))
             r = poster.Poster.get_data(url)
-            print 'complete'
+            print('complete')
 
-            print 'remove existing data'
+            print('remove existing data')
             try:
                 getattr(db, category).remove({})
             except:
-                print 'unable to remove db.{0}'.format(category)
+                print('unable to remove db.{0}'.format(category))
 
             # Insert latest data
             for element in r[category]:
@@ -200,17 +200,17 @@ class DBUpdater(object):
     @staticmethod
     def update_tinydb():
         # Get latest charainfo data
-        for category in data_mapping.keys():
+        for category in list(data_mapping.keys()):
             url = data_mapping[category]['db_source']
-            print 'Getting data from {0}'.format(url)
+            print('Getting data from {0}'.format(url))
             r = poster.Poster.get_data(url)
-            print 'complete'
+            print('complete')
 
             if len(r[category]) > 0:
-                print 'init db file'
+                print('init db file')
                 DBUpdater._initial_db_file(category)
             else:
-                print 'Unable to get DB information of category {0}'.format(category)
+                print('Unable to get DB information of category {0}'.format(category))
 
             # Insert latest data
             for element in r[category]:

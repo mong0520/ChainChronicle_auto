@@ -9,7 +9,7 @@ def tutorial(sid, entry=False, **kwargs):
     if entry:
         url += '/entry'
     data = dict()
-    for k, v in kwargs.iteritems():
+    for k, v in kwargs.items():
         data[k] = v
     headers = {'Cookie': 'sid={0}'.format(sid)}
     cookies = {'sid': sid}

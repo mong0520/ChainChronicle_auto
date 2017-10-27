@@ -1,9 +1,9 @@
 import requests
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import zlib
 import json
-import global_config
+import utils.global_config as global_config
 
 class Poster(object):
 
@@ -31,7 +31,7 @@ class Poster(object):
 
         data = dict()
         if kwargs:
-            for k, v in kwargs.iteritems():
+            for k, v in kwargs.items():
                 data[k] = v
         headers = {'Cookie': 'sid={0}'.format(sid)}
         cookies = {'sid': sid}
@@ -44,16 +44,16 @@ class Poster(object):
         # kwargs['timestamp'] = int(time.time())
         kwargs['timestamp'] = int(time.time() * 1000)
         kwargs['cnt'] = format(kwargs['timestamp'] + 5000, 'x')
-        query_string = urllib.urlencode(kwargs)
+        query_string = urllib.parse.urlencode(kwargs)
         post_url = '?'.join([url, query_string])
         kwargs.pop('timestamp', None)
         if payload is None:
-            payload = urllib.quote_plus(urllib.urlencode(kwargs))
+            payload = urllib.parse.quote_plus(urllib.parse.urlencode(kwargs))
             payload = 'nature=' + payload
 
         if global_config.is_debug():
-            print post_url
-        # print post_url
+            print(post_url)
+        # print(post_url)
         # print payload
         headers.update(Poster.DEFAULT_HEADERS)
         # print headers
@@ -68,7 +68,7 @@ class Poster(object):
         # gzip decompress in-the-fly
         decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
         if global_config.is_debug():
-            print decompressed_data
+            print(decompressed_data)
         return decompressed_data
 
 
@@ -80,7 +80,8 @@ class Poster(object):
 
     @staticmethod
     def post_data(url, headers=dict(), cookies=None, payload=None, **kwargs):
-        return json.loads(Poster.__post_data(url, headers, cookies, payload, **kwargs))
+        json_data = Poster.__post_data(url, headers, cookies, payload, **kwargs).decode('utf-8')
+        return json.loads(json_data)
 
     @staticmethod
     def post_data_v2(url, headers=dict(), cookies=None, payload=None, **kwargs):

@@ -2,32 +2,32 @@
 # -*- coding: utf-8 -*-
 from flask import Flask
 import subprocess, sys
-import ConfigParser
+import configparser
 from flask import request
 import json
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 app = Flask(__name__)
 app_root = os.getcwd()
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.optionxform=str
 
 cmd_template = {
-    'run': u"python cc_main.py -c config/{0}.conf -a {1}",
-    'query': u"python scripts/find_general.py -s {0} -f {1} -v {2}"
+    'run': "python cc_main.py -c config/{0}.conf -a {1}",
+    'query': "python scripts/find_general.py -s {0} -f {1} -v {2}"
 }
 
 def __dump_config():
     for section in config.sections():
-        print u"[%s]" % section
+        print("[%s]" % section)
         for option in config.options(section):
-            print " ", option, "=", config.get(section, option)
+            print(" ", option, "=", config.get(section, option))
 
 def run_command(cmd, cwd=os.getcwd()):
-    print "enter run_command"
-    print cmd
+    print("enter run_command")
+    print(cmd)
     process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
     stdout, stderr = process.communicate()
     return stdout
@@ -50,34 +50,34 @@ def show(user, section):
 @app.route("/set/<user>/<section>", methods=['POST'])
 def set(user, section):
     data = request.json
-    print data
+    print(data)
     config_path = os.path.join(app_root, 'config', '{0}.conf'.format(user))
-    print config_path
+    print(config_path)
     config.read(config_path)
     #__dump_config()
-    for k, v in data.iteritems():
-        print 'set {0} to {1} in section [{2}]'.format(k, v, section)
+    for k, v in data.items():
+        print('set {0} to {1} in section [{2}]'.format(k, v, section))
         config.set(section, k, v)
     with open(config_path, 'wb') as configfile:
         config.write(configfile)
-    return u'設定檔已儲存'
+    return '設定檔已儲存'
 
 
 @app.route("/unset/<user>/<section>/<option>", methods=['POST'])
 def unset(user, section, option):
     config_path = os.path.join(app_root, 'config', '{0}.conf'.format(user))
-    print config_path
+    print(config_path)
     config.read(config_path)
     #__dump_config()
     try:
         ret = config.remove_option(section, option)
-    except ConfigParser.NoSectionError as e:
+    except configparser.NoSectionError as e:
         return 'No section {0} found'.format(section)
     if not ret:
         return 'Reset option {0} failed'.format(option)
     with open(config_path, 'wb') as configfile:
         config.write(configfile)
-    return u'設定檔已儲存'
+    return '設定檔已儲存'
 
 
 @app.route("/run/<user>/<section>", methods=['POST'])
@@ -87,16 +87,16 @@ def run(user, section):
         result = run_command(cmd)
         return result
     except Exception as e:
-        print e
+        print(e)
         return e
 
 
 @app.route('/query/<db>/<field>/<value>', methods=['GET', 'POST'])
 def query(db, field, value):
-    print db, field, value
+    print(db, field, value)
     try:
         cmd = cmd_template['query'].format(db, field, value)
-        print cmd
+        print(cmd)
         result = run_command(cmd)
         return result
     except Exception as e:

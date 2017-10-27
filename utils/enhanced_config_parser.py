@@ -1,9 +1,9 @@
 import os.path
-import ConfigParser
+import configparser
 import sys
 
 
-class EnhancedConfigParser(ConfigParser.SafeConfigParser, object):
+class EnhancedConfigParser(configparser.SafeConfigParser, object):
 
     SEC_GLOBAL = 'GLOBAL'
 
@@ -31,7 +31,7 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser, object):
         any section's prefix name matched the key name, this section should have the required options which defined by
         required_section_options
         """
-        for key in self.required_section_options.keys():
+        for key in list(self.required_section_options.keys()):
             for section in self.sections():
                 if section.startswith(key):
                     for required_option in self.required_section_options[key]:
@@ -71,9 +71,9 @@ class EnhancedConfigParser(ConfigParser.SafeConfigParser, object):
 
     def dump_config(self):
         for section in self.sections():
-            print "[%s]" % section
+            print("[%s]" % section)
             for option in self.options(section):
-                print " ", option, "=", self.get(section, option)
+                print(" ", option, "=", self.get(section, option))
 
 
 class MissingRequiredOptionsException(Exception):
@@ -93,10 +93,10 @@ if __name__ == '__main__':
     ers_config_parser.read(os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]),
                                                         '../sample/cd_sample01.conf')))
 
-    print ers_config_parser.sections_with_prefix('GLO')
+    print(ers_config_parser.sections_with_prefix('GLO'))
 
     # Print out options with specific prefix in a section
-    print ers_config_parser.options_with_prefix('APP-AMPS', 'app')
+    print(ers_config_parser.options_with_prefix('APP-AMPS', 'app'))
 
     # get option value as list
     # print ers_config_parser.getlist('APP01', 'app_01')
