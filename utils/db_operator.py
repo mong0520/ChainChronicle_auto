@@ -63,7 +63,7 @@ class DBOperator(object):
             result_list = db.search(my_search == v)
         except ValueError:
             v = value
-            name_keyword = '.?{0}.?'.format(v.decode("utf-8"))
+            name_keyword = '.?{0}.?'.format(v)
             result_list = db.search(my_search.search(name_keyword))
 
         return result_list
