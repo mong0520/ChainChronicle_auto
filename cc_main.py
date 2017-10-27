@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 import argparse
 import logging
@@ -1411,7 +1411,7 @@ class ChainChronicle(object):
                     # self.logger.debug('Reward Type: {0}'.format(item_type))
                     if item_type == 'card':
                         card = utils.db_operator.DBOperator.get_cards('cid', item_id)[0]
-                        self.logger.debug('得到角色: {0}'.format(card['name'].encode('utf-8')))
+                        self.logger.debug('得到角色: {0}'.format(card['name']))
                     else:
                         pass
                         # self.logger.debug('Reward ID: {0}'.format(item_id))
@@ -1462,7 +1462,7 @@ class ChainChronicle(object):
                 else:
                     card = cards[0]  # cid is key index
                     if card['rarity'] >= gacha_info['auto_sell_rarity_threshold']:
-                        msg = '得到 {0}-{1}, 稀有度: {2}'.format(card['title'].encode('utf-8'), card['name'].encode('utf-8'), card['rarity'])
+                        msg = '得到 {0}-{1}, 稀有度: {2}'.format(card['title'], card['name'], card['rarity'])
                         self.logger.debug(msg)
                     else:
                         pass
