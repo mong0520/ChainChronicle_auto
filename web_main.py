@@ -15,8 +15,8 @@ config = configparser.ConfigParser()
 config.optionxform=str
 
 cmd_template = {
-    'run': "python cc_main.py -c config/{0}.conf -a {1}",
-    'query': "python scripts/find_general.py -s {0} -f {1} -v {2}"
+    'run': "python3 cc_main.py -c config/{0}.conf -a {1}",
+    'query': "python3 scripts/find_general.py -s {0} -f {1} -v {2}"
 }
 
 def __dump_config():
