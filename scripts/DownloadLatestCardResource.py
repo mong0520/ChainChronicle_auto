@@ -14,7 +14,7 @@ from utils import poster
 import urllib.request, urllib.parse, urllib.error
 
 q = Queue(maxsize=0)
-num_threads = 1
+num_threads = 10
 timestamp = int(time.time() * 1000)
 cnt = format(timestamp + 5000, 'x')
 pattern = "cha_2d_card_(\d+)\.bdl"
@@ -24,18 +24,22 @@ downloaded_file = list()
 
 def do_stuff(q):
     while True:
-        url = q.get()
-        print(url)
-        if url:
-            print(url, output_path)
-            filename = wget.download(url, out=output_path)
-            file_size = os.stat(filename).st_size
-            if file_size and file_size < 5000:
-                os.remove(filename)
-            else:
+        try:
+            url = q.get()
+            print(url)
+            if url:
+                print(url, output_path)
+                filename = wget.download(url, out=output_path)
+                file_size = os.stat(filename).st_size
+                if file_size and file_size < 5000:
+                    os.remove(filename)
+                else:
+                    downloaded_file.append(os.path.basename(url))
                 downloaded_file.append(os.path.basename(url))
-            downloaded_file.append(os.path.basename(url))
-            q.task_done()
+                q.task_done()
+        except Exception as e:
+            print(e)
+            pass
 
 def get_content_url():
     ret = session_client.login('ANDO822adb47-dd36-41ce-8640-9f17604d0778')
@@ -90,13 +94,14 @@ try:
         for r in result:
             url = '{0}Resource/Card/{1}'.format(ctroot, r)
             if r not in processed_card_list:
-                #print('Put #{0} in downloading queue'.format(r))
+                print('Put #{0} in downloading queue'.format(r))
                 q.put(url)
             else:
                 print('{0} is alread downloaded'.format(r))
 except:
     raise
 
+print("Start to join queue")
 q.join()
 
 # print processed_card_list
