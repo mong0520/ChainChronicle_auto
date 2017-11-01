@@ -107,7 +107,7 @@ class DBOperator(object):
                 try:
                     print('{0}: {1}'.format(key, r[key]))
                 except UnicodeEncodeError:
-                    print('{0}: {1}'.format(key, r[key].encode('utf-8')))
+                    print('{0}: {1}'.format(key, r[key]))
                 except KeyError:
                     pass
 
@@ -124,7 +124,7 @@ class DBOperator(object):
                 print('===========================')
                 print('Chapter: {0}'.format(quest['chapter_cnt']))
                 print('ID: {0}'.format(quest['quest_id']))
-                print('Name: {0}'.format(quest['name'].encode('utf-8')))
+                print('Name: {0}'.format(quest['name']))
                 print('Difficult: {0}'.format(quest['difficulty']))
 
 
