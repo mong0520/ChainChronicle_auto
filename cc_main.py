@@ -6,11 +6,8 @@ import os
 import sys
 import time
 from random import randint
-try:
-    import socket
-    import socks
-except:
-    pass
+import socket
+import socks
 
 import simplejson
 
@@ -189,7 +186,7 @@ class ChainChronicle(object):
 
         ret = session_client.login(self.account_info['uid'], self.account_info['token'])
         if self.debug:
-            utils.response_parser.dump_response(ret)
+            simplejson.dumps(ret)
 
         # print simplejson.dumps(ret, ensure_ascii=False).encode('utf-8')
         # sys.exit(0)
