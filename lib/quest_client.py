@@ -25,7 +25,7 @@ def start_quest(quest_info, sid, version=2):
     cookies = {'sid': sid}
     headers = {'Cookie': 'sid={0}'.format(sid)}
     data = {
-        'oc': 1,
+        # 'oc': 1,
         'type': quest_info['qtype'],
         'qid': quest_info['qid'],
         'fid': quest_info['fid'],
