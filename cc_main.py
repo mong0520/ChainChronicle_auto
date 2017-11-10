@@ -903,6 +903,7 @@ class ChainChronicle(object):
         except Exception as e:
             pass
 
+
         for i in range(0, count):
             weapon_client_base = list()
             for j in range(0, buy_count):
@@ -1021,7 +1022,7 @@ class ChainChronicle(object):
                     pprint.pprint(ret)
                     raise
                 weapon_list = utils.db_operator.DBOperator.get_weapons('id', item_id)
-                weapon_name = weapon_list[0]['name'].encode('utf-8')
+                weapon_name = weapon_list[0]['name']
 
                 for keyword in target_weapon_keyword:
                     b_found = False
