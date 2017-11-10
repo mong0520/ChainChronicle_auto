@@ -69,15 +69,18 @@ class DBOperator(object):
         return result_list
 
     @staticmethod
-    def get_cards(field, value):
+    def get_cards(field=None, value=None):
         """
         :param field: field to find, e.q,: title, name
         :param value: field value to match
         :return: matched dictionary
         """
-        result_list = DBOperator.__query(
-            data_mapping['charainfo']['db_obj'], field, value)
-        return result_list
+        if field is None and value is None:
+            return data_mapping['charainfo']['db_obj'].all()
+        else:
+            result_list = DBOperator.__query(
+                data_mapping['charainfo']['db_obj'], field, value)
+            return result_list
 
     @staticmethod
     def get_quests(quest_name):
@@ -168,13 +171,13 @@ class DBUpdater(object):
             os.unlink(db_path)
         data_mapping[category]['db_obj'] = TinyDB(db_path)
 
-    
+
 
     @staticmethod
     def update_mongodb():
         client = MongoClient('127.0.0.1', 27017)
         db = client.cc
-        # Get latest charainfo 
+        # Get latest charainfo
         for category in list(data_mapping.keys()):
             url = data_mapping[category]['db_source']
             print('Getting data from {0}'.format(url))
@@ -194,7 +197,7 @@ class DBUpdater(object):
                     for doc in element:
                         collection = getattr(db, category).insert_one(doc)
                 elif type(element) is dict:
-                    collection = getattr(db, category).insert_one(element) 
+                    collection = getattr(db, category).insert_one(element)
 
 
     @staticmethod

@@ -1325,10 +1325,11 @@ class ChainChronicle(object):
             sys.exit(0)
         else:
             pickup_list = r['pickup']
-        # self.logger.debug(simplejson.dumps(pickup_list, ensure_ascii=False))
+        self.logger.debug(simplejson.dumps(pickup_list, ensure_ascii=False))
+        for pickup in pickup_list:
+            self.logger.debug(pickup)
 
         explorer_area = self.config.getlist(section, 'area')
-        print(explorer_area)
 
         # debug section
         # card_idx = self.find_best_idx_to_explorer(pickup_list[3], except_card_id)
@@ -1343,7 +1344,7 @@ class ChainChronicle(object):
         # Get non-cards presents
         self.do_present_process(1, 0, 'item')
 
-        for i in range(0, 3):
+        for i in range(0, len(explorer_area)):
             # get result
             while True:
                 r = explorer_client.get_explorer_result(i + 1, self.account_info['sid'])
@@ -1362,12 +1363,14 @@ class ChainChronicle(object):
                     self.logger.warning(r)
                     break
 
+
             area = int(explorer_area[i])
             for pickup_item in pickup_list:
                 if pickup_item['location_id'] == area:
+                    self.logger.debug('start to find character to explorer...')
                     card_idx, card_id = self.find_best_idx_to_explorer(pickup_item, except_card_id)
                     except_card_id.append(card_id)
-                    self.logger.debug('Explorer cards = {0}'.format(card_id))
+                    # self.logger.debug('Explorer cards = {0}'.format(card_id))
                     break
 
             # go to explorer
@@ -1385,7 +1388,7 @@ class ChainChronicle(object):
             try:
                 stone_finish = self.config.getint(section, 'StoneFinish')
             except:
-                stone_finish = 1
+                stone_finish = 0
 
             r = explorer_client.start_explorer(parameter, self.account_info['sid'])
             if r['res'] == 2311:
@@ -1393,6 +1396,8 @@ class ChainChronicle(object):
                 parameter['pickup'] = 0
                 explorer_client.start_explorer(parameter, self.account_info['sid'])
 
+            if r['res'] != 0:
+                self.logger.debug(r)
 
             if stone_finish:
                 # self.logger.debug('Use stone to finish explorer right now!')
@@ -1680,59 +1685,52 @@ class ChainChronicle(object):
         time.sleep(sleep_in_sec)
 
     def find_best_idx_to_explorer(self, area_pickup_list, except_card_id=[]):
-        # for pickup in pickup_list:
-        # self.logger.debug(pickup)
-        # card_list = self.CC_GetAllData()['body'][6]['data']
         card_list = alldata_client.get_alldata(self.account_info['sid'])['body'][6]['data']
 
+        candidates = [c for c in card_list if 'maxlv' in c and c['maxlv'] < 80]  # not rank 5 cards
         # self.logger.debug("Pickup attribute home: {0}".format(area_pickup_list['home']))
         # self.logger.debug("Pickup attribute job type: {0}".format(area_pickup_list['jobtype']))
         # self.logger.debug("Pickup attribute weapontype: {0}".format(area_pickup_list['weapontype']))
-        temp_idx = None
-        for card in card_list:
+        # for c in candidates:
+                # print(c)
+        cards_db = utils.db_operator.DBOperator.get_cards()
+
+        for card in candidates:
             if card['id'] in except_card_id:
                 # self.logger.debug(u"跳過保留不去探索的卡片: {0}".format(card['id']))
                 continue
 
+            for c in cards_db:
+                if card['id'] == c['cid']:
+                    # print(card['id'])
+                    card_doc = c
+                    break
 
-            if card['type'] == 0:
-                card_doc = None
-                card_doc_list = utils.db_operator.DBOperator.get_cards('cid', card['id'])
-                if len(card_doc_list) > 0:
-                    card_doc = card_doc_list[0]
-                if card_doc:
-                    if 'rarity' in card_doc and card_doc['rarity'] >= 5:
+            if card_doc:
+                init_idx = card['idx']
+                init_cid = card['id']
+                # print(card_doc['rarity'])
+                # print('Verify:..{0}'.format(card_doc['name']))
+                # TODO: bug here, weapon type is not equal to battletype
+                # print(card_doc['home'])
+                # print(card_doc['jobtype'])
+                if (int(area_pickup_list['home']) == card_doc['home']) or (
+                    int(area_pickup_list['jobtype']) == card_doc['jobtype']):
+
+                    if card_doc['rarity'] >= 5:
                         continue
-                    temp_idx = card['idx']
 
-                    # self.logger.debug("home:{0}, {1}".format(card_doc['home'], type(card_doc['home'])))
-                    # self.logger.debug("jobtype:{0}".format(card_doc['jobtype']))
-                    # TODO: bug here, weapon type is not equal to battletype
-                    # how to solve it due to mongodb has no weapon type record
-                    # self.logger.debug("weapontype:{0}".format(card_doc['battletype']))
-                    if (int(area_pickup_list['home']) == card_doc['home']) or (
-                        int(area_pickup_list['jobtype']) == card_doc['jobtype']) or (
-                        int(area_pickup_list['weapontype']) == card_doc['battletype']):
-
-                        temp_idx = card['idx']
-                        # self.logger.debug(u"Found pickup card! {0}".format(card_doc['name']))
-                        # self.logger.debug(u"{0} is picked to eplorer".format(temp_idx))
-                        self.logger.debug('Pick {0} to explorer'.format(card_doc['name']))
-                        # print card
-                        return temp_idx, card['id']
-                    else:
-                        # this card does not fit pick up criteria
-                        continue
+                    cidx = card['idx']
+                    self.logger.debug('Pick {0} to explorer, cid = {1}'.format(card_doc['name'], card['id']))
+                    return cidx, card['id']
                 else:
-                    # DB has no record to do matching
+                    # this card does not fit pick up criteria
                     continue
-                # self.logger.error("Cannot find card id {0} in database, please update DB".format(card['id']))
-                # self.logger.debug("{0} is picked to eplorer".format(temp_idx))
             else:
-                # card is not character
+                # DB has no record to do matching
                 continue
         self.logger.warning("找不到適合的探索角色，使用[{0}]".format(card_doc['name']))
-        return temp_idx, card['id']
+        return init_idx, init_cid
 
     def __get_latest_quest(self):
         r = alldata_client.get_alldata(self.account_info['sid'])
