@@ -382,8 +382,7 @@ class ChainChronicle(object):
                 options.pop(k)
 
         api_path = options.pop('API')
-        for i in range(0, 1000):
-            options = {'item_id': 0, 'type': i}
+        for i in range(0, 1):
             print(options)
             r = debug_client.debug_post(self.account_info['sid'], api_path, **options)
 
