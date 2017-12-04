@@ -33,7 +33,7 @@ def compose(sid, weapon_list, eid=None):
 
     r = requests.post(post_url, data=payload, headers=headers, cookies=cookies)
     decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
-    # print decompressed_data
+    print(decompressed_data)
     return json.loads(decompressed_data)
 
 
