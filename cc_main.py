@@ -743,6 +743,8 @@ class ChainChronicle(object):
                 self.__sleep(self.config.getint('GLOBAL', 'Delay'), salt=True)
 
             result = quest_client.finish_quest(quest_info, self.account_info['sid'])
+            if 'initiation' in result.keys():
+                self.logger.debug('傳授成功')
             # utils.response_parser.dump_response(result)
             if quest_info['show_treasure']:
                 treasure_list = result['earns']['treasure']
@@ -1643,6 +1645,7 @@ class ChainChronicle(object):
             self.logger.debug("{0} = {1}".format(key, data))
 
     def do_get_present(self, section, *args, **kwargs):
+        self.do_present_process(1, 0, 'weapon')
         self.do_present_process(1, 0, 'item')
         self.do_present_process(1, 0, 'stone')
 
@@ -1651,13 +1654,13 @@ class ChainChronicle(object):
             return
         sid = self.account_info['sid']
         present_ids = present_client.get_present_list(sid, item_type)
-        # self.logger.debug('禮物清單: {0}'.format(present_ids))
+        self.logger.debug('禮物清單: {0}'.format(present_ids))
         while len(present_ids) > 0:
             pid = present_ids.pop(0)
-            # self.logger.debug("接收禮物 {0}".format(pid))
+            self.logger.debug("接收禮物 {0}".format(pid))
             ret = present_client.receieve_present(pid, sid)
             if ret['res'] == 0:
-                # self.logger.debug(u"    -> 接收成功")
+                self.logger.debug(u"    -> 接收成功")
                 pass
             else:
                 self.logger.debug("    -> 接收失敗: {0}".format(ret))
