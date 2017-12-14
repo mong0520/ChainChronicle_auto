@@ -82,6 +82,7 @@ class ChainChronicle(object):
             'UZU': self.do_uzu_section,
             'INFO_UZU': self.do_uzu_info_section,
             'RESET_DISCIPLE': self.do_reset_disciple,
+            'TAKEOVER': self.do_take_over,
             # 'AUTO_COMPOSE': self.do_auto_compose
             #'SECTION_NAME': sefl.function_name
         }
@@ -278,6 +279,17 @@ class ChainChronicle(object):
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
         print((subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()))
+
+
+    def do_take_over(self, section, *args, **kwargs):
+        api_path = '/user/takeover'
+        post_data = {
+            'uuid': self.config.get('GENERAL', 'Uid'),
+            'account': self.config.get('GENERAL', 'Account'),
+            'pass': 'aaa123'
+        }
+        ret = general_client.general_post(self.account_info['sid'], api_path, **post_data)
+        self.logger.debug(simplejson.dumps(ret, ensure_ascii=False).encode('utf-8'))
 
     def do_reset_disciple(self, section, *args, **kwars):
         api_path = '/teacher/confirm_disciple'
