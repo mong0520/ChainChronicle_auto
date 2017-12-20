@@ -203,6 +203,15 @@ class ChainChronicle(object):
             self.logger.error(msg)
             raise KeyError(msg)
 
+        self.process_user_info()
+
+    def process_user_info(self):
+        self.alldata = alldata_client.get_alldata(self.account_info['sid'])
+        self.user_info =self.alldata['body'][4]['data']
+        self.uzu_scid = self.user_info['uzuLastRefilledScheduleId']
+        # self.logger.debug(self.uzu_scid)
+
+
     def __auto_compose(self, base_card_idx, max_lv):
         # Get all 成長卡
         card_list = alldata_client.get_allcards(self.account_info['sid'])
@@ -316,14 +325,6 @@ class ChainChronicle(object):
         ret = general_client.general_post(self.account_info['sid'], uzu_info_api)
         uzu_data_list = ret['uzu']
 
-        # alldata = alldata_client.get_alldata(self.account_info['sid'])
-        # uzu_info_list = alldata['body'][25]['data']
-        # utils.response_parser.dump_response(alldata)
-        # print uzu_info_list
-        # for uzu_info in uzu_info_list:
-        #     print uzu_info['uzu_id']
-        #     print uzu_info['clear_list']
-
         for idx, uzu_data in enumerate(uzu_data_list):
             print('=================')
             # cleared_list = uzu_info_list[idx]['clear_list']
@@ -337,9 +338,16 @@ class ChainChronicle(object):
 
             # print simplejson.dumps(uzu_data, ensure_ascii=False).encode('utf-8')
 
+    def get_next_uzu_stage(self, uzid):
+        uzu_info = self.alldata['body'][28]['data'][int(uzid)-1]
+        self.logger.debug(uzu_info)
+        self.logger.debug('目前天魔狀態:')
+        for key in uzu_info:
+            self.logger.debug('{0}: {1}'.format(key, uzu_info[key]))
+        # cleared_lv starts from 1, clear list starts from 0, so cleared_lv can be the next stage to play
+        return uzu_info['cleared_lv']
 
     def do_uzu_section(self, section, *args, **kwars):
-        max_st = 12
         uzu_api = {
             'entry': '/uzu/entry',
             'result': '/uzu/result'
@@ -347,19 +355,15 @@ class ChainChronicle(object):
 
         options_entry = dict()
         options_entry['uzid'] = self.config.get(section, 'uzid')
-        options_entry['scid'] = self.config.get(section, 'scid')
+        options_entry['scid'] = self.uzu_scid
         options_entry['fid'] = 1965350
         options_entry['htype'] = 0
-        try:
-            options_entry['st'] = self.config.getint(section, 'st')
-        except Exception as e:
-            options_entry['st'] = max_st
+        options_entry['st'] = self.get_next_uzu_stage(options_entry['uzid'])
         options_entry['pt'] = self.config.get(section, 'pt')
 
         options_result = dict()
         options_result['res'] = 1
-        options_result['uzid'] = self.config.get(section, 'uzid')
-
+        options_result['uzid'] = options_entry['uzid']
         # ret = general_client.general_post(self.account_info['sid'], '/data/uzuinfo')
         # utils.response_parser.dump_response(ret)
         for i in range(options_entry['st'], 0, -1):
@@ -635,8 +639,7 @@ class ChainChronicle(object):
 
     def do_show_status(self, section, *args, **kwargs):
         accepted_keys = ['uid', 'heroName', 'open_id', 'lv', 'cardMax', 'accept_disciple', 'name', 'friendCnt'
-        'only_friend_disciple', 'staminaMax']
-        r = alldata_client.get_alldata(self.account_info['sid'])
+        'only_friend_disciple', 'staminaMax', 'uzuLastRefilledScheduleId', 'uzu_key']
         item_mapping = {
             # 2: '魂力果實',
             # 3: '復活果實',
@@ -649,8 +652,8 @@ class ChainChronicle(object):
             20: '轉蛋幣',
         }
 
-        data_list = r['body'][8]['data']
-        stone_count = r['body'][12]['data']
+        data_list = self.alldata['body'][8]['data']
+        stone_count = self.alldata['body'][12]['data']
         # logger.info(json.dumps(data_list, sort_keys=True, indent=2))
         for data in data_list:
             try:
@@ -659,8 +662,7 @@ class ChainChronicle(object):
                 pass
         self.logger.debug('精靈石 = {0}'.format(stone_count))
 
-        user_info = r['body'][4]['data']
-        for key, data in list(user_info.items()):
+        for key, data in list(self.user_info.items()):
             if key in accepted_keys:
                 self.logger.debug("{0} = {1}".format(key, data))
 
