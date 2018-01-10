@@ -3,8 +3,8 @@ import requests
 import utils.global_config
 
 
-def get_gacha_page(sid):
-    url = "{0}/web/gacha?type=story&gacha_id=1".format(utils.global_config.get_hostname())
+def get_gacha_page(sid, gacha_id=1):
+    url = "{0}/web/gacha?type=event&gacha_id={1}".format(utils.global_config.get_hostname(), gacha_id)
     headers = {
         'DeviceWidth': '1024',
         'Proxy-Connection': 'keep-alive',
