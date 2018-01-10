@@ -290,7 +290,7 @@ class ChainChronicle(object):
 
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
-        print((subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()))
+        print((subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()).decode('utf-8').replace(' ',''))
 
 
     def do_take_over(self, section, *args, **kwargs):
