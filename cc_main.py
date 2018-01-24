@@ -208,7 +208,10 @@ class ChainChronicle(object):
     def process_user_info(self):
         self.alldata = alldata_client.get_alldata(self.account_info['sid'])
         self.user_info =self.alldata['body'][4]['data']
-        self.uzu_scid = self.user_info['uzuLastRefilledScheduleId']
+        try:
+            self.uzu_scid = self.user_info['uzuLastRefilledScheduleId']
+        except Exception as e:
+            pass
         # self.logger.debug(self.uzu_scid)
 
 
@@ -287,7 +290,7 @@ class ChainChronicle(object):
 
     def do_show_gacha_event(self, section, *args, **kwargs):
         import subprocess
-        print((subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()))
+        print((subprocess.Popen("cd scripts && sh get_gacha_info.sh", shell=True, stdout=subprocess.PIPE).stdout.read()).decode('utf-8').replace(' ',''))
 
 
     def do_take_over(self, section, *args, **kwargs):
@@ -358,9 +361,13 @@ class ChainChronicle(object):
         options_entry['scid'] = self.uzu_scid
         options_entry['fid'] = 1965350
         options_entry['htype'] = 0
-        options_entry['st'] = self.get_next_uzu_stage(options_entry['uzid'])
-        options_entry['pt'] = self.config.get(section, 'pt')
+        try:
+            options_entry['st'] = self.config.getint(section, 'st')
+        except:
+            options_entry['st'] = self.get_next_uzu_stage(options_entry['uzid'])
 
+        options_entry['pt'] = self.config.get(section, 'pt')
+        # sys.exit(0)
         options_result = dict()
         options_result['res'] = 1
         options_result['uzid'] = options_entry['uzid']
