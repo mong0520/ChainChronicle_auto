@@ -27,7 +27,7 @@ def login(uid, token=None):
     }
     payload = 'param=' + urllib.parse.quote_plus(simplejson.dumps(payload_dict))
     # print url
-    print(payload)
+    # print(payload)
     # ret = poster.post_data(url, headers, None, payload, **data)
     ret = poster.post_data(url, headers, None, payload, **data)
     return ret
