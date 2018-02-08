@@ -14,8 +14,8 @@ class Poster(object):
         'Device': '0',
         'Platform': '1',
         'Content-Type': 'application/x-www-form-urlencoded',
-        'AppVersion': '3.22',
-        'user-agent': 'Chronicle/3.2.2 Rev/2014 (iPhone OS 10.2) DeviceWidth:1024',
+        'AppVersion': '3.41',
+        'user-agent': 'Chronicle/3.4.1 Rev/2014 (iPhone OS 10.2) DeviceWidth:1024',
         'Accept-Encoding': 'identity',
         'Host': '{0}'.format(global_config.get_fqdn()),
         'Connection': 'Keep-Alive'
@@ -64,6 +64,7 @@ class Poster(object):
         # r.headers['Content-Type'] = 'application/x-gzip'
         # print "encoding = {0}".format(r.headers)
         # print r.text
+        # print(r.text)
 
         # gzip decompress in-the-fly
         decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
