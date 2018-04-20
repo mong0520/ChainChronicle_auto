@@ -277,7 +277,9 @@ class ChainChronicle(object):
                 self.logger.debug('徒弟畢業! UID = {0}'.format(self.account_info['uid'], r['res']))
                 teacher_disciple_client.IS_DISCIPLE_GRADUATED = False
             else:
-                self.logger.debug('徒弟 UID {0} 無法畢業, msg = {1}'.format(self.account_info['uid'], r))
+                self.logger.debug('徒弟 UID {0} 無法畢業, msg = {1}, retry'.format(self.account_info['uid'], r))
+                time.sleep(5)
+                teacher_disciple_client.thanks_thanks_graduate(self.account_info['sid'])
         else:
             # 徒：申請師父
             r = teacher_disciple_client.apply_teacher(self.account_info['sid'], tid=tid)

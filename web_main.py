@@ -32,6 +32,10 @@ def run_command(cmd, cwd=os.getcwd()):
     stdout, stderr = process.communicate()
     return stdout
 
+@app.route("/health_check", methods=['GET'])
+def health_check():
+    return 'ok'
+
 @app.route("/show/<user>/<section>", methods=['POST'])
 def show(user, section):
     config_path = os.path.join(app_root, 'config', '{0}.conf'.format(user))
