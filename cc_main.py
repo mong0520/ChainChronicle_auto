@@ -1296,11 +1296,14 @@ class ChainChronicle(object):
             parameter['card_idx'] = card_idx_pool[i]
             counter = 0
             parameter['pickup'] = 0
+            parameter['interval'] = 1
 
             while True:
                 try:
                     r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+                    print(r)
                     r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+                    print(r)
                     if r['res'] == 0:
                         counter += 1
                     elif r['res'] == 2311:
@@ -1411,6 +1414,7 @@ class ChainChronicle(object):
             except:
                 parameter['interval'] = 1
 
+            self.logging.debug(interval)
             try:
                 stone_finish = self.config.getint(section, 'StoneFinish')
             except:
