@@ -26,14 +26,14 @@ def compose(sid, weapon_list, eid=None):
     if eid:
         query_string += "&eid={0}".format(eid) #  special event
     post_url = url + query_string
-    # print post_url
+    print(post_url)
     payload = urllib.parse.quote_plus(query_string)
     payload = 'nature=' + payload
-    # print payload
+    print(payload)
 
     r = requests.post(post_url, data=payload, headers=headers, cookies=cookies)
     decompressed_data = zlib.decompress(r.content, 16+zlib.MAX_WBITS)
-    print(decompressed_data)
+    # print(decompressed_data)
     return json.loads(decompressed_data)
 
 

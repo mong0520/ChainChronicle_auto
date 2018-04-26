@@ -10,37 +10,42 @@ if not os.path.isdir(DB_PATH):
     os.makedirs(DB_PATH)
 DB_SOURCE_BASE = 'http://v322.cc.mobimon.com.tw/data/'
 data_mapping = {
-    'evolve':{
-        'db_source': DB_SOURCE_BASE + 'weaponlist',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
+    'reinforce': {
+        'db_source': DB_SOURCE_BASE + 'reinforce',
+        'db_obj': TinyDB(os.path.join(DB_PATH, 'reinforce')),
         'raw_list': list()
     },
-    'weaponlist':{
-        'db_source': DB_SOURCE_BASE + 'weaponlist',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'weaponlist')),
-        'raw_list': list()
-    }
-    ,
-    'charainfo': {
-        'db_source': DB_SOURCE_BASE + 'charainfo',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'charainfo')),
-        'raw_list': list()
-    },
-    'chararein': {
-        'db_source': DB_SOURCE_BASE + 'charainfo',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'chararein')),
-        'raw_list': list()
-    },
-    'questdigest': {
-        'db_source': DB_SOURCE_BASE + 'questdigest',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'questdigest')),
-        'raw_list': list()
-    },
-    'skilllist': {
-        'db_source': DB_SOURCE_BASE + 'skilllist',
-        'db_obj': TinyDB(os.path.join(DB_PATH, 'skilllist')),
-        'raw_list': list()
-    }
+    # 'evolve':{
+    #     'db_source': DB_SOURCE_BASE + 'weaponlist',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'evolve')),
+    #     'raw_list': list()
+    # },
+    # 'weaponlist':{
+    #     'db_source': DB_SOURCE_BASE + 'weaponlist',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'weaponlist')),
+    #     'raw_list': list()
+    # }
+    # ,
+    # 'charainfo': {
+    #     'db_source': DB_SOURCE_BASE + 'charainfo',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'charainfo')),
+    #     'raw_list': list()
+    # },
+    # 'chararein': {
+    #     'db_source': DB_SOURCE_BASE + 'charainfo',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'chararein')),
+    #     'raw_list': list()
+    # },
+    # 'questdigest': {
+    #     'db_source': DB_SOURCE_BASE + 'questdigest',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'questdigest')),
+    #     'raw_list': list()
+    # },
+    # 'skilllist': {
+    #     'db_source': DB_SOURCE_BASE + 'skilllist',
+    #     'db_obj': TinyDB(os.path.join(DB_PATH, 'skilllist')),
+    #     'raw_list': list()
+    # }
 
     # note, weaponlist有三個資料可以拿，一個叫weaponlist，是一般武器，一個叫evolve，是鍊金武器，一個叫reinforce，是武器強化卡
     # weaponlist, skilllist, charainfo, questdigest, supportersskill, bossinfo, weaponcomposeevent, explorerlocation
@@ -182,6 +187,7 @@ class DBUpdater(object):
             url = data_mapping[category]['db_source']
             print('Getting data from {0}'.format(url))
             r = poster.Poster.get_data(url)
+            print(r)
             print('complete')
 
             print('remove existing data')

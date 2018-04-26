@@ -1287,51 +1287,42 @@ class ChainChronicle(object):
 
         monitor_period = 30 # display money in every 30 seconds
         money_threshold = 1500000000
-        def run(i):
-            # print i
-            card_idx_pool = [358771956, 330984563, 364031956]
-            parameter = dict()
-            parameter['explorer_idx'] = i + 1
-            parameter['location_id'] = i
-            parameter['card_idx'] = card_idx_pool[i]
-            counter = 0
-            parameter['pickup'] = 0
-            parameter['interval'] = 1
+        while true:
+            for i in range(0, 3):
+                # print i
+                card_idx_pool = [358771956, 330984563, 364031956]
+                parameter = dict()
+                parameter['explorer_idx'] = i + 1
+                parameter['location_id'] = i
+                parameter['card_idx'] = card_idx_pool[i]
+                counter = 0
+                parameter['pickup'] = 0
+                parameter['interval'] = 1
 
-            while True:
-                try:
-                    r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
-                    print(r)
-                    r = explorer_client.start_explorer(parameter, self.account_info['sid'])
-                    print(r)
-                    if r['res'] == 0:
-                        counter += 1
-                    elif r['res'] == 2311:
-                        parameter['pickup'] = 1
-                    elif r['res'] == -2001:
-                        # now processing
-                        pass
-                    elif r['res'] == 2304:
-                        # is used explorer_idx, maybe too fask
-                        pass
-                    else:
-                        self.logger.debug('Thread-{0} is breaking on unknown result: {1}'.format(i, r))
+                while True:
+                    try:
+                        r = explorer_client.cancel_explorer(parameter, self.account_info['sid'])
+                        print(r)
+                        r = explorer_client.start_explorer(parameter, self.account_info['sid'])
+                        print(r)
+                        if r['res'] == 0:
+                            counter += 1
+                        elif r['res'] == 2311:
+                            parameter['pickup'] = 1
+                        elif r['res'] == -2001:
+                            # now processing
+                            pass
+                        elif r['res'] == 2304:
+                            # is used explorer_idx, maybe too fask
+                            pass
+                        else:
+                            self.logger.debug('Thread-{0} is breaking on unknown result: {1}'.format(i, r))
+                            break
+                    except Exception as e:
+                        self.logger.debug('Thread-{0} is breaking on exception: {1}'.format(i, e))
+                        print(e)
                         break
-                except Exception as e:
-                    self.logger.debug('Thread-{0} is breaking on exception: {1}'.format(i, e))
-                    print(e)
-                    break
 
-        threads = []
-        for i in range(0, 3):
-            threads.append(threading.Thread(target=run, args=[i]))
-
-        self.logger.debug('Threads start!')
-        for t in threads:
-            t.setDaemon(True)
-            t.start()
-
-        while True:
             r = alldata_client.get_alldata(self.account_info['sid'])
             data = r['body'][8]['data']
             for d in data:
@@ -1341,8 +1332,6 @@ class ChainChronicle(object):
                         sys.exit(0)
                     self.logger.debug("剩餘金幣 = {0}".format(d['cnt']))
                     money_current = d['cnt']
-            time.sleep(monitor_period)
-
 
 
     def do_explorer_section(self, section, *args, **kwargs):
