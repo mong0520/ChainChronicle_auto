@@ -1287,7 +1287,7 @@ class ChainChronicle(object):
 
         monitor_period = 30 # display money in every 30 seconds
         money_threshold = 1500000000
-        while true:
+        while True:
             for i in range(0, 3):
                 # print i
                 card_idx_pool = [358771956, 330984563, 364031956]
