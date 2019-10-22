@@ -11,5 +11,5 @@ pyslack-real==0.6.0
 requests==2.18.1
 simplejson==3.10.0
 tinydb==3.3.0
-urllib3==1.21.1
+urllib3==1.24.2
 Werkzeug==0.15.3
